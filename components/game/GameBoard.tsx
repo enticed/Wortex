@@ -1,6 +1,6 @@
 'use client';
 
-import { DndContext, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core';
 import { useState } from 'react';
 import Vortex from './Vortex';
 import AssemblyArea from './AssemblyArea';
@@ -12,12 +12,29 @@ interface GameBoardProps {
 }
 
 export default function GameBoard({ puzzle }: GameBoardProps) {
-  const { gameState, grabWord, placeWord, removeWord } = useGameState(puzzle);
+  const { gameState, grabWord, placeWord, removeWord, reorderWords } = useGameState(puzzle);
   const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
 
   const handleDragStart = (event: DragStartEvent) => {
     setDraggedWordId(event.active.id as string);
     grabWord(event.active.id as string);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Check if we're reordering within the target phrase area
+    const isActiveInTarget = gameState.targetPhraseWords.some((w) => w.id === activeId);
+    const isOverInTarget = gameState.targetPhraseWords.some((w) => w.id === overId);
+
+    if (isActiveInTarget && isOverInTarget && activeId !== overId) {
+      reorderWords(activeId, overId);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -27,8 +44,12 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       const wordId = active.id as string;
       const areaId = over.id as string;
 
+      // Only place word if dragging from vortex to an assembly area
       if (areaId === 'target' || areaId === 'facsimile') {
-        placeWord(wordId, areaId);
+        const isFromVortex = gameState.vortexWords.some((w) => w.id === wordId);
+        if (isFromVortex) {
+          placeWord(wordId, areaId);
+        }
       }
     }
 
@@ -36,7 +57,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
   };
 
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
       <div className="h-screen w-full flex flex-col bg-gray-50 dark:bg-gray-900">
         {/* Top 25% - Target Phrase Assembly Area */}
         <div className="h-1/4 border-b-2 border-gray-300 dark:border-gray-700 p-4 bg-blue-50 dark:bg-blue-950">

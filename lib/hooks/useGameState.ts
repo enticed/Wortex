@@ -222,10 +222,57 @@ export function useGameState(puzzle: Puzzle | null) {
     });
   }, []);
 
+  // Reorder words in target phrase (manual assembly)
+  const reorderWords = useCallback((activeId: string, overId: string) => {
+    setGameState((prev) => {
+      const oldIndex = prev.targetPhraseWords.findIndex((w) => w.id === activeId);
+      const newIndex = prev.targetPhraseWords.findIndex((w) => w.id === overId);
+
+      if (oldIndex === -1 || newIndex === -1) return prev;
+
+      const reordered = [...prev.targetPhraseWords];
+      const [movedWord] = reordered.splice(oldIndex, 1);
+      reordered.splice(newIndex, 0, movedWord);
+
+      // Update positions
+      const updatedWords = reordered.map((word, index) => ({
+        ...word,
+        position: index,
+      }));
+
+      // Check if game is complete after reordering
+      const isComplete = prev.puzzle
+        ? areAllPhrasesComplete(
+            updatedWords,
+            prev.puzzle.targetPhrase.words,
+            prev.facsimilePhraseWords,
+            prev.puzzle.facsimilePhrase.words
+          )
+        : false;
+
+      const score =
+        isComplete && prev.puzzle
+          ? calculateScore(
+              prev.totalWordsSeen,
+              prev.puzzle.targetPhrase.words.length +
+                prev.puzzle.facsimilePhrase.words.length
+            )
+          : null;
+
+      return {
+        ...prev,
+        targetPhraseWords: updatedWords,
+        isComplete,
+        score,
+      };
+    });
+  }, []);
+
   return {
     gameState,
     grabWord,
     placeWord,
     removeWord,
+    reorderWords,
   };
 }

@@ -1,0 +1,40 @@
+'use client';
+
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface SortableWordProps {
+  id: string;
+  text: string;
+}
+
+export default function SortableWord({ id, text }: SortableWordProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`
+        px-4 py-2 rounded-lg font-semibold text-sm
+        bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100
+        cursor-grab active:cursor-grabbing
+        shadow-sm hover:shadow-md
+        transition-shadow duration-200
+        select-none
+      `}
+    >
+      {text}
+    </div>
+  );
+}
