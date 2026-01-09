@@ -48,7 +48,7 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
 
   // Calculate font size and scale based on radius (smaller near center)
   const getScale = (radius: number) => {
-    return Math.max(0.5, radius); // Scale from 0.5 to 1.0
+    return Math.max(0.7, radius * 1.2); // Scale from 0.7 to 1.2 (larger words)
   };
 
   // Animate words in the vortex
@@ -65,7 +65,7 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
         existingAnims.forEach(anim => anim.kill());
       }
 
-      const duration = 10; // 10 seconds for full cycle
+      const duration = 15; // 15 seconds for full cycle (slower)
       const rotations = 5;
 
       // Create a timeline for this word
@@ -90,7 +90,7 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
       });
 
       const radiusTween = gsap.to(wordData, {
-        radius: 0.15,
+        radius: 0.25, // Don't go as close to center
         duration: duration,
         ease: 'power1.in',
         repeat: -1,

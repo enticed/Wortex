@@ -31,8 +31,8 @@ export function useGameState(puzzle: Puzzle | null) {
       setGameState((prev) => ({
         ...prev,
         puzzle,
-        vortexWords: initialWords.slice(0, 5), // Start with 5 words visible
-        totalWordsSeen: 5,
+        vortexWords: initialWords.slice(0, 3), // Start with 3 words visible (easier)
+        totalWordsSeen: 3,
       }));
     }
   }, [puzzle]);
@@ -44,8 +44,8 @@ export function useGameState(puzzle: Puzzle | null) {
     const interval = setInterval(() => {
       setGameState((prev) => {
         // Check if we need to add more words
-        if (prev.vortexWords.length < 8) {
-          // Keep 8 words in vortex at a time
+        if (prev.vortexWords.length < 6) {
+          // Keep 6 words in vortex at a time (reduced from 8)
           const allWords = createVortexWords(puzzle);
           const nextWord = allWords[prev.totalWordsSeen % allWords.length];
 
@@ -63,7 +63,7 @@ export function useGameState(puzzle: Puzzle | null) {
         }
         return prev;
       });
-    }, 2000); // Add new word every 2 seconds
+    }, 3000); // Add new word every 3 seconds (slower)
 
     return () => clearInterval(interval);
   }, [puzzle, gameState.isComplete, gameState.isPaused]);
