@@ -1,0 +1,219 @@
+-- Wortex Database Schema for Supabase
+
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  display_name TEXT,
+  timezone TEXT DEFAULT 'UTC',
+  is_anonymous BOOLEAN DEFAULT TRUE,
+  subscription_status TEXT DEFAULT 'none' CHECK (subscription_status IN ('none', 'active', 'expired')),
+  subscription_expires_at TIMESTAMPTZ,
+  CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- Puzzles table
+CREATE TABLE IF NOT EXISTS puzzles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  date DATE NOT NULL UNIQUE,
+  target_phrase TEXT NOT NULL,
+  facsimile_phrase TEXT NOT NULL,
+  difficulty INTEGER DEFAULT 1 CHECK (difficulty >= 1 AND difficulty <= 5),
+  bonus_question JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  created_by_ai BOOLEAN DEFAULT FALSE,
+  approved BOOLEAN DEFAULT FALSE
+);
+
+-- Index on date for fast lookups
+CREATE INDEX IF NOT EXISTS puzzles_date_idx ON puzzles(date);
+CREATE INDEX IF NOT EXISTS puzzles_approved_idx ON puzzles(approved);
+
+-- Scores table
+CREATE TABLE IF NOT EXISTS scores (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  puzzle_id UUID NOT NULL REFERENCES puzzles(id) ON DELETE CASCADE,
+  score NUMERIC(10, 2) NOT NULL,
+  bonus_correct BOOLEAN DEFAULT FALSE,
+  time_taken_seconds INTEGER NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, puzzle_id) -- One score per user per puzzle
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS scores_user_id_idx ON scores(user_id);
+CREATE INDEX IF NOT EXISTS scores_puzzle_id_idx ON scores(puzzle_id);
+CREATE INDEX IF NOT EXISTS scores_score_idx ON scores(score);
+CREATE INDEX IF NOT EXISTS scores_created_at_idx ON scores(created_at);
+
+-- Stats table (one row per user)
+CREATE TABLE IF NOT EXISTS stats (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  total_games INTEGER DEFAULT 0,
+  average_score NUMERIC(10, 2) DEFAULT 0,
+  current_streak INTEGER DEFAULT 0,
+  best_streak INTEGER DEFAULT 0,
+  last_played_date DATE,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Leaderboard view (materialized for performance)
+CREATE OR REPLACE VIEW leaderboards AS
+SELECT
+  s.puzzle_id,
+  s.user_id,
+  u.display_name,
+  s.score,
+  RANK() OVER (PARTITION BY s.puzzle_id ORDER BY s.score ASC) as rank,
+  p.date as puzzle_date
+FROM scores s
+JOIN users u ON s.user_id = u.id
+JOIN puzzles p ON s.puzzle_id = p.id
+ORDER BY s.puzzle_id, rank;
+
+-- Row Level Security (RLS) Policies
+
+-- Enable RLS on all tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE puzzles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stats ENABLE ROW LEVEL SECURITY;
+
+-- Users policies
+CREATE POLICY "Users can view their own data"
+  ON users FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own data"
+  ON users FOR UPDATE
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert their own data"
+  ON users FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- Puzzles policies (read-only for players)
+CREATE POLICY "Anyone can view approved puzzles"
+  ON puzzles FOR SELECT
+  USING (approved = TRUE);
+
+-- Scores policies
+CREATE POLICY "Users can view all scores"
+  ON scores FOR SELECT
+  USING (TRUE);
+
+CREATE POLICY "Users can insert their own scores"
+  ON scores FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own scores"
+  ON scores FOR UPDATE
+  USING (auth.uid() = user_id);
+
+-- Stats policies
+CREATE POLICY "Users can view all stats"
+  ON stats FOR SELECT
+  USING (TRUE);
+
+CREATE POLICY "Users can update their own stats"
+  ON stats FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own stats"
+  ON stats FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Functions
+
+-- Function to update stats after a score is inserted
+CREATE OR REPLACE FUNCTION update_user_stats()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO stats (user_id, total_games, average_score, last_played_date)
+  VALUES (
+    NEW.user_id,
+    1,
+    NEW.score,
+    (SELECT date FROM puzzles WHERE id = NEW.puzzle_id)
+  )
+  ON CONFLICT (user_id) DO UPDATE SET
+    total_games = stats.total_games + 1,
+    average_score = (stats.average_score * stats.total_games + NEW.score) / (stats.total_games + 1),
+    last_played_date = (SELECT date FROM puzzles WHERE id = NEW.puzzle_id),
+    updated_at = NOW();
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to update stats
+CREATE TRIGGER update_stats_after_score
+  AFTER INSERT ON scores
+  FOR EACH ROW
+  EXECUTE FUNCTION update_user_stats();
+
+-- Function to update streak
+CREATE OR REPLACE FUNCTION update_user_streak(p_user_id UUID, p_puzzle_date DATE)
+RETURNS VOID AS $$
+DECLARE
+  v_last_played DATE;
+  v_current_streak INTEGER;
+  v_best_streak INTEGER;
+BEGIN
+  SELECT last_played_date, current_streak, best_streak
+  INTO v_last_played, v_current_streak, v_best_streak
+  FROM stats
+  WHERE user_id = p_user_id;
+
+  -- If last played was yesterday, increment streak
+  IF v_last_played = p_puzzle_date - INTERVAL '1 day' THEN
+    v_current_streak := v_current_streak + 1;
+  -- If last played was today, keep streak
+  ELSIF v_last_played = p_puzzle_date THEN
+    -- No change
+  -- Otherwise, reset streak
+  ELSE
+    v_current_streak := 1;
+  END IF;
+
+  -- Update best streak if current is higher
+  IF v_current_streak > v_best_streak THEN
+    v_best_streak := v_current_streak;
+  END IF;
+
+  -- Update stats
+  UPDATE stats
+  SET
+    current_streak = v_current_streak,
+    best_streak = v_best_streak,
+    updated_at = NOW()
+  WHERE user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Insert some sample data (for development)
+INSERT INTO puzzles (date, target_phrase, facsimile_phrase, difficulty, bonus_question, approved)
+VALUES (
+  CURRENT_DATE,
+  'To be or not to be, that is the question',
+  'To exist or to cease, this is what we must decide',
+  1,
+  '{
+    "type": "literature",
+    "question": "Who wrote this famous line?",
+    "options": [
+      {"id": "1", "author": "William Shakespeare", "book": "Hamlet"},
+      {"id": "2", "author": "Charles Dickens", "book": "Great Expectations"},
+      {"id": "3", "author": "Jane Austen", "book": "Pride and Prejudice"},
+      {"id": "4", "author": "Mark Twain", "book": "Huckleberry Finn"},
+      {"id": "5", "author": "Ernest Hemingway", "book": "The Old Man and the Sea"}
+    ],
+    "correctAnswerId": "1"
+  }'::jsonb,
+  TRUE
+)
+ON CONFLICT (date) DO NOTHING;
