@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { Stage, Layer, Text, Circle } from 'react-konva';
 import { gsap } from 'gsap';
+import Word from './Word';
 import type { WordInVortex } from '@/types/game';
 
 interface VortexProps {
@@ -13,17 +13,17 @@ interface VortexProps {
 
 export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-  const stageRef = useRef<any>(null);
-  const animationRef = useRef<gsap.core.Tween[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const wordRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const animationRefs = useRef<Map<string, gsap.core.Tween[]>>(new Map());
 
   // Handle responsive sizing
   useEffect(() => {
     const updateSize = () => {
-      const container = document.getElementById('vortex-container');
-      if (container) {
+      if (containerRef.current) {
         setDimensions({
-          width: container.clientWidth,
-          height: container.clientHeight,
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight,
         });
       }
     };
@@ -33,57 +33,11 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // Animate words in the vortex
-  useEffect(() => {
-    if (!isActive) return;
-
-    // Clear previous animations
-    animationRef.current.forEach((tween) => tween.kill());
-    animationRef.current = [];
-
-    // Create spiral animations for each word
-    words.forEach((word, index) => {
-      const duration = 10; // 10 seconds per rotation
-      const rotations = 5; // Number of complete rotations
-
-      // Animate angle (rotation)
-      const angleTween = gsap.to(word, {
-        angle: `+=${360 * rotations}`,
-        duration: duration,
-        ease: 'none',
-        repeat: -1,
-        onUpdate: () => {
-          // Force re-render
-          stageRef.current?.batchDraw();
-        },
-      });
-
-      // Animate radius (spiral inward)
-      const radiusTween = gsap.to(word, {
-        radius: 0.1, // Move toward center
-        duration: duration,
-        ease: 'power1.in',
-        repeat: -1,
-        repeatDelay: 0,
-        onRepeat: () => {
-          // Reset to outer edge when reaching center
-          word.radius = 0.9;
-        },
-      });
-
-      animationRef.current.push(angleTween, radiusTween);
-    });
-
-    return () => {
-      animationRef.current.forEach((tween) => tween.kill());
-    };
-  }, [words, isActive]);
-
   // Calculate position from polar coordinates
   const getCartesianPosition = (angle: number, radius: number) => {
     const centerX = dimensions.width / 2;
     const centerY = dimensions.height / 2;
-    const maxRadius = Math.min(dimensions.width, dimensions.height) / 2 - 50;
+    const maxRadius = Math.min(dimensions.width, dimensions.height) / 2 - 80;
 
     const radian = (angle * Math.PI) / 180;
     const x = centerX + Math.cos(radian) * radius * maxRadius;
@@ -92,70 +46,143 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
     return { x, y };
   };
 
-  // Calculate font size based on radius (smaller near center)
-  const getFontSize = (radius: number) => {
-    return Math.max(12, 24 * radius); // Minimum 12px, max 24px
+  // Calculate font size and scale based on radius (smaller near center)
+  const getScale = (radius: number) => {
+    return Math.max(0.5, radius); // Scale from 0.5 to 1.0
   };
 
+  // Animate words in the vortex
+  useEffect(() => {
+    if (!isActive) return;
+
+    words.forEach((word) => {
+      const wordElement = wordRefs.current.get(word.id);
+      if (!wordElement || word.isGrabbed) return;
+
+      // Clear existing animations for this word
+      const existingAnims = animationRefs.current.get(word.id);
+      if (existingAnims) {
+        existingAnims.forEach(anim => anim.kill());
+      }
+
+      const duration = 10; // 10 seconds for full cycle
+      const rotations = 5;
+
+      // Create a timeline for this word
+      const timeline = gsap.timeline({ repeat: -1 });
+
+      // Animate the word's polar coordinates
+      const wordData = { angle: word.angle, radius: word.radius };
+
+      const angleTween = gsap.to(wordData, {
+        angle: `+=${360 * rotations}`,
+        duration: duration,
+        ease: 'none',
+        repeat: -1,
+        onUpdate: () => {
+          if (wordElement && !word.isGrabbed) {
+            const pos = getCartesianPosition(wordData.angle, wordData.radius);
+            const scale = getScale(wordData.radius);
+            wordElement.style.transform = `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px) scale(${scale})`;
+            wordElement.style.opacity = String(Math.max(0.3, wordData.radius));
+          }
+        },
+      });
+
+      const radiusTween = gsap.to(wordData, {
+        radius: 0.15,
+        duration: duration,
+        ease: 'power1.in',
+        repeat: -1,
+        onRepeat: () => {
+          wordData.radius = 0.95;
+          wordData.angle = Math.random() * 360;
+        },
+      });
+
+      animationRefs.current.set(word.id, [angleTween, radiusTween]);
+    });
+
+    return () => {
+      animationRefs.current.forEach((anims) => {
+        anims.forEach(anim => anim.kill());
+      });
+      animationRefs.current.clear();
+    };
+  }, [words, isActive, dimensions]);
+
+  // Clean up animations for removed words
+  useEffect(() => {
+    const currentWordIds = new Set(words.map(w => w.id));
+
+    // Remove refs and animations for words that no longer exist
+    wordRefs.current.forEach((_, id) => {
+      if (!currentWordIds.has(id)) {
+        const anims = animationRefs.current.get(id);
+        if (anims) {
+          anims.forEach(anim => anim.kill());
+          animationRefs.current.delete(id);
+        }
+        wordRefs.current.delete(id);
+      }
+    });
+  }, [words]);
+
   return (
-    <div id="vortex-container" className="w-full h-full relative">
-      <Stage width={dimensions.width} height={dimensions.height} ref={stageRef}>
-        <Layer>
-          {/* Draw vortex spiral guides (visual effect) */}
-          {[0.9, 0.7, 0.5, 0.3, 0.1].map((radius, index) => {
-            const centerX = dimensions.width / 2;
-            const centerY = dimensions.height / 2;
-            const maxRadius = Math.min(dimensions.width, dimensions.height) / 2 - 50;
+    <div ref={containerRef} className="w-full h-full relative overflow-hidden">
+      {/* Vortex spiral guides */}
+      <svg className="absolute inset-0 pointer-events-none" width={dimensions.width} height={dimensions.height}>
+        {[0.9, 0.7, 0.5, 0.3, 0.15].map((radius, index) => {
+          const centerX = dimensions.width / 2;
+          const centerY = dimensions.height / 2;
+          const maxRadius = Math.min(dimensions.width, dimensions.height) / 2 - 80;
+          const r = radius * maxRadius;
 
-            return (
-              <Circle
-                key={`spiral-${index}`}
-                x={centerX}
-                y={centerY}
-                radius={radius * maxRadius}
-                stroke="#8b5cf6"
-                strokeWidth={1}
-                opacity={0.2}
-                dash={[10, 10]}
-              />
-            );
-          })}
-
-          {/* Draw words */}
-          {words.map((word) => {
-            const pos = getCartesianPosition(word.angle, word.radius);
-            const fontSize = getFontSize(word.radius);
-
-            return (
-              <Text
-                key={word.id}
-                x={pos.x}
-                y={pos.y}
-                text={word.word}
-                fontSize={fontSize}
-                fill={word.isGrabbed ? '#10b981' : '#374151'}
-                fontFamily="Arial"
-                fontStyle="bold"
-                align="center"
-                verticalAlign="middle"
-                offsetX={fontSize * word.word.length * 0.3} // Center text
-                offsetY={fontSize / 2}
-                opacity={word.isGrabbed ? 0.5 : 1}
-                onClick={() => !word.isGrabbed && onWordGrab(word.id)}
-                onTap={() => !word.isGrabbed && onWordGrab(word.id)}
-                shadowColor="black"
-                shadowBlur={2}
-                shadowOpacity={0.3}
-                cursor="pointer"
-              />
-            );
-          })}
-        </Layer>
-      </Stage>
+          return (
+            <circle
+              key={`spiral-${index}`}
+              cx={centerX}
+              cy={centerY}
+              r={r}
+              fill="none"
+              stroke="#8b5cf6"
+              strokeWidth="1"
+              opacity="0.2"
+              strokeDasharray="10 10"
+            />
+          );
+        })}
+      </svg>
 
       {/* Center vortex visual */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
         <div className="w-16 h-16 rounded-full bg-gradient-radial from-purple-500/50 to-transparent animate-pulse" />
+      </div>
+
+      {/* Draggable words */}
+      <div className="absolute inset-0">
+        {words.map((word) => {
+          if (word.isGrabbed) return null;
+
+          const initialPos = getCartesianPosition(word.angle, word.radius);
+          const initialScale = getScale(word.radius);
+
+          return (
+            <div
+              key={word.id}
+              ref={(el) => {
+                if (el) wordRefs.current.set(word.id, el);
+              }}
+              className="absolute top-0 left-0 transition-opacity"
+              style={{
+                transform: `translate(-50%, -50%) translate(${initialPos.x}px, ${initialPos.y}px) scale(${initialScale})`,
+                opacity: Math.max(0.3, word.radius),
+              }}
+            >
+              <Word id={word.id} text={word.word} isPlaced={false} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
