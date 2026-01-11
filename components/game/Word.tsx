@@ -38,7 +38,7 @@ export default function Word({ id, text, isPlaced = false }: WordProps) {
 
       {/* Actual word styling */}
       <div className={`
-        px-4 py-2 rounded-lg font-semibold text-sm
+        px-3 py-1.5 rounded-lg font-semibold
         ${
           isPlaced
             ? 'bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100'

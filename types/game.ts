@@ -58,6 +58,7 @@ export interface GameState {
   vortexWords: WordInVortex[];
   targetPhraseWords: PlacedWord[];
   facsimilePhraseWords: PlacedWord[];
+  dismissedWords: Set<string>; // Track dismissed word keys (belongsTo-sourceIndex)
   totalWordsSeen: number;
   isComplete: boolean;
   score: number | null; // Base puzzle score

@@ -16,6 +16,7 @@ export function useGameState(puzzle: Puzzle | null) {
     vortexWords: [],
     targetPhraseWords: [],
     facsimilePhraseWords: [],
+    dismissedWords: new Set<string>(),
     totalWordsSeen: 0,
     isComplete: false,
     score: null,
@@ -91,21 +92,48 @@ export function useGameState(puzzle: Puzzle | null) {
 
         // If vortex is full (10 words), cycle through unplaced words
         if (prev.vortexWords.length >= 10) {
-          // Find words that are not placed (in either target or facsimile)
+          // Find words that are not placed and not dismissed
           const unplacedWords = allWords.filter(w => {
             const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
-            return !placedWordKeys.has(wordKey);
+            return !placedWordKeys.has(wordKey) && !prev.dismissedWords.has(wordKey);
           });
 
-          // If all words are placed, game is complete
+          // If all unplaced words are dismissed, clear dismissed set
           if (unplacedWords.length === 0) {
-            return prev;
+            const allUnplacedWords = allWords.filter(w => {
+              const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
+              return !placedWordKeys.has(wordKey);
+            });
+
+            // If truly no words left, game is complete
+            if (allUnplacedWords.length === 0) {
+              return prev;
+            }
+
+            // Clear dismissed words and continue with all unplaced words
+            return {
+              ...prev,
+              dismissedWords: new Set<string>(),
+            };
           }
 
-          // Cycle through unplaced words continuously
-          // This ensures we keep showing words even if all are currently in vortex
-          const nextWordIndex = prev.totalWordsSeen % unplacedWords.length;
-          const nextWord = unplacedWords[nextWordIndex];
+          // Get IDs of words currently in vortex
+          const vortexWordKeys = new Set(
+            prev.vortexWords.map(vw => `${vw.belongsTo}-${vw.sourceIndex}`)
+          );
+
+          // Prioritize words not currently in vortex
+          const wordsNotInVortex = unplacedWords.filter(w => {
+            const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
+            return !vortexWordKeys.has(wordKey);
+          });
+
+          // Use wordsNotInVortex if available, otherwise use all unplaced words
+          const candidateWords = wordsNotInVortex.length > 0 ? wordsNotInVortex : unplacedWords;
+
+          // Select next word using modulo for cycling
+          const nextWordIndex = prev.totalWordsSeen % candidateWords.length;
+          const nextWord = candidateWords[nextWordIndex];
 
           // Remove oldest word (first in array) and add new word
           const timestamp = Date.now();
@@ -361,6 +389,24 @@ export function useGameState(puzzle: Puzzle | null) {
     }));
   }, []);
 
+  // Dismiss a word from vortex (swipe gesture)
+  const dismissWord = useCallback((wordId: string) => {
+    setGameState((prev) => {
+      const word = prev.vortexWords.find((w) => w.id === wordId);
+      if (!word) return prev;
+
+      const wordKey = `${word.belongsTo}-${word.sourceIndex}`;
+      const newDismissedWords = new Set(prev.dismissedWords);
+      newDismissedWords.add(wordKey);
+
+      return {
+        ...prev,
+        dismissedWords: newDismissedWords,
+        vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
+      };
+    });
+  }, []);
+
   return {
     gameState,
     grabWord,
@@ -369,5 +415,6 @@ export function useGameState(puzzle: Puzzle | null) {
     reorderWords,
     answerBonus,
     skipBonus,
+    dismissWord,
   };
 }

@@ -27,7 +27,7 @@ export default function SortableWord({ id, text }: SortableWordProps) {
       {...attributes}
       {...listeners}
       className={`
-        px-4 py-2 rounded-lg font-semibold text-sm
+        px-3 py-1.5 rounded-lg font-semibold
         bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100
         cursor-grab active:cursor-grabbing
         shadow-sm hover:shadow-md

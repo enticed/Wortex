@@ -39,6 +39,20 @@ export default function AssemblyArea({
   // Sort words by position
   const sortedWords = [...placedWords].sort((a, b) => a.position - b.position);
 
+  // Calculate dynamic sizing based on number of words
+  // Scale down for longer phrases
+  const getWordScale = () => {
+    if (expectedLength <= 15) return 'text-sm'; // Normal size
+    if (expectedLength <= 25) return 'text-xs'; // Slightly smaller
+    return 'text-[10px]'; // Very small for long phrases
+  };
+
+  const getGapSize = () => {
+    if (expectedLength <= 15) return 'gap-2';
+    if (expectedLength <= 25) return 'gap-1.5';
+    return 'gap-1';
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
@@ -54,8 +68,9 @@ export default function AssemblyArea({
       <div
         ref={setNodeRef}
         className={`
-          flex-1 border-2 rounded-lg p-4
-          flex items-center justify-center
+          flex-1 border-2 rounded-lg p-2
+          flex items-start justify-center
+          overflow-y-auto
           transition-all duration-500
           ${isComplete ? 'border-solid bg-gradient-to-br' : 'border-dashed'}
           ${isComplete && id === 'target' ? 'from-blue-200 to-blue-300 dark:from-blue-800 dark:to-blue-900 border-blue-500 dark:border-blue-400' : ''}
@@ -83,7 +98,7 @@ export default function AssemblyArea({
               : 'Drag words here to assemble the quote'}
           </div>
         ) : (
-          <div className="flex flex-wrap gap-2 items-start content-start w-full">
+          <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
             {isAutoAssembly ? (
               // Auto-assembly: words are not sortable, just display them
               sortedWords.map((word) => (

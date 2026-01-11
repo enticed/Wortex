@@ -26,7 +26,7 @@ interface GameBoardProps {
 }
 
 export default function GameBoard({ puzzle }: GameBoardProps) {
-  const { gameState, grabWord, placeWord, removeWord, reorderWords, answerBonus, skipBonus } = useGameState(puzzle);
+  const { gameState, grabWord, placeWord, removeWord, reorderWords, answerBonus, skipBonus, dismissWord } = useGameState(puzzle);
   const { userId, refreshStats } = useUser();
   const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
   const [draggedWordText, setDraggedWordText] = useState<string | null>(null);
@@ -206,6 +206,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             <Vortex
               words={gameState.vortexWords}
               onWordGrab={grabWord}
+              onWordDismiss={dismissWord}
               isActive={!gameState.isComplete && !gameState.isPaused}
             />
           )}
