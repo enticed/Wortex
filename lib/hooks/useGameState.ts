@@ -19,6 +19,7 @@ export function useGameState(puzzle: Puzzle | null) {
     totalWordsSeen: 0,
     isComplete: false,
     score: null,
+    finalScore: null,
     bonusAnswered: false,
     bonusCorrect: null,
     isPaused: false,
@@ -335,11 +336,19 @@ export function useGameState(puzzle: Puzzle | null) {
 
   // Answer bonus question
   const answerBonus = useCallback((isCorrect: boolean) => {
-    setGameState((prev) => ({
-      ...prev,
-      bonusAnswered: true,
-      bonusCorrect: isCorrect,
-    }));
+    setGameState((prev) => {
+      // If correct, apply 10% reduction to base score
+      const finalScore = isCorrect && prev.score !== null
+        ? Math.round((prev.score * 0.9) * 100) / 100
+        : prev.score;
+
+      return {
+        ...prev,
+        bonusAnswered: true,
+        bonusCorrect: isCorrect,
+        finalScore,
+      };
+    });
   }, []);
 
   // Skip bonus question
@@ -348,6 +357,7 @@ export function useGameState(puzzle: Puzzle | null) {
       ...prev,
       bonusAnswered: true,
       bonusCorrect: false,
+      finalScore: prev.score, // No reduction for skip
     }));
   }, []);
 

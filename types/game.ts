@@ -60,7 +60,8 @@ export interface GameState {
   facsimilePhraseWords: PlacedWord[];
   totalWordsSeen: number;
   isComplete: boolean;
-  score: number | null;
+  score: number | null; // Base puzzle score
+  finalScore: number | null; // Score after bonus adjustment
   bonusAnswered: boolean;
   bonusCorrect: boolean | null;
   isPaused: boolean;

@@ -122,7 +122,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
   // Submit score when bonus is answered
   useEffect(() => {
     async function submitScore() {
-      if (gameState.bonusAnswered && !scoreSubmitted && userId && gameState.score !== null) {
+      if (gameState.bonusAnswered && !scoreSubmitted && userId && gameState.finalScore !== null) {
         setScoreSubmitted(true);
 
         const timeTakenSeconds = Math.floor((Date.now() - gameStartTime.current) / 1000);
@@ -134,7 +134,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             body: JSON.stringify({
               userId,
               puzzleId: puzzle.id,
-              score: gameState.score,
+              score: gameState.finalScore,
               bonusCorrect: gameState.bonusCorrect || false,
               timeTakenSeconds,
             }),
@@ -153,7 +153,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     }
 
     submitScore();
-  }, [gameState.bonusAnswered, scoreSubmitted, userId, gameState.score, gameState.bonusCorrect, puzzle.id, refreshStats]);
+  }, [gameState.bonusAnswered, scoreSubmitted, userId, gameState.finalScore, gameState.bonusCorrect, puzzle.id, refreshStats]);
 
   // Check if individual phrases are complete
   const isTargetComplete = isPhraseComplete(
@@ -248,15 +248,20 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                     : 'bg-gray-100 dark:bg-gray-800'
                 }`}>
                   <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    Bonus Question
+                    Final Score
                   </div>
-                  <div className={`text-2xl font-bold ${
+                  <div className={`text-3xl font-bold ${
                     gameState.bonusCorrect
                       ? 'text-green-600 dark:text-green-400'
                       : 'text-gray-600 dark:text-gray-400'
                   }`}>
-                    {gameState.bonusCorrect ? '✓ Correct' : '✗ Incorrect'}
+                    {gameState.finalScore?.toFixed(2)}
                   </div>
+                  {gameState.bonusCorrect && (
+                    <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      10% bonus reduction applied!
+                    </div>
+                  )}
                 </div>
               </div>
               <button
