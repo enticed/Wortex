@@ -42,7 +42,8 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
   const getCartesianPosition = (angle: number, radius: number) => {
     const centerX = dimensions.width / 2;
     const centerY = dimensions.height / 2;
-    const maxRadius = Math.min(dimensions.width, dimensions.height) / 2 - 80;
+    // Use 90% of available space (10% margin for word size)
+    const maxRadius = Math.min(dimensions.width, dimensions.height) * 0.45;
 
     const radian = (angle * Math.PI) / 180;
     const x = centerX + Math.cos(radian) * radius * maxRadius;
@@ -160,7 +161,7 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
           d={(() => {
             const centerX = dimensions.width / 2;
             const centerY = dimensions.height / 2;
-            const maxRadius = Math.min(dimensions.width, dimensions.height) / 2 - 80;
+            const maxRadius = Math.min(dimensions.width, dimensions.height) * 0.45;
             const points: string[] = [];
 
             // Generate spiral path: entrance at left (180°) spiraling to center
