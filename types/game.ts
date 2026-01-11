@@ -59,6 +59,7 @@ export interface GameState {
   targetPhraseWords: PlacedWord[];
   facsimilePhraseWords: PlacedWord[];
   dismissedWords: Set<string>; // Track dismissed word keys (belongsTo-sourceIndex)
+  wordQueue: string[]; // Queue of word keys to show next (shuffled for fair distribution)
   totalWordsSeen: number;
   isComplete: boolean;
   score: number | null; // Base puzzle score
