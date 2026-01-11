@@ -15,7 +15,8 @@
       "Bash(node -e:*)",
       "Bash(node scripts/setup-database.mjs:*)",
       "Bash(node scripts/add-sample-puzzle.mjs:*)",
-      "Bash(node scripts/test-anonymous-auth.mjs:*)"
+      "Bash(node scripts/test-anonymous-auth.mjs:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

@@ -27,12 +27,12 @@ export async function getDailyPuzzle(timezone: string = 'UTC'): Promise<Puzzle |
 
   // Transform database row to Puzzle type
   const puzzle: Puzzle = {
-    id: data.id,
-    date: data.date,
-    targetPhrase: createPhrase(data.target_phrase, 'target'),
-    facsimilePhrase: createPhrase(data.facsimile_phrase, 'facsimile'),
-    difficulty: data.difficulty,
-    bonusQuestion: data.bonus_question as BonusQuestion,
+    id: (data as any).id,
+    date: (data as any).date,
+    targetPhrase: createPhrase((data as any).target_phrase, 'target'),
+    facsimilePhrase: createPhrase((data as any).facsimile_phrase, 'facsimile'),
+    difficulty: (data as any).difficulty,
+    bonusQuestion: (data as any).bonus_question as BonusQuestion,
     allWords: [],
   };
 
@@ -58,12 +58,12 @@ export async function getPuzzleByDate(date: string): Promise<Puzzle | null> {
   }
 
   const puzzle: Puzzle = {
-    id: data.id,
-    date: data.date,
-    targetPhrase: createPhrase(data.target_phrase, 'target'),
-    facsimilePhrase: createPhrase(data.facsimile_phrase, 'facsimile'),
-    difficulty: data.difficulty,
-    bonusQuestion: data.bonus_question as BonusQuestion,
+    id: (data as any).id,
+    date: (data as any).date,
+    targetPhrase: createPhrase((data as any).target_phrase, 'target'),
+    facsimilePhrase: createPhrase((data as any).facsimile_phrase, 'facsimile'),
+    difficulty: (data as any).difficulty,
+    bonusQuestion: (data as any).bonus_question as BonusQuestion,
     allWords: [],
   };
 
@@ -87,7 +87,7 @@ export async function getAvailablePuzzleDates(): Promise<string[]> {
     return [];
   }
 
-  return data.map((row) => row.date);
+  return data.map((row) => (row as any).date);
 }
 
 /**

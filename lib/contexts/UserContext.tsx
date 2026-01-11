@@ -51,6 +51,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             // Create user record
             const { error: insertError } = await supabase
               .from('users')
+              // @ts-ignore - Supabase browser client types not properly inferred
               .insert({
                 id: data.user.id,
                 is_anonymous: true,

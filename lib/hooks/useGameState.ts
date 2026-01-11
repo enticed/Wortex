@@ -279,6 +279,7 @@ export function useGameState(puzzle: Puzzle | null) {
         id: wordId,
         word: word.word,
         belongsTo: word.belongsTo,
+        sourceIndex: word.position,
         angle: Math.random() * 360,
         radius: 0.9,
         appearanceCount: 0,
