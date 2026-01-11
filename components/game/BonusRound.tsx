@@ -67,12 +67,9 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
       <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-2xl max-h-full overflow-y-auto">
         {/* Header */}
         <div className="mb-2">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
             Bonus Round
           </h2>
-          <p className="text-xs text-gray-600 dark:text-gray-400">
-            Answer correctly for bonus points!
-          </p>
         </div>
 
         {/* Question */}

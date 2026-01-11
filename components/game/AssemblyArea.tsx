@@ -75,9 +75,6 @@ export default function AssemblyArea({
             }`}>
               &ldquo;{completedText}&rdquo;
             </p>
-            <div className="mt-3 text-sm font-semibold text-gray-600 dark:text-gray-400">
-              ✓ Complete
-            </div>
           </div>
         ) : sortedWords.length === 0 ? (
           <div className="text-gray-400 dark:text-gray-600 text-sm">

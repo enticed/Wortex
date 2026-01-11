@@ -48,7 +48,8 @@ export interface WordInVortex {
 export interface PlacedWord {
   id: string;
   word: string;
-  position: number; // Index in the phrase
+  position: number; // Current position in assembly area
+  sourceIndex: number; // Original position in source phrase (for tracking duplicates)
   belongsTo: 'target' | 'facsimile';
 }
 

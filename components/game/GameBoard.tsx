@@ -215,7 +215,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         <div className="h-[30%] border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950">
           <AssemblyArea
             id="facsimile"
-            title="AI Facsimile (Auto Assembly)"
+            title="Spoof (Auto Assembly)"
             placedWords={gameState.facsimilePhraseWords}
             expectedLength={puzzle.facsimilePhrase.words.length}
             bgColor="bg-green-50 dark:bg-green-950"
@@ -283,12 +283,18 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         // Offset the preview above the touch point so finger doesn't obscure it
         ({ transform }) => ({
           ...transform,
-          y: transform.y - 80, // Move 80px above finger
+          y: transform.y - 50, // Move 50px above finger
         })
       ]}>
         {draggedWordText ? (
-          <div className="px-6 py-3 rounded-lg font-bold text-lg bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400 scale-125 cursor-grabbing animate-pulse">
-            {draggedWordText}
+          <div className="relative">
+            {/* Tether line connecting to finger */}
+            <div className="absolute left-1/2 top-full w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50" style={{ transformOrigin: 'top' }} />
+
+            {/* Dragged word - matches original styling */}
+            <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
+              {draggedWordText}
+            </div>
           </div>
         ) : null}
       </DragOverlay>

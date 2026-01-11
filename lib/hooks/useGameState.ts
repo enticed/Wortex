@@ -49,25 +49,10 @@ export function useGameState(puzzle: Puzzle | null) {
         // This allows duplicate words like "to" and "be" to be tracked as separate instances
         const placedWordKeys = new Set<string>();
         prev.targetPhraseWords.forEach(pw => {
-          // Match placed word to its sourceIndex in allWords
-          const match = allWords.find(aw =>
-            aw.word === pw.word &&
-            aw.belongsTo === pw.belongsTo &&
-            aw.sourceIndex === pw.position
-          );
-          if (match) {
-            placedWordKeys.add(`${match.belongsTo}-${match.sourceIndex}`);
-          }
+          placedWordKeys.add(`${pw.belongsTo}-${pw.sourceIndex}`);
         });
         prev.facsimilePhraseWords.forEach(pw => {
-          const match = allWords.find(aw =>
-            aw.word === pw.word &&
-            aw.belongsTo === pw.belongsTo &&
-            aw.sourceIndex === pw.position
-          );
-          if (match) {
-            placedWordKeys.add(`${match.belongsTo}-${match.sourceIndex}`);
-          }
+          placedWordKeys.add(`${pw.belongsTo}-${pw.sourceIndex}`);
         });
 
         const vortexWordKeys = new Set(
@@ -105,6 +90,7 @@ export function useGameState(puzzle: Puzzle | null) {
 
         // If vortex is full (10 words), cycle through unplaced words
         if (prev.vortexWords.length >= 10) {
+          // Find words that are not placed (in either target or facsimile)
           const unplacedWords = allWords.filter(w => {
             const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
             return !placedWordKeys.has(wordKey);
@@ -115,8 +101,8 @@ export function useGameState(puzzle: Puzzle | null) {
             return prev;
           }
 
-          // Simply cycle through unplaced words continuously
-          // Don't try to check if all are already shown - just keep cycling
+          // Cycle through unplaced words continuously
+          // This ensures we keep showing words even if all are currently in vortex
           const nextWordIndex = prev.totalWordsSeen % unplacedWords.length;
           const nextWord = unplacedWords[nextWordIndex];
 
@@ -197,6 +183,7 @@ export function useGameState(puzzle: Puzzle | null) {
             id: wordId,
             word: word.word,
             position: correctPosition,
+            sourceIndex: word.sourceIndex,
             belongsTo: 'facsimile',
           };
 
@@ -232,6 +219,7 @@ export function useGameState(puzzle: Puzzle | null) {
           id: wordId,
           word: word.word,
           position: currentWords.length,
+          sourceIndex: word.sourceIndex,
           belongsTo: 'target',
         };
 
@@ -279,7 +267,7 @@ export function useGameState(puzzle: Puzzle | null) {
         id: wordId,
         word: word.word,
         belongsTo: word.belongsTo,
-        sourceIndex: word.position,
+        sourceIndex: word.sourceIndex,
         angle: Math.random() * 360,
         radius: 0.9,
         appearanceCount: 0,
