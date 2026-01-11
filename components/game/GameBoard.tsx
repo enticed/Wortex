@@ -174,8 +174,8 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       onDragEnd={handleDragEnd}
     >
       <div className="h-screen w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
-        {/* Top 25% - Target Phrase Assembly Area */}
-        <div className="h-1/4 border-b-2 border-gray-300 dark:border-gray-700 p-4 bg-blue-50 dark:bg-blue-950">
+        {/* Top 30% - Target Phrase Assembly Area */}
+        <div className="h-[30vh] border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950">
           <AssemblyArea
             id="target"
             title="Famous Quote (Manual Assembly)"
@@ -189,11 +189,11 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           />
         </div>
 
-        {/* Middle 50% - Vortex Area or Bonus Round */}
-        <div className="h-1/2 relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
+        {/* Middle 35% - Vortex Area or Bonus Round */}
+        <div className="h-[35vh] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
           {gameState.isComplete && !gameState.bonusAnswered ? (
-            // Show bonus round in vortex area
-            <div className="h-full flex items-center justify-center p-4">
+            // Show bonus round in vortex area - compact version
+            <div className="h-full flex items-center justify-center p-2">
               <BonusRound
                 bonusQuestion={puzzle.bonusQuestion}
                 onAnswer={(selectedAnswerId, isCorrect) => {
@@ -211,8 +211,8 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           )}
         </div>
 
-        {/* Bottom 25% - Facsimile Phrase Assembly Area */}
-        <div className="h-1/4 border-t-2 border-gray-300 dark:border-gray-700 p-4 bg-green-50 dark:bg-green-950">
+        {/* Bottom 35% - Facsimile Phrase Assembly Area */}
+        <div className="h-[35vh] border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950">
           <AssemblyArea
             id="facsimile"
             title="AI Facsimile (Auto Assembly)"
@@ -270,11 +270,11 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         )}
 
         {/* Debug Info (remove in production) */}
-        <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 p-2 rounded shadow text-xs">
-          <div>Vortex Words: {gameState.vortexWords.length}</div>
-          <div>Target: {gameState.targetPhraseWords.length} / {puzzle.targetPhrase.words.length}</div>
-          <div>Facsimile: {gameState.facsimilePhraseWords.length} / {puzzle.facsimilePhrase.words.length}</div>
-          <div>Total Seen: {gameState.totalWordsSeen}</div>
+        <div className="fixed top-2 left-2 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-1.5 rounded shadow text-[10px] leading-tight pointer-events-none">
+          <div>V:{gameState.vortexWords.length}</div>
+          <div>T:{gameState.targetPhraseWords.length}/{puzzle.targetPhrase.words.length}</div>
+          <div>F:{gameState.facsimilePhraseWords.length}/{puzzle.facsimilePhrase.words.length}</div>
+          <div>Seen:{gameState.totalWordsSeen}</div>
         </div>
       </div>
 

@@ -64,9 +64,9 @@ export function isPhraseComplete(placedWords: PlacedWord[], expectedWords: strin
   // Sort words by position to ensure correct order
   const sortedWords = [...placedWords].sort((a, b) => a.position - b.position);
 
-  // Check if all words are in correct positions
+  // Check if all words match expected words in order (don't check position property itself)
   return sortedWords.every((placed, index) => {
-    return placed.position === index && placed.word.toLowerCase() === expectedWords[index].toLowerCase();
+    return placed.word.toLowerCase() === expectedWords[index].toLowerCase();
   });
 }
 

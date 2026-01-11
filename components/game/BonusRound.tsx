@@ -40,7 +40,7 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
   };
 
   const getButtonStyle = (optionId: string): string => {
-    const baseStyle = 'w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ';
+    const baseStyle = 'w-full text-left p-2 rounded-lg border-2 transition-all duration-200 text-sm ';
 
     if (!hasAnswered) {
       if (selectedAnswer === optionId) {
@@ -63,28 +63,28 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto animate-fade-in">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-2xl max-h-full overflow-y-auto">
+    <div className="w-full max-w-2xl mx-auto animate-fade-in">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-2xl max-h-full overflow-y-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        <div className="mb-2">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
             Bonus Round
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-xs text-gray-600 dark:text-gray-400">
             Answer correctly for bonus points!
           </p>
         </div>
 
         {/* Question */}
-        <div className="mb-6">
-          <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-4 mb-6">
-            <p className="text-lg text-gray-900 dark:text-gray-100 font-medium">
+        <div className="mb-3">
+          <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2 mb-3">
+            <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
               {bonusQuestion.question}
             </p>
           </div>
 
           {/* Options */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             {bonusQuestion.options.map((option, index) => (
               <button
                 key={option.id}
@@ -93,11 +93,11 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
                 className={getButtonStyle(option.id)}
               >
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-700 dark:text-gray-300 mr-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-gray-300 mr-2">
                     {String.fromCharCode(65 + index)}
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {getOptionLabel(option)}
                     </div>
                   </div>
@@ -115,12 +115,12 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
 
         {/* Result Message */}
         {hasAnswered && (
-          <div className={`mb-6 p-4 rounded-lg ${
+          <div className={`mb-2 p-2 rounded-lg ${
             selectedAnswer === bonusQuestion.correctAnswerId
               ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
               : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
           }`}>
-            <p className="font-semibold">
+            <p className="text-sm font-semibold">
               {selectedAnswer === bonusQuestion.correctAnswerId
                 ? '🎉 Correct! Well done!'
                 : '❌ Incorrect. Better luck next time!'}
@@ -129,19 +129,19 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
         )}
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           {!hasAnswered && (
             <>
               <button
                 onClick={handleSubmit}
                 disabled={!selectedAnswer}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
               >
                 Submit Answer
               </button>
               <button
                 onClick={onSkip}
-                className="px-6 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 font-semibold transition-colors"
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 font-semibold transition-colors text-sm"
               >
                 Skip
               </button>
