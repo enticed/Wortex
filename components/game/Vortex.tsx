@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
+import { useDroppable } from '@dnd-kit/core';
 import Word from './Word';
 import type { WordInVortex } from '@/types/game';
 
@@ -12,10 +13,14 @@ interface VortexProps {
 }
 
 export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'vortex',
+  });
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const containerRef = useRef<HTMLDivElement>(null);
   const wordRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const animationRefs = useRef<Map<string, gsap.core.Tween[]>>(new Map());
+  const animatedWordIds = useRef<Set<string>>(new Set());
 
   // Handle responsive sizing
   useEffect(() => {
@@ -46,9 +51,24 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
     return { x, y };
   };
 
-  // Calculate font size and scale based on radius (smaller near center)
+  // Calculate spiral position based on progress (0 = entrance, 1 = center)
+  // Words enter from the left side and spiral inward
+  const getSpiralPosition = (progress: number) => {
+    // Progress from 0 (entrance) to 1 (center)
+    // Radius: Start at edge (1.0) and spiral to center (0.1)
+    const radius = 1.0 - (progress * 0.9);
+
+    // Angle: Start at 180° (left side) and make 4-5 full rotations
+    const rotations = 4.5; // 4.5 full rotations from entrance to center
+    const angle = 180 + (progress * 360 * rotations);
+
+    return { radius, angle };
+  };
+
+  // Calculate font size and scale based on radius (larger at outer positions)
   const getScale = (radius: number) => {
-    return Math.max(0.7, radius * 1.2); // Scale from 0.7 to 1.2 (larger words)
+    // Scale from 1.3 (outer) to 0.4 (inner)
+    return 0.4 + (radius * 0.9);
   };
 
   // Animate words in the vortex
@@ -56,60 +76,49 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
     if (!isActive) return;
 
     words.forEach((word) => {
+      // Skip if this word is already being animated or is grabbed
+      if (animatedWordIds.current.has(word.id) || word.isGrabbed) return;
+
       const wordElement = wordRefs.current.get(word.id);
-      if (!wordElement || word.isGrabbed) return;
+      // IMPORTANT: Don't mark as animated if element isn't ready yet
+      // This allows retry on next render when element becomes available
+      if (!wordElement) return;
 
-      // Clear existing animations for this word
-      const existingAnims = animationRefs.current.get(word.id);
-      if (existingAnims) {
-        existingAnims.forEach(anim => anim.kill());
-      }
+      // Mark this word as animated
+      animatedWordIds.current.add(word.id);
 
-      const duration = 15; // 15 seconds for full cycle (slower)
-      const rotations = 5;
+      // Each word starts at progress 0 (entrance) and animates to progress 1 (center)
+      const wordData = { progress: 0 };
 
-      // Create a timeline for this word
-      const timeline = gsap.timeline({ repeat: -1 });
-
-      // Animate the word's polar coordinates
-      const wordData = { angle: word.angle, radius: word.radius };
-
-      const angleTween = gsap.to(wordData, {
-        angle: `+=${360 * rotations}`,
-        duration: duration,
-        ease: 'none',
-        repeat: -1,
+      // Animate the word along the spiral path from entrance to center
+      const spiralTween = gsap.to(wordData, {
+        progress: 1,
+        duration: 15, // 15 seconds to complete the full spiral journey
+        ease: 'none', // Linear progression
         onUpdate: () => {
-          if (wordElement && !word.isGrabbed) {
-            const pos = getCartesianPosition(wordData.angle, wordData.radius);
-            const scale = getScale(wordData.radius);
-            wordElement.style.transform = `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px) scale(${scale})`;
-            wordElement.style.opacity = String(Math.max(0.3, wordData.radius));
+          // Get fresh element ref in case it changed
+          const currentElement = wordRefs.current.get(word.id);
+          if (currentElement) {
+            const spiralPos = getSpiralPosition(wordData.progress);
+            const pos = getCartesianPosition(spiralPos.angle, spiralPos.radius);
+            const currentScale = getScale(spiralPos.radius);
+
+            currentElement.style.transform = `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px) scale(${currentScale})`;
+
+            // Fade out as approaching center
+            const opacity = wordData.progress < 0.9 ? 1 : (1 - (wordData.progress - 0.9) * 10);
+            currentElement.style.opacity = String(Math.max(0, opacity));
           }
         },
-      });
-
-      const radiusTween = gsap.to(wordData, {
-        radius: 0.25, // Don't go as close to center
-        duration: duration,
-        ease: 'power1.in',
-        repeat: -1,
-        onRepeat: () => {
-          wordData.radius = 0.95;
-          wordData.angle = Math.random() * 360;
+        onComplete: () => {
+          // Word reached the center - remove from animated set
+          animatedWordIds.current.delete(word.id);
         },
       });
 
-      animationRefs.current.set(word.id, [angleTween, radiusTween]);
+      animationRefs.current.set(word.id, [spiralTween]);
     });
-
-    return () => {
-      animationRefs.current.forEach((anims) => {
-        anims.forEach(anim => anim.kill());
-      });
-      animationRefs.current.clear();
-    };
-  }, [words, isActive, dimensions]);
+  }, [words, isActive]);
 
   // Clean up animations for removed words
   useEffect(() => {
@@ -124,34 +133,56 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
           animationRefs.current.delete(id);
         }
         wordRefs.current.delete(id);
+        animatedWordIds.current.delete(id);
       }
     });
   }, [words]);
 
   return (
-    <div ref={containerRef} className="w-full h-full relative overflow-hidden">
-      {/* Vortex spiral guides */}
-      <svg className="absolute inset-0 pointer-events-none" width={dimensions.width} height={dimensions.height}>
-        {[0.9, 0.7, 0.5, 0.3, 0.15].map((radius, index) => {
-          const centerX = dimensions.width / 2;
-          const centerY = dimensions.height / 2;
-          const maxRadius = Math.min(dimensions.width, dimensions.height) / 2 - 80;
-          const r = radius * maxRadius;
+    <div
+      ref={(node) => {
+        containerRef.current = node;
+        setNodeRef(node);
+      }}
+      className={`w-full h-full relative overflow-hidden transition-all ${
+        isOver ? 'ring-4 ring-red-500 ring-inset' : ''
+      }`}
+    >
+      {/* Vortex spiral guide - show the spiral path */}
+      <svg
+        className="absolute inset-0 pointer-events-none"
+        width={dimensions.width}
+        height={dimensions.height}
+        suppressHydrationWarning
+      >
+        {/* Draw a smooth spiral path from left entrance to center */}
+        <path
+          d={(() => {
+            const centerX = dimensions.width / 2;
+            const centerY = dimensions.height / 2;
+            const maxRadius = Math.min(dimensions.width, dimensions.height) / 2 - 80;
+            const points: string[] = [];
 
-          return (
-            <circle
-              key={`spiral-${index}`}
-              cx={centerX}
-              cy={centerY}
-              r={r}
-              fill="none"
-              stroke="#8b5cf6"
-              strokeWidth="1"
-              opacity="0.2"
-              strokeDasharray="10 10"
-            />
-          );
-        })}
+            // Generate spiral path: entrance at left (180°) spiraling to center
+            for (let i = 0; i <= 100; i++) {
+              const progress = i / 100;
+              const spiralPos = getSpiralPosition(progress);
+              const angle = (spiralPos.angle * Math.PI) / 180;
+              const radius = spiralPos.radius * maxRadius;
+              const x = centerX + Math.cos(angle) * radius;
+              const y = centerY + Math.sin(angle) * radius;
+              points.push(i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`);
+            }
+
+            return points.join(' ');
+          })()}
+          fill="none"
+          stroke="#8b5cf6"
+          strokeWidth="2"
+          opacity="0.3"
+          strokeDasharray="8 8"
+          suppressHydrationWarning
+        />
       </svg>
 
       {/* Center vortex visual */}
@@ -164,8 +195,10 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
         {words.map((word) => {
           if (word.isGrabbed) return null;
 
-          const initialPos = getCartesianPosition(word.angle, word.radius);
-          const initialScale = getScale(word.radius);
+          // All words start at the entrance (progress = 0)
+          const spiralPos = getSpiralPosition(0);
+          const initialPos = getCartesianPosition(spiralPos.angle, spiralPos.radius);
+          const initialScale = getScale(spiralPos.radius);
 
           return (
             <div
@@ -173,10 +206,10 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
               ref={(el) => {
                 if (el) wordRefs.current.set(word.id, el);
               }}
-              className="absolute top-0 left-0 transition-opacity"
+              className="absolute top-0 left-0"
               style={{
                 transform: `translate(-50%, -50%) translate(${initialPos.x}px, ${initialPos.y}px) scale(${initialScale})`,
-                opacity: Math.max(0.3, word.radius),
+                opacity: 1,
               }}
             >
               <Word id={word.id} text={word.word} isPlaced={false} />

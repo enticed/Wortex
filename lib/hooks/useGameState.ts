@@ -43,11 +43,52 @@ export function useGameState(puzzle: Puzzle | null) {
 
     const interval = setInterval(() => {
       setGameState((prev) => {
-        // Check if we need to add more words
-        if (prev.vortexWords.length < 6) {
-          // Keep 6 words in vortex at a time (reduced from 8)
-          const allWords = createVortexWords(puzzle);
-          const nextWord = allWords[prev.totalWordsSeen % allWords.length];
+        const allWords = createVortexWords(puzzle);
+
+        // Track word INSTANCES by belongsTo + sourceIndex
+        // This allows duplicate words like "to" and "be" to be tracked as separate instances
+        const placedWordKeys = new Set<string>();
+        prev.targetPhraseWords.forEach(pw => {
+          // Match placed word to its sourceIndex in allWords
+          const match = allWords.find(aw =>
+            aw.word === pw.word &&
+            aw.belongsTo === pw.belongsTo &&
+            aw.sourceIndex === pw.position
+          );
+          if (match) {
+            placedWordKeys.add(`${match.belongsTo}-${match.sourceIndex}`);
+          }
+        });
+        prev.facsimilePhraseWords.forEach(pw => {
+          const match = allWords.find(aw =>
+            aw.word === pw.word &&
+            aw.belongsTo === pw.belongsTo &&
+            aw.sourceIndex === pw.position
+          );
+          if (match) {
+            placedWordKeys.add(`${match.belongsTo}-${match.sourceIndex}`);
+          }
+        });
+
+        const vortexWordKeys = new Set(
+          prev.vortexWords.map(vw => {
+            const match = allWords.find(aw =>
+              aw.word === vw.word && aw.belongsTo === vw.belongsTo
+            );
+            return match ? `${match.belongsTo}-${match.sourceIndex}` : null;
+          }).filter(Boolean) as string[]
+        );
+
+        // Find word instances that haven't been placed yet AND aren't in vortex
+        const availableWords = allWords.filter(w => {
+          const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
+          return !placedWordKeys.has(wordKey) && !vortexWordKeys.has(wordKey);
+        });
+
+        // If vortex is not full, add new words (max 10 words in vortex at once)
+        if (prev.vortexWords.length < 10 && availableWords.length > 0) {
+          const nextWordIndex = prev.totalWordsSeen % availableWords.length;
+          const nextWord = availableWords[nextWordIndex];
 
           return {
             ...prev,
@@ -61,9 +102,44 @@ export function useGameState(puzzle: Puzzle | null) {
             totalWordsSeen: prev.totalWordsSeen + 1,
           };
         }
+
+        // If vortex is full (10 words), cycle through unplaced words
+        if (prev.vortexWords.length >= 10) {
+          const unplacedWords = allWords.filter(w => {
+            const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
+            return !placedWordKeys.has(wordKey);
+          });
+
+          // If all words are placed, game is complete
+          if (unplacedWords.length === 0) {
+            return prev;
+          }
+
+          // Simply cycle through unplaced words continuously
+          // Don't try to check if all are already shown - just keep cycling
+          const nextWordIndex = prev.totalWordsSeen % unplacedWords.length;
+          const nextWord = unplacedWords[nextWordIndex];
+
+          // Remove oldest word (first in array) and add new word
+          const timestamp = Date.now();
+          return {
+            ...prev,
+            vortexWords: [
+              ...prev.vortexWords.slice(1), // Remove first (oldest) word
+              {
+                ...nextWord,
+                angle: 180, // Start at left entrance
+                radius: 1.0, // Start at outer edge
+                id: generateWordId(nextWord.word, timestamp),
+              },
+            ],
+            totalWordsSeen: prev.totalWordsSeen + 1,
+          };
+        }
+
         return prev;
       });
-    }, 3000); // Add new word every 3 seconds (slower)
+    }, 1500); // Add new word every 1.5 seconds (faster pace)
 
     return () => clearInterval(interval);
   }, [puzzle, gameState.isComplete, gameState.isPaused]);
@@ -228,7 +304,7 @@ export function useGameState(puzzle: Puzzle | null) {
       const oldIndex = prev.targetPhraseWords.findIndex((w) => w.id === activeId);
       const newIndex = prev.targetPhraseWords.findIndex((w) => w.id === overId);
 
-      if (oldIndex === -1 || newIndex === -1) return prev;
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return prev;
 
       const reordered = [...prev.targetPhraseWords];
       const [movedWord] = reordered.splice(oldIndex, 1);
@@ -268,11 +344,31 @@ export function useGameState(puzzle: Puzzle | null) {
     });
   }, []);
 
+  // Answer bonus question
+  const answerBonus = useCallback((isCorrect: boolean) => {
+    setGameState((prev) => ({
+      ...prev,
+      bonusAnswered: true,
+      bonusCorrect: isCorrect,
+    }));
+  }, []);
+
+  // Skip bonus question
+  const skipBonus = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      bonusAnswered: true,
+      bonusCorrect: false,
+    }));
+  }, []);
+
   return {
     gameState,
     grabWord,
     placeWord,
     removeWord,
     reorderWords,
+    answerBonus,
+    skipBonus,
   };
 }

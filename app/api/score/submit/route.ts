@@ -1,0 +1,63 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { userId, puzzleId, score, bonusCorrect, timeTakenSeconds } = body;
+
+    // Validate inputs
+    if (!userId || !puzzleId || score === undefined || timeTakenSeconds === undefined) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createClient();
+
+    // Submit score (upsert to handle replays)
+    const { error: scoreError } = await supabase
+      .from('scores')
+      .upsert({
+        user_id: userId,
+        puzzle_id: puzzleId,
+        score,
+        bonus_correct: bonusCorrect || false,
+        time_taken_seconds: timeTakenSeconds,
+      }, {
+        onConflict: 'user_id,puzzle_id'
+      });
+
+    if (scoreError) {
+      console.error('Error submitting score:', scoreError);
+      return NextResponse.json(
+        { error: 'Failed to submit score' },
+        { status: 500 }
+      );
+    }
+
+    // Get puzzle date for streak calculation
+    const { data: puzzleData } = await supabase
+      .from('puzzles')
+      .select('date')
+      .eq('id', puzzleId)
+      .single();
+
+    // Update streak
+    if (puzzleData) {
+      await supabase.rpc('update_user_streak', {
+        p_user_id: userId,
+        p_puzzle_date: puzzleData.date,
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error in score submission:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

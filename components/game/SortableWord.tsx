@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface SortableWordProps {
   id: string;
   text: string;
+  onDiscard?: (id: string) => void;
 }
 
 export default function SortableWord({ id, text }: SortableWordProps) {
@@ -33,6 +34,7 @@ export default function SortableWord({ id, text }: SortableWordProps) {
         transition-shadow duration-200
         select-none
       `}
+      title="Drag to reorder or drag to vortex to remove"
     >
       {text}
     </div>

@@ -38,6 +38,7 @@ export interface WordInVortex {
   id: string;
   word: string;
   belongsTo: 'target' | 'facsimile' | 'spurious';
+  sourceIndex: number; // Index in the original phrase (for tracking duplicates)
   angle: number; // Current angle in the vortex
   radius: number; // Distance from center (0-1, where 1 is outer edge)
   appearanceCount: number; // How many times this word has appeared

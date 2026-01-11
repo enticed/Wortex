@@ -5,13 +5,34 @@
 import type { Phrase, WordInVortex, PlacedWord, Puzzle } from '@/types/game';
 
 /**
- * Parse a phrase into individual words
+ * Parse a phrase into individual words, normalizing to lowercase
+ * (except for proper nouns which remain capitalized)
  */
 export function parsePhrase(text: string): string[] {
+  // Common proper nouns to keep capitalized (expand this list as needed)
+  const properNouns = new Set([
+    'Shakespeare', 'Hamlet', 'God', 'Jesus', 'Christ', 'Buddha',
+    'America', 'American', 'Europe', 'European', 'Asia', 'Asian',
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+  ]);
+
   return text
-    .split(/\s+/)
+    // Split on whitespace AND em/en dashes (treating dashes as word separators)
+    .split(/[\s—–]+/)
     .filter((word) => word.length > 0)
-    .map((word) => word.trim());
+    .map((word) => {
+      const cleaned = word.trim();
+      // Remove other punctuation (but not dashes since we split on them)
+      const bareWord = cleaned.replace(/[.,!?;:'"()[\]{}]/g, '');
+      if (bareWord.length === 0) return null; // Skip if only punctuation
+      if (properNouns.has(bareWord)) {
+        return bareWord; // Keep capitalized proper nouns
+      }
+      return bareWord.toLowerCase(); // Everything else lowercase
+    })
+    .filter((word): word is string => word !== null); // Remove nulls
 }
 
 /**
@@ -40,9 +61,12 @@ export function calculateScore(totalWordsSeen: number, uniqueWords: number): num
 export function isPhraseComplete(placedWords: PlacedWord[], expectedWords: string[]): boolean {
   if (placedWords.length !== expectedWords.length) return false;
 
+  // Sort words by position to ensure correct order
+  const sortedWords = [...placedWords].sort((a, b) => a.position - b.position);
+
   // Check if all words are in correct positions
-  return placedWords.every((placed, index) => {
-    return placed.word.toLowerCase() === expectedWords[index].toLowerCase();
+  return sortedWords.every((placed, index) => {
+    return placed.position === index && placed.word.toLowerCase() === expectedWords[index].toLowerCase();
   });
 }
 
@@ -69,6 +93,14 @@ export function generateWordId(word: string, timestamp: number): string {
 }
 
 /**
+ * Simple seeded random number generator (for consistent SSR/client rendering)
+ */
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+/**
  * Create all words for the vortex from both phrases
  */
 export function createVortexWords(puzzle: Puzzle): WordInVortex[] {
@@ -77,12 +109,14 @@ export function createVortexWords(puzzle: Puzzle): WordInVortex[] {
 
   // Add target phrase words
   puzzle.targetPhrase.words.forEach((word, index) => {
+    const seed = timestamp + index;
     allWords.push({
-      id: generateWordId(word, timestamp + index),
+      id: generateWordId(word, seed),
       word,
       belongsTo: 'target',
-      angle: Math.random() * 360,
-      radius: 0.8 + Math.random() * 0.2, // Start near outer edge
+      sourceIndex: index, // Track original position for duplicate handling
+      angle: seededRandom(seed) * 360,
+      radius: 0.8 + seededRandom(seed + 1000) * 0.2, // Start near outer edge
       appearanceCount: 0,
       isGrabbed: false,
     });
@@ -90,19 +124,21 @@ export function createVortexWords(puzzle: Puzzle): WordInVortex[] {
 
   // Add facsimile phrase words
   puzzle.facsimilePhrase.words.forEach((word, index) => {
+    const seed = timestamp + index + 1000;
     allWords.push({
-      id: generateWordId(word, timestamp + index + 1000),
+      id: generateWordId(word, seed),
       word,
       belongsTo: 'facsimile',
-      angle: Math.random() * 360,
-      radius: 0.8 + Math.random() * 0.2,
+      sourceIndex: index, // Track original position for duplicate handling
+      angle: seededRandom(seed) * 360,
+      radius: 0.8 + seededRandom(seed + 2000) * 0.2,
       appearanceCount: 0,
       isGrabbed: false,
     });
   });
 
-  // Shuffle the words
-  return shuffleArray(allWords);
+  // Shuffle the words using seeded random
+  return shuffleArraySeeded(allWords, timestamp);
 }
 
 /**
@@ -112,6 +148,18 @@ export function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+/**
+ * Shuffle an array with seeded random (Fisher-Yates algorithm)
+ */
+export function shuffleArraySeeded<T>(array: T[], seed: number): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(seededRandom(seed + i) * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;

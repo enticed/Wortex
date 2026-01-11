@@ -1,14 +1,14 @@
-import GameBoard from '@/components/game/GameBoard';
+import PuzzleLoader from '@/components/game/PuzzleLoader';
 import { createPhrase } from '@/lib/utils/game';
 import type { Puzzle } from '@/types/game';
 
 export default function Home() {
-  // Sample puzzle data for testing
-  const samplePuzzle: Puzzle = {
+  // Fallback sample puzzle if database is not available
+  const fallbackPuzzle: Puzzle = {
     id: 'sample-1',
     date: new Date().toISOString().split('T')[0],
-    targetPhrase: createPhrase('To be or not to be that is the question', 'target'),
-    facsimilePhrase: createPhrase('To exist or to cease this is what we must decide', 'facsimile'),
+    targetPhrase: createPhrase('To be, or not to be, that is the question', 'target'),
+    facsimilePhrase: createPhrase('To exist or to cease—this is what we must decide', 'facsimile'),
     difficulty: 1,
     bonusQuestion: {
       type: 'literature',
@@ -25,5 +25,5 @@ export default function Home() {
     allWords: [],
   };
 
-  return <GameBoard puzzle={samplePuzzle} />;
+  return <PuzzleLoader fallbackPuzzle={fallbackPuzzle} />;
 }
