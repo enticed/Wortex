@@ -26,7 +26,6 @@ export function useGameState(puzzle: Puzzle | null) {
     vortexWords: [],
     targetPhraseWords: [],
     facsimilePhraseWords: [],
-    dismissedWords: new Set<string>(),
     wordQueue: [],
     totalWordsSeen: 0,
     isComplete: false,
@@ -50,7 +49,7 @@ export function useGameState(puzzle: Puzzle | null) {
     }
   }, [puzzle]);
 
-  // Add new words to vortex periodically using queue-based fair distribution
+  // Add new words to vortex periodically - simple fair distribution of ALL words
   useEffect(() => {
     if (!puzzle || gameState.isComplete || gameState.isPaused) return;
 
@@ -58,55 +57,17 @@ export function useGameState(puzzle: Puzzle | null) {
       setGameState((prev) => {
         const allWords = createVortexWords(puzzle);
 
-        // Track placed word keys
-        const placedWordKeys = new Set<string>();
-        prev.targetPhraseWords.forEach(pw => {
-          placedWordKeys.add(`${pw.belongsTo}-${pw.sourceIndex}`);
-        });
-        prev.facsimilePhraseWords.forEach(pw => {
-          placedWordKeys.add(`${pw.belongsTo}-${pw.sourceIndex}`);
-        });
-
-        // Get all unplaced, non-dismissed words
-        const unplacedWords = allWords.filter(w => {
-          const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
-          return !placedWordKeys.has(wordKey) && !prev.dismissedWords.has(wordKey);
-        });
-
-        // If no unplaced words available (all dismissed), clear dismissals
-        if (unplacedWords.length === 0) {
-          const allUnplacedWords = allWords.filter(w => {
-            const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
-            return !placedWordKeys.has(wordKey);
-          });
-
-          if (allUnplacedWords.length === 0) {
-            return prev; // Game complete
-          }
-
-          // Clear dismissed set and refill queue
-          const newQueue = shuffleArray(
-            allUnplacedWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
-          );
-
-          return {
-            ...prev,
-            dismissedWords: new Set<string>(),
-            wordQueue: newQueue,
-          };
-        }
-
         // Get words currently in vortex
         const vortexWordKeys = new Set(
           prev.vortexWords.map(vw => `${vw.belongsTo}-${vw.sourceIndex}`)
         );
 
-        // Initialize or refill queue when empty
+        // Initialize or refill queue when empty - show ALL words regardless of placement
         let queue = prev.wordQueue;
         if (queue.length === 0) {
-          // Create shuffled queue of all unplaced word keys
+          // Create shuffled queue of ALL word keys (no filtering)
           queue = shuffleArray(
-            unplacedWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
+            allWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
           );
         }
 
@@ -123,9 +84,9 @@ export function useGameState(puzzle: Puzzle | null) {
         }
 
         // If all queued words are in vortex, refill queue and try again
-        if (!nextWordKey && unplacedWords.length > prev.vortexWords.length) {
+        if (!nextWordKey && allWords.length > prev.vortexWords.length) {
           queue = shuffleArray(
-            unplacedWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
+            allWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
           );
           remainingQueue = [...queue];
 
@@ -407,19 +368,11 @@ export function useGameState(puzzle: Puzzle | null) {
     }));
   }, []);
 
-  // Dismiss a word from vortex (swipe gesture)
+  // Dismiss a word from vortex (swipe gesture) - just removes from vortex, will reappear in next cycle
   const dismissWord = useCallback((wordId: string) => {
     setGameState((prev) => {
-      const word = prev.vortexWords.find((w) => w.id === wordId);
-      if (!word) return prev;
-
-      const wordKey = `${word.belongsTo}-${word.sourceIndex}`;
-      const newDismissedWords = new Set(prev.dismissedWords);
-      newDismissedWords.add(wordKey);
-
       return {
         ...prev,
-        dismissedWords: newDismissedWords,
         vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
       };
     });

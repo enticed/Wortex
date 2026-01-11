@@ -58,7 +58,6 @@ export interface GameState {
   vortexWords: WordInVortex[];
   targetPhraseWords: PlacedWord[];
   facsimilePhraseWords: PlacedWord[];
-  dismissedWords: Set<string>; // Track dismissed word keys (belongsTo-sourceIndex)
   wordQueue: string[]; // Queue of word keys to show next (shuffled for fair distribution)
   totalWordsSeen: number;
   isComplete: boolean;
