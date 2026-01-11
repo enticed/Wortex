@@ -173,9 +173,9 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="h-screen w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
+      <div className="h-[100dvh] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
         {/* Top 30% - Target Phrase Assembly Area */}
-        <div className="h-[30vh] border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950">
+        <div className="h-[30%] border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950">
           <AssemblyArea
             id="target"
             title="Famous Quote (Manual Assembly)"
@@ -189,11 +189,11 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           />
         </div>
 
-        {/* Middle 35% - Vortex Area or Bonus Round */}
-        <div className="h-[35vh] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
+        {/* Middle 40% - Vortex Area or Bonus Round */}
+        <div className="h-[40%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
           {gameState.isComplete && !gameState.bonusAnswered ? (
             // Show bonus round in vortex area - compact version
-            <div className="h-full flex items-center justify-center p-2">
+            <div className="h-full flex items-center justify-center px-2">
               <BonusRound
                 bonusQuestion={puzzle.bonusQuestion}
                 onAnswer={(selectedAnswerId, isCorrect) => {
@@ -211,8 +211,8 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           )}
         </div>
 
-        {/* Bottom 35% - Facsimile Phrase Assembly Area */}
-        <div className="h-[35vh] border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950">
+        {/* Bottom 30% - Facsimile Phrase Assembly Area */}
+        <div className="h-[30%] border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950">
           <AssemblyArea
             id="facsimile"
             title="AI Facsimile (Auto Assembly)"
