@@ -279,7 +279,13 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       </div>
 
       {/* Drag Overlay - shows the word being dragged */}
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay dropAnimation={null} modifiers={[
+        // Offset the preview above the touch point so finger doesn't obscure it
+        ({ transform }) => ({
+          ...transform,
+          y: transform.y - 80, // Move 80px above finger
+        })
+      ]}>
         {draggedWordText ? (
           <div className="px-6 py-3 rounded-lg font-bold text-lg bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400 scale-125 cursor-grabbing animate-pulse">
             {draggedWordText}
