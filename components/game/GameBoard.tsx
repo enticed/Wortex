@@ -1,6 +1,16 @@
 'use client';
 
-import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, DragOverlay } from '@dnd-kit/core';
+import {
+  DndContext,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverEvent,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 import { useState, useEffect, useRef } from 'react';
 import Vortex from './Vortex';
 import AssemblyArea from './AssemblyArea';
@@ -23,6 +33,22 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
   const [showBonusRound, setShowBonusRound] = useState(false);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const gameStartTime = useRef<number>(Date.now());
+
+  // Configure sensors for both mouse and touch input
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 10, // 10px movement before drag starts
+    },
+  });
+
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 100, // 100ms delay before drag starts (allows scrolling)
+      tolerance: 5, // 5px movement tolerance
+    },
+  });
+
+  const sensors = useSensors(mouseSensor, touchSensor);
 
   const handleDragStart = (event: DragStartEvent) => {
     const wordId = event.active.id as string;
@@ -141,8 +167,13 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
   );
 
   return (
-    <DndContext onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-      <div className="h-screen w-full flex flex-col bg-gray-50 dark:bg-gray-900">
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="h-screen w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
         {/* Top 25% - Target Phrase Assembly Area */}
         <div className="h-1/4 border-b-2 border-gray-300 dark:border-gray-700 p-4 bg-blue-50 dark:bg-blue-950">
           <AssemblyArea
