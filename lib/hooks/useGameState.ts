@@ -82,16 +82,16 @@ export function useGameState(puzzle: Puzzle | null) {
           return true;
         });
 
-        // Get words currently in vortex
-        const vortexWordKeys = new Set(
-          prev.vortexWords.map(vw => `${vw.belongsTo}-${vw.sourceIndex}`)
-        );
-
         // Initialize or refill queue when empty
         let queue = prev.wordQueue;
         let newDismissedSet = prev.dismissedForNextCycle;
 
         if (queue.length === 0) {
+          // If no words available at all, stop
+          if (availableWords.length === 0) {
+            return prev;
+          }
+
           // Filter out dismissed words for this cycle only
           const wordsForQueue = availableWords.filter(w => {
             const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
@@ -99,68 +99,29 @@ export function useGameState(puzzle: Puzzle | null) {
           });
 
           // If all words dismissed, clear dismissals and use all available
-          if (wordsForQueue.length === 0 && availableWords.length > 0) {
+          if (wordsForQueue.length === 0) {
             queue = shuffleArray(
               availableWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
             );
+            newDismissedSet = new Set<string>();
           } else {
             // Create shuffled queue from non-dismissed words
             queue = shuffleArray(
               wordsForQueue.map(w => `${w.belongsTo}-${w.sourceIndex}`)
             );
-          }
-
-          // Clear dismissed set when starting new cycle
-          newDismissedSet = new Set<string>();
-        }
-
-        // Find next word not currently in vortex
-        let nextWordKey: string | null = null;
-        let remainingQueue = [...queue];
-
-        for (let i = 0; i < remainingQueue.length; i++) {
-          if (!vortexWordKeys.has(remainingQueue[i])) {
-            nextWordKey = remainingQueue[i];
-            remainingQueue = remainingQueue.slice(i + 1);
-            break;
+            // Clear dismissed set when starting new cycle
+            newDismissedSet = new Set<string>();
           }
         }
 
-        // If all queued words are in vortex, refill queue and try again
-        if (!nextWordKey && availableWords.length > 0) {
-          const wordsForQueue = availableWords.filter(w => {
-            const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
-            return !prev.dismissedForNextCycle.has(wordKey);
-          });
-
-          // If all words dismissed, clear dismissals and use all available
-          if (wordsForQueue.length === 0 && availableWords.length > 0) {
-            queue = shuffleArray(
-              availableWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
-            );
-          } else {
-            queue = shuffleArray(
-              wordsForQueue.map(w => `${w.belongsTo}-${w.sourceIndex}`)
-            );
-          }
-
-          remainingQueue = [...queue];
-          newDismissedSet = new Set<string>();
-
-          for (let i = 0; i < remainingQueue.length; i++) {
-            if (!vortexWordKeys.has(remainingQueue[i])) {
-              nextWordKey = remainingQueue[i];
-              remainingQueue = remainingQueue.slice(i + 1);
-              break;
-            }
-          }
+        // Get next word from queue (no longer checking if it's in vortex)
+        // This allows cycling - same word can appear multiple times
+        if (queue.length === 0) {
+          return prev; // Queue is empty and no available words
         }
 
-        // If still no word found, it means all available words are in vortex
-        // This is okay - just maintain current state
-        if (!nextWordKey) {
-          return prev;
-        }
+        const nextWordKey = queue[0];
+        const remainingQueue = queue.slice(1);
 
         // Find the actual word object
         const nextWord = availableWords.find(w =>
