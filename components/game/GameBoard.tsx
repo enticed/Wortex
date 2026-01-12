@@ -186,7 +186,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="h-[100dvh] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
+      <div className="h-[calc(100dvh-3rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
         {/* Top 30% - Target Phrase Assembly Area */}
         <div className="h-[30%] border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950">
           <AssemblyArea
