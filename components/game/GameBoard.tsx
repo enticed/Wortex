@@ -32,6 +32,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
   const { userId, refreshStats } = useUser();
   const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
   const [draggedWordText, setDraggedWordText] = useState<string | null>(null);
+  const [draggedWordBelongsTo, setDraggedWordBelongsTo] = useState<'target' | 'facsimile' | 'spurious' | null>(null);
   const [showBonusRound, setShowBonusRound] = useState(false);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [vortexSpeed, setVortexSpeed] = useState(1.0); // Speed multiplier for vortex rotation
@@ -57,11 +58,16 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     const wordId = event.active.id as string;
     setDraggedWordId(wordId);
 
-    // Find the word text
+    // Find the word and determine which phrase it belongs to
     const vortexWord = gameState.vortexWords.find((w) => w.id === wordId);
     const targetWord = gameState.targetPhraseWords.find((w) => w.id === wordId);
-    const wordText = vortexWord?.word || targetWord?.word || '';
+    const facsimileWord = gameState.facsimilePhraseWords.find((w) => w.id === wordId);
+
+    const wordText = vortexWord?.word || targetWord?.word || facsimileWord?.word || '';
+    const belongsTo = vortexWord?.belongsTo || targetWord?.belongsTo || facsimileWord?.belongsTo || null;
+
     setDraggedWordText(wordText);
+    setDraggedWordBelongsTo(belongsTo);
 
     grabWord(wordId);
   };
@@ -76,6 +82,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
     setDraggedWordId(null);
     setDraggedWordText(null);
+    setDraggedWordBelongsTo(null);
 
     const activeId = active.id as string;
     if (!over) return;
@@ -264,22 +271,59 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
       {/* Drag Overlay - shows the word being dragged */}
       <DragOverlay dropAnimation={null} modifiers={[
-        // Offset the preview above the touch point so finger doesn't obscure it
-        ({ transform }) => ({
-          ...transform,
-          y: transform.y - 50, // Move 50px above finger
-        })
+        // Offset the preview based on which phrase the word belongs to
+        ({ transform }) => {
+          // Spurious words (can go in either): keep at finger position
+          // Target phrase (top) words: offset above finger
+          // Facsimile phrase (bottom) words: offset below finger
+          const yOffset = draggedWordBelongsTo === 'spurious' ? 0
+                        : draggedWordBelongsTo === 'facsimile' ? 50
+                        : -50;
+          return {
+            ...transform,
+            y: transform.y + yOffset,
+          };
+        }
       ]}>
         {draggedWordText ? (
-          <div className="relative">
-            {/* Tether line connecting to finger */}
-            <div className="absolute left-1/2 top-full w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50" style={{ transformOrigin: 'top' }} />
+          draggedWordBelongsTo === 'spurious' ? (
+            // Spurious words: show both above and below finger
+            <div className="relative">
+              {/* Word above finger */}
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-[50px]">
+                <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
+                  {draggedWordText}
+                </div>
+                {/* Tether line to finger */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-full w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50" />
+              </div>
 
-            {/* Dragged word - matches original styling */}
-            <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
-              {draggedWordText}
+              {/* Word below finger */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-[50px]">
+                {/* Tether line from finger */}
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50" />
+                <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
+                  {draggedWordText}
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            // Target or Facsimile words: show in appropriate direction
+            <div className="relative">
+              {/* Tether line connecting to finger */}
+              <div
+                className={`absolute left-1/2 w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50 ${
+                  draggedWordBelongsTo === 'facsimile' ? 'bottom-full' : 'top-full'
+                }`}
+                style={{ transformOrigin: draggedWordBelongsTo === 'facsimile' ? 'bottom' : 'top' }}
+              />
+
+              {/* Dragged word - matches original styling */}
+              <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
+                {draggedWordText}
+              </div>
+            </div>
+          )
         ) : null}
       </DragOverlay>
     </DndContext>
