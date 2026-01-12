@@ -89,8 +89,12 @@ export function useGameState(puzzle: Puzzle | null) {
         if (queue.length === 0) {
           // If no words available at all, stop
           if (availableWords.length === 0) {
+            console.log('No available words - both phrases likely complete');
             return prev;
           }
+
+          console.log(`Refilling queue - Available words (${availableWords.length}):`, availableWords.map(w => `${w.word}[${w.belongsTo}-${w.sourceIndex}]`).join(', '));
+          console.log(`Placed: T=${prev.targetPhraseWords.length}/${puzzle.targetPhrase.words.length}, F=${prev.facsimilePhraseWords.length}/${puzzle.facsimilePhrase.words.length}`);
 
           // Filter out dismissed words for this cycle only
           const wordsForQueue = availableWords.filter(w => {
@@ -104,6 +108,7 @@ export function useGameState(puzzle: Puzzle | null) {
               availableWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
             );
             newDismissedSet = new Set<string>();
+            console.log(`Refilled queue (all dismissed): ${queue.length} words`);
           } else {
             // Create shuffled queue from non-dismissed words
             queue = shuffleArray(
@@ -111,24 +116,33 @@ export function useGameState(puzzle: Puzzle | null) {
             );
             // Clear dismissed set when starting new cycle
             newDismissedSet = new Set<string>();
+            console.log(`Refilled queue: ${queue.length} words`);
           }
         }
 
-        // Get next word from queue (no longer checking if it's in vortex)
-        // This allows cycling - same word can appear multiple times
-        if (queue.length === 0) {
-          return prev; // Queue is empty and no available words
+        // Get next word from queue that exists in availableWords
+        // Skip over any stale entries (words that have been placed)
+        let nextWordKey: string | null = null;
+        let nextWord: typeof availableWords[0] | undefined = undefined;
+        let remainingQueue = [...queue];
+
+        while (remainingQueue.length > 0 && !nextWord) {
+          nextWordKey = remainingQueue[0];
+          remainingQueue = remainingQueue.slice(1);
+
+          nextWord = availableWords.find(w =>
+            `${w.belongsTo}-${w.sourceIndex}` === nextWordKey
+          );
+
+          if (!nextWord) {
+            // Word from queue is no longer available (was placed)
+            console.log(`Skipping stale word ${nextWordKey} - Queue left: ${remainingQueue.length}, Available: ${availableWords.length}`);
+          }
         }
 
-        const nextWordKey = queue[0];
-        const remainingQueue = queue.slice(1);
-
-        // Find the actual word object
-        const nextWord = availableWords.find(w =>
-          `${w.belongsTo}-${w.sourceIndex}` === nextWordKey
-        );
-
-        if (!nextWord) {
+        // If we exhausted the queue without finding a valid word, stop
+        if (!nextWord || !nextWordKey) {
+          console.log('No valid words found in queue - stopping');
           return prev;
         }
 
@@ -190,6 +204,22 @@ export function useGameState(puzzle: Puzzle | null) {
 
         // For facsimile (auto-assembly), find correct position
         if (areaId === 'facsimile') {
+          // Check if this sourceIndex is already placed
+          const alreadyPlaced = currentWords.some(
+            (w) => w.sourceIndex === word.sourceIndex && w.belongsTo === word.belongsTo
+          );
+
+          if (alreadyPlaced) {
+            // Don't allow placing the same word twice, return it to vortex
+            console.log(`Word ${word.word}[${word.belongsTo}-${word.sourceIndex}] already placed in facsimile, rejecting`);
+            return {
+              ...prev,
+              vortexWords: prev.vortexWords.map((w) =>
+                w.id === wordId ? { ...w, isGrabbed: false } : w
+              ),
+            };
+          }
+
           const correctPosition = findCorrectPosition(
             word.word,
             expectedWords,
@@ -242,7 +272,23 @@ export function useGameState(puzzle: Puzzle | null) {
           };
         }
 
-        // For target (manual assembly), place at end
+        // For target (manual assembly), check if this sourceIndex is already placed
+        const alreadyPlaced = currentWords.some(
+          (w) => w.sourceIndex === word.sourceIndex && w.belongsTo === word.belongsTo
+        );
+
+        if (alreadyPlaced) {
+          // Don't allow placing the same word twice, return it to vortex
+          console.log(`Word ${word.word}[${word.belongsTo}-${word.sourceIndex}] already placed, rejecting`);
+          return {
+            ...prev,
+            vortexWords: prev.vortexWords.map((w) =>
+              w.id === wordId ? { ...w, isGrabbed: false } : w
+            ),
+          };
+        }
+
+        // Place at end
         const newWord: PlacedWord = {
           id: wordId,
           word: word.word,
