@@ -62,8 +62,21 @@ export function useGameState(puzzle: Puzzle | null) {
         const targetComplete = prev.targetPhraseWords.length === puzzle.targetPhrase.words.length;
         const facsimileComplete = prev.facsimilePhraseWords.length === puzzle.facsimilePhrase.words.length;
 
-        // Filter out words from completed phrases
+        // Track which words are already placed
+        const placedWordKeys = new Set<string>();
+        prev.targetPhraseWords.forEach(pw => {
+          placedWordKeys.add(`${pw.belongsTo}-${pw.sourceIndex}`);
+        });
+        prev.facsimilePhraseWords.forEach(pw => {
+          placedWordKeys.add(`${pw.belongsTo}-${pw.sourceIndex}`);
+        });
+
+        // Filter out words from completed phrases AND already placed words
         const availableWords = allWords.filter(w => {
+          const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
+          // Skip if already placed
+          if (placedWordKeys.has(wordKey)) return false;
+          // Skip if from completed phrase
           if (targetComplete && w.belongsTo === 'target') return false;
           if (facsimileComplete && w.belongsTo === 'facsimile') return false;
           return true;
@@ -143,7 +156,8 @@ export function useGameState(puzzle: Puzzle | null) {
           }
         }
 
-        // If still no word found, skip this cycle
+        // If still no word found, it means all available words are in vortex
+        // This is okay - just maintain current state
         if (!nextWordKey) {
           return prev;
         }
