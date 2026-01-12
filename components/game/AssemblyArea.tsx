@@ -59,9 +59,22 @@ export default function AssemblyArea({
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           {title}
         </h2>
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          {placedWords.length} / {expectedLength} words
-          {isComplete && ' ✓'}
+        <span className={`text-xs ${
+          isComplete
+            ? 'text-green-600 dark:text-green-400 font-semibold'
+            : placedWords.length > expectedLength
+            ? 'text-red-600 dark:text-red-400'
+            : placedWords.length === expectedLength && !isComplete
+            ? 'text-yellow-600 dark:text-yellow-400'
+            : 'text-gray-500 dark:text-gray-400'
+        }`}>
+          {isComplete ? (
+            <>✓ Complete</>
+          ) : placedWords.length === expectedLength ? (
+            <>{placedWords.length} / {expectedLength} - Check order</>
+          ) : (
+            <>{placedWords.length} / {expectedLength} words</>
+          )}
         </span>
       </div>
 
