@@ -28,7 +28,7 @@ interface GameBoardProps {
 }
 
 export default function GameBoard({ puzzle }: GameBoardProps) {
-  const { gameState, grabWord, placeWord, removeWord, answerBonus, skipBonus, dismissWord } = useGameState(puzzle);
+  const { gameState, grabWord, placeWord, removeWord, reorderWords, answerBonus, skipBonus, dismissWord } = useGameState(puzzle);
   const { userId, refreshStats } = useUser();
   const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
   const [draggedWordText, setDraggedWordText] = useState<string | null>(null);
@@ -94,6 +94,21 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     const isActiveInFacsimile = gameState.facsimilePhraseWords.some((w) => w.id === activeId);
     const isFromVortex = gameState.vortexWords.some((w) => w.id === activeId);
 
+    // Phase 2: Handle reordering within target area
+    if (gameState.phase === 2 && isActiveInTarget) {
+      const oldIndex = gameState.targetPhraseWords.findIndex((w) => w.id === activeId);
+      const newIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
+
+      if (oldIndex !== newIndex && newIndex !== -1) {
+        const reordered = [...gameState.targetPhraseWords];
+        const [removed] = reordered.splice(oldIndex, 1);
+        reordered.splice(newIndex, 0, removed);
+        reorderWords(reordered);
+      }
+      return;
+    }
+
+    // Phase 1: Regular placement/removal
     // Remove word from assembly area back to vortex
     if (isActiveInTarget && overId === 'vortex') {
       removeWord(activeId, 'target');
@@ -104,12 +119,11 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       return;
     }
 
-    // Place word from vortex into assembly areas (auto-assembly handles positioning)
+    // Place word from vortex into assembly areas
     if (overId === 'target' || overId === 'facsimile') {
       if (isFromVortex) {
         placeWord(activeId, overId);
       }
-      // If already placed, do nothing (can't reorder with auto-assembly)
     }
   };
 
@@ -168,51 +182,55 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       onDragEnd={handleDragEnd}
     >
       <div className="h-[calc(100dvh-3rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
-        {/* Top 25% - Target Phrase Assembly Area (Auto-Assembly) */}
-        <div className="h-[25%] border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950">
+        {/* Top Area - Phase 1: 25%, Phase 2: 75% */}
+        <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
+          gameState.phase === 2 ? 'h-[75%]' : 'h-[25%]'
+        }`}>
           <AssemblyArea
             id="target"
-            title="Famous Quote (Auto-Assembly)"
+            title={gameState.phase === 2 ? "Famous Quote (Reorder)" : "Famous Quote (Collect Words)"}
             placedWords={gameState.targetPhraseWords}
             expectedLength={puzzle.targetPhrase.words.length}
             bgColor="bg-blue-50 dark:bg-blue-950"
             borderColor="border-blue-300 dark:border-blue-700"
-            isAutoAssembly={true}
+            isAutoAssembly={false}
             isComplete={isTargetComplete}
             completedText={puzzle.targetPhrase.text}
+            onReorder={gameState.phase === 2 ? reorderWords : undefined}
           />
         </div>
 
-        {/* Middle 50% - Vortex Area, Bonus Round, or Final Results */}
-        <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
-          {gameState.bonusAnswered ? (
-            // Show final results in vortex area
-            <FinalResults
-              puzzleScore={gameState.score || 0}
-              finalScore={gameState.finalScore || 0}
-              bonusCorrect={gameState.bonusCorrect}
-              onPlayAgain={() => window.location.reload()}
-            />
-          ) : gameState.isComplete ? (
-            // Show bonus round in vortex area
-            <div className="h-full flex items-center justify-center px-2">
-              <BonusRound
-                bonusQuestion={puzzle.bonusQuestion}
-                onAnswer={(selectedAnswerId, isCorrect) => {
-                  answerBonus(isCorrect);
-                }}
-                onSkip={skipBonus}
+        {/* Middle Area - Vortex (Phase 1), Bonus Round, or Final Results */}
+        {gameState.phase === 1 && (
+          <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
+            {gameState.bonusAnswered ? (
+              // Show final results in vortex area
+              <FinalResults
+                puzzleScore={gameState.score || 0}
+                finalScore={gameState.finalScore || 0}
+                bonusCorrect={gameState.bonusCorrect}
+                onPlayAgain={() => window.location.reload()}
               />
-            </div>
-          ) : (
-            // Show vortex
-            <Vortex
-              words={gameState.vortexWords}
-              onWordGrab={grabWord}
-              isActive={!gameState.isComplete && !gameState.isPaused}
-              speed={vortexSpeed}
-            />
-          )}
+            ) : gameState.isComplete ? (
+              // Show bonus round in vortex area
+              <div className="h-full flex items-center justify-center px-2">
+                <BonusRound
+                  bonusQuestion={puzzle.bonusQuestion}
+                  onAnswer={(selectedAnswerId, isCorrect) => {
+                    answerBonus(isCorrect);
+                  }}
+                  onSkip={skipBonus}
+                />
+              </div>
+            ) : (
+              // Show vortex
+              <Vortex
+                words={gameState.vortexWords}
+                onWordGrab={grabWord}
+                isActive={!gameState.isComplete && !gameState.isPaused}
+                speed={vortexSpeed}
+              />
+            )}
 
           {/* Speed Slider - Left Edge */}
           {!gameState.isComplete && (
@@ -243,14 +261,40 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             </div>
           )}
 
-          {/* Debug Info - inside vortex area */}
-          <div className="absolute bottom-2 left-2 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-1.5 rounded shadow text-[10px] leading-tight pointer-events-none">
-            <div>V:{gameState.vortexWords.length}</div>
-            <div>T:{gameState.targetPhraseWords.length}/{puzzle.targetPhrase.words.length}</div>
-            <div>F:{gameState.facsimilePhraseWords.length}/{puzzle.facsimilePhrase.words.length}</div>
-            <div>Seen:{gameState.totalWordsSeen}</div>
+            {/* Debug Info - inside vortex area */}
+            <div className="absolute bottom-2 left-2 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-1.5 rounded shadow text-[10px] leading-tight pointer-events-none">
+              <div>Phase:{gameState.phase}</div>
+              <div>V:{gameState.vortexWords.length}</div>
+              <div>T:{gameState.targetPhraseWords.length}/{puzzle.targetPhrase.words.length}</div>
+              <div>F:{gameState.facsimilePhraseWords.length}/{puzzle.facsimilePhrase.words.length}</div>
+              <div>Seen:{gameState.totalWordsSeen}</div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Phase 2 Complete - Show bonus/results in middle area */}
+        {gameState.phase === 2 && gameState.isComplete && (
+          <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
+            {gameState.bonusAnswered ? (
+              <FinalResults
+                puzzleScore={gameState.score || 0}
+                finalScore={gameState.finalScore || 0}
+                bonusCorrect={gameState.bonusCorrect}
+                onPlayAgain={() => window.location.reload()}
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center px-2">
+                <BonusRound
+                  bonusQuestion={puzzle.bonusQuestion}
+                  onAnswer={(selectedAnswerId, isCorrect) => {
+                    answerBonus(isCorrect);
+                  }}
+                  onSkip={skipBonus}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Bottom 25% - Facsimile Phrase Assembly Area */}
         <div className="h-[25%] border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950">

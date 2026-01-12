@@ -1,6 +1,12 @@
 'use client';
 
 import { useDroppable } from '@dnd-kit/core';
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import Word from './Word';
 import type { PlacedWord } from '@/types/game';
 
@@ -14,6 +20,31 @@ interface AssemblyAreaProps {
   isAutoAssembly?: boolean;
   isComplete?: boolean;
   completedText?: string;
+  onReorder?: (reorderedWords: PlacedWord[]) => void;
+}
+
+// Sortable word wrapper for Phase 2
+function SortableWord({ id, text }: { id: string; text: string }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <Word id={id} text={text} isPlaced={true} />
+    </div>
+  );
 }
 
 export default function AssemblyArea({
@@ -26,10 +57,13 @@ export default function AssemblyArea({
   isAutoAssembly = false,
   isComplete = false,
   completedText = '',
+  onReorder,
 }: AssemblyAreaProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
   });
+
+  const isSortable = !!onReorder;
 
   // Sort words by position
   const sortedWords = [...placedWords].sort((a, b) => a.position - b.position);
@@ -108,13 +142,24 @@ export default function AssemblyArea({
           </div>
         ) : sortedWords.length === 0 ? (
           <div className="text-gray-400 dark:text-gray-600 text-sm">
-            {isAutoAssembly
+            {isSortable
+              ? 'Drag words to reorder them'
+              : isAutoAssembly
               ? 'Drag words here - they will auto-arrange'
               : 'Drag words here to assemble the quote'}
           </div>
+        ) : isSortable ? (
+          // Phase 2: Sortable reordering
+          <SortableContext items={sortedWords.map(w => w.id)} strategy={horizontalListSortingStrategy}>
+            <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
+              {sortedWords.map((word) => (
+                <SortableWord key={word.id} id={word.id} text={word.word} />
+              ))}
+            </div>
+          </SortableContext>
         ) : (
+          // Phase 1 or auto-assembly: Words just display in position
           <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
-            {/* Both areas now use auto-assembly - words just display in position */}
             {sortedWords.map((word) => (
               <Word key={word.id} id={word.id} text={word.word} isPlaced={true} />
             ))}

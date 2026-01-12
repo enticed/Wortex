@@ -61,6 +61,7 @@ export interface GameState {
   wordQueue: string[]; // Queue of word keys to show next (shuffled for fair distribution)
   dismissedForNextCycle: Set<string>; // Words dismissed via drag-to-right that skip next cycle
   totalWordsSeen: number;
+  phase: 1 | 2; // Phase 1: collect words, Phase 2: reorder target phrase
   isComplete: boolean;
   score: number | null; // Base puzzle score
   finalScore: number | null; // Score after bonus adjustment
