@@ -10,9 +10,10 @@ interface VortexProps {
   words: WordInVortex[];
   onWordGrab: (wordId: string) => void;
   isActive: boolean;
+  speed?: number; // Speed multiplier: 0.5 = slow, 1.0 = normal, 2.0 = fast
 }
 
-export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
+export default function Vortex({ words, onWordGrab, isActive, speed = 1.0 }: VortexProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'vortex',
   });
@@ -92,9 +93,10 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
       const wordData = { progress: 0 };
 
       // Animate the word along the spiral path from entrance to center
+      const baseDuration = 15; // Base duration in seconds
       const spiralTween = gsap.to(wordData, {
         progress: 1,
-        duration: 15, // 15 seconds to complete the full spiral journey
+        duration: baseDuration / speed, // Adjust duration based on speed
         ease: 'none', // Linear progression
         onUpdate: () => {
           // Get fresh element ref in case it changed
@@ -119,7 +121,7 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
 
       animationRefs.current.set(word.id, [spiralTween]);
     });
-  }, [words, isActive]);
+  }, [words, isActive, speed]); // Re-run when speed changes
 
   // Clean up animations for removed words
   useEffect(() => {
@@ -137,7 +139,7 @@ export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
         animatedWordIds.current.delete(id);
       }
     });
-  }, [words]);
+  }, [words, speed, isActive]); // Re-run when speed changes to update animation durations
 
   return (
     <div

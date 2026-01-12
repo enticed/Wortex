@@ -18,7 +18,6 @@ import AssemblyArea from './AssemblyArea';
 import Word from './Word';
 import BonusRound from './BonusRound';
 import FinalResults from './FinalResults';
-import DismissZone from './DismissZone';
 import { useGameState } from '@/lib/hooks/useGameState';
 import { isPhraseComplete } from '@/lib/utils/game';
 import { useUser } from '@/lib/contexts/UserContext';
@@ -35,6 +34,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
   const [draggedWordText, setDraggedWordText] = useState<string | null>(null);
   const [showBonusRound, setShowBonusRound] = useState(false);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  const [vortexSpeed, setVortexSpeed] = useState(1.0); // Speed multiplier for vortex rotation
   const gameStartTime = useRef<number>(Date.now());
 
   // Configure sensors for both mouse and touch input
@@ -78,16 +78,6 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     setDraggedWordText(null);
 
     const activeId = active.id as string;
-
-    // Check if dragging to right edge to dismiss
-    if (over && over.id === 'dismiss-zone') {
-      const isFromVortex = gameState.vortexWords.some((w) => w.id === activeId);
-      if (isFromVortex) {
-        dismissWord(activeId);
-        return;
-      }
-    }
-
     if (!over) return;
 
     const overId = over.id as string;
@@ -213,7 +203,30 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
               words={gameState.vortexWords}
               onWordGrab={grabWord}
               isActive={!gameState.isComplete && !gameState.isPaused}
+              speed={vortexSpeed}
             />
+          )}
+
+          {/* Speed Slider - Left Edge */}
+          {!gameState.isComplete && (
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-3 rounded-lg shadow-lg">
+              <div className="text-xs text-gray-600 dark:text-gray-400 font-semibold writing-mode-vertical transform rotate-180">
+                SPEED
+              </div>
+              <input
+                type="range"
+                min="0.25"
+                max="2"
+                step="0.25"
+                value={vortexSpeed}
+                onChange={(e) => setVortexSpeed(parseFloat(e.target.value))}
+                className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer [writing-mode:bt-lr] [-webkit-appearance:slider-vertical]"
+                style={{ writingMode: 'bt-lr' as any, WebkitAppearance: 'slider-vertical' as any }}
+              />
+              <div className="text-xs text-gray-600 dark:text-gray-400 font-mono">
+                {vortexSpeed.toFixed(2)}x
+              </div>
+            </div>
           )}
 
           {/* Debug Info - inside vortex area */}
@@ -240,10 +253,6 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           />
         </div>
 
-        {/* Dismiss Zone - Right Edge */}
-        {draggedWordId && gameState.vortexWords.some((w) => w.id === draggedWordId) && (
-          <DismissZone />
-        )}
       </div>
 
       {/* Drag Overlay - shows the word being dragged */}
