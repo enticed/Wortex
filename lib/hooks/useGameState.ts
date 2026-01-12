@@ -158,78 +158,43 @@ export function useGameState(puzzle: Puzzle | null) {
           ? prev.puzzle.targetPhrase.words
           : prev.puzzle.facsimilePhrase.words;
 
-        // For facsimile (auto-assembly), find correct position
-        // No duplicate checking - player has full control
-        if (areaId === 'facsimile') {
-          const correctPosition = findCorrectPosition(
-            word.word,
-            expectedWords,
-            currentWords
-          );
+        // Both areas now use auto-assembly - find correct position
+        const correctPosition = findCorrectPosition(
+          word.word,
+          expectedWords,
+          currentWords
+        );
 
-          if (correctPosition === null) {
-            // Word doesn't belong, return it to vortex
-            return {
-              ...prev,
-              vortexWords: prev.vortexWords.map((w) =>
-                w.id === wordId ? { ...w, isGrabbed: false } : w
-              ),
-            };
-          }
-
-          // Place word in correct position
-          const newWord: PlacedWord = {
-            id: wordId,
-            word: word.word,
-            position: correctPosition,
-            sourceIndex: word.sourceIndex,
-            belongsTo: 'facsimile',
-          };
-
-          const updatedWords = [...currentWords, newWord];
-
-          // Check if game is complete
-          const isComplete = areAllPhrasesComplete(
-            prev.targetPhraseWords,
-            prev.puzzle.targetPhrase.words,
-            updatedWords,
-            prev.puzzle.facsimilePhrase.words
-          );
-
-          const score = isComplete
-            ? calculateScore(
-                prev.totalWordsSeen,
-                prev.puzzle.targetPhrase.words.length +
-                  prev.puzzle.facsimilePhrase.words.length
-              )
-            : null;
-
+        if (correctPosition === null) {
+          // Word doesn't belong to this phrase, return it to vortex
           return {
             ...prev,
-            facsimilePhraseWords: updatedWords,
-            vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
-            isComplete,
-            score,
+            vortexWords: prev.vortexWords.map((w) =>
+              w.id === wordId ? { ...w, isGrabbed: false } : w
+            ),
           };
         }
 
-        // For target (manual assembly), place at end
-        // No duplicate checking - player has full control
+        // Place word in correct position
         const newWord: PlacedWord = {
           id: wordId,
           word: word.word,
-          position: currentWords.length,
+          position: correctPosition,
           sourceIndex: word.sourceIndex,
-          belongsTo: 'target',
+          belongsTo: areaId,
         };
 
         const updatedWords = [...currentWords, newWord];
 
+        // Update the appropriate phrase array
+        const newTargetWords = isTarget ? updatedWords : prev.targetPhraseWords;
+        const newFacsimileWords = isTarget ? prev.facsimilePhraseWords : updatedWords;
+
         // Check if game is complete
         const isComplete = areAllPhrasesComplete(
-          updatedWords,
+          newTargetWords,
           prev.puzzle.targetPhrase.words,
-          prev.facsimilePhraseWords,
+          newFacsimileWords,
           prev.puzzle.facsimilePhrase.words
         );
 
@@ -243,7 +208,8 @@ export function useGameState(puzzle: Puzzle | null) {
 
         return {
           ...prev,
-          targetPhraseWords: updatedWords,
+          targetPhraseWords: newTargetWords,
+          facsimilePhraseWords: newFacsimileWords,
           vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
           isComplete,
           score,
@@ -287,51 +253,7 @@ export function useGameState(puzzle: Puzzle | null) {
     });
   }, []);
 
-  // Reorder words in target phrase (manual assembly)
-  const reorderWords = useCallback((activeId: string, overId: string) => {
-    setGameState((prev) => {
-      const oldIndex = prev.targetPhraseWords.findIndex((w) => w.id === activeId);
-      const newIndex = prev.targetPhraseWords.findIndex((w) => w.id === overId);
-
-      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return prev;
-
-      const reordered = [...prev.targetPhraseWords];
-      const [movedWord] = reordered.splice(oldIndex, 1);
-      reordered.splice(newIndex, 0, movedWord);
-
-      // Update positions
-      const updatedWords = reordered.map((word, index) => ({
-        ...word,
-        position: index,
-      }));
-
-      // Check if game is complete after reordering
-      const isComplete = prev.puzzle
-        ? areAllPhrasesComplete(
-            updatedWords,
-            prev.puzzle.targetPhrase.words,
-            prev.facsimilePhraseWords,
-            prev.puzzle.facsimilePhrase.words
-          )
-        : false;
-
-      const score =
-        isComplete && prev.puzzle
-          ? calculateScore(
-              prev.totalWordsSeen,
-              prev.puzzle.targetPhrase.words.length +
-                prev.puzzle.facsimilePhrase.words.length
-            )
-          : null;
-
-      return {
-        ...prev,
-        targetPhraseWords: updatedWords,
-        isComplete,
-        score,
-      };
-    });
-  }, []);
+  // Reordering removed - both areas now use auto-assembly
 
   // Answer bonus question
   const answerBonus = useCallback((isCorrect: boolean) => {
@@ -383,7 +305,6 @@ export function useGameState(puzzle: Puzzle | null) {
     grabWord,
     placeWord,
     removeWord,
-    reorderWords,
     answerBonus,
     skipBonus,
     dismissWord,

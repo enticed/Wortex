@@ -29,7 +29,7 @@ interface GameBoardProps {
 }
 
 export default function GameBoard({ puzzle }: GameBoardProps) {
-  const { gameState, grabWord, placeWord, removeWord, reorderWords, answerBonus, skipBonus, dismissWord } = useGameState(puzzle);
+  const { gameState, grabWord, placeWord, removeWord, answerBonus, skipBonus, dismissWord } = useGameState(puzzle);
   const { userId, refreshStats } = useUser();
   const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
   const [draggedWordText, setDraggedWordText] = useState<string | null>(null);
@@ -92,43 +92,27 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
     const overId = over.id as string;
 
-    // Check if reordering within target phrase area
+    // Check placement sources
     const isActiveInTarget = gameState.targetPhraseWords.some((w) => w.id === activeId);
     const isActiveInFacsimile = gameState.facsimilePhraseWords.some((w) => w.id === activeId);
-    const isOverTargetWord = gameState.targetPhraseWords.some((w) => w.id === overId);
-    const isOverFacsimileWord = gameState.facsimilePhraseWords.some((w) => w.id === overId);
+    const isFromVortex = gameState.vortexWords.some((w) => w.id === activeId);
 
-    // Check if dragging a word from target back to vortex to discard it
+    // Remove word from assembly area back to vortex
     if (isActiveInTarget && overId === 'vortex') {
       removeWord(activeId, 'target');
       return;
     }
-
-    // If dragging from vortex onto a word in target area, place it in target
-    const isFromVortex = gameState.vortexWords.some((w) => w.id === activeId);
-    if (isFromVortex && isOverTargetWord) {
-      placeWord(activeId, 'target');
+    if (isActiveInFacsimile && overId === 'vortex') {
+      removeWord(activeId, 'facsimile');
       return;
     }
 
-    // If dragging from vortex onto a word in facsimile area, place it in facsimile
-    if (isFromVortex && isOverFacsimileWord) {
-      placeWord(activeId, 'facsimile');
-      return;
-    }
-
-    // Reordering within target area
-    if (isActiveInTarget && isOverTargetWord && activeId !== overId) {
-      reorderWords(activeId, overId);
-      return;
-    }
-
-    // Dropping directly on assembly area droppable zones
+    // Place word from vortex into assembly areas (auto-assembly handles positioning)
     if (overId === 'target' || overId === 'facsimile') {
       if (isFromVortex) {
         placeWord(activeId, overId);
       }
-      // If it's already in target and dropped on target droppable, do nothing (keep it)
+      // If already placed, do nothing (can't reorder with auto-assembly)
     }
   };
 
@@ -187,23 +171,23 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       onDragEnd={handleDragEnd}
     >
       <div className="h-[calc(100dvh-3rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
-        {/* Top 30% - Target Phrase Assembly Area */}
-        <div className="h-[30%] border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950">
+        {/* Top 25% - Target Phrase Assembly Area (Auto-Assembly) */}
+        <div className="h-[25%] border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950">
           <AssemblyArea
             id="target"
-            title="Famous Quote (Manual Assembly)"
+            title="Famous Quote (Auto-Assembly)"
             placedWords={gameState.targetPhraseWords}
             expectedLength={puzzle.targetPhrase.words.length}
             bgColor="bg-blue-50 dark:bg-blue-950"
             borderColor="border-blue-300 dark:border-blue-700"
-            isAutoAssembly={false}
+            isAutoAssembly={true}
             isComplete={isTargetComplete}
             completedText={puzzle.targetPhrase.text}
           />
         </div>
 
-        {/* Middle 40% - Vortex Area, Bonus Round, or Final Results */}
-        <div className="h-[40%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
+        {/* Middle 50% - Vortex Area, Bonus Round, or Final Results */}
+        <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
           {gameState.bonusAnswered ? (
             // Show final results in vortex area
             <FinalResults
@@ -241,11 +225,11 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           </div>
         </div>
 
-        {/* Bottom 30% - Facsimile Phrase Assembly Area */}
-        <div className="h-[30%] border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950">
+        {/* Bottom 25% - Facsimile Phrase Assembly Area */}
+        <div className="h-[25%] border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950">
           <AssemblyArea
             id="facsimile"
-            title="Spoof (Auto Assembly)"
+            title="Spoof (Auto-Assembly)"
             placedWords={gameState.facsimilePhraseWords}
             expectedLength={puzzle.facsimilePhrase.words.length}
             bgColor="bg-green-50 dark:bg-green-950"

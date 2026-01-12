@@ -1,12 +1,7 @@
 'use client';
 
 import { useDroppable } from '@dnd-kit/core';
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-} from '@dnd-kit/sortable';
 import Word from './Word';
-import SortableWord from './SortableWord';
 import type { PlacedWord } from '@/types/game';
 
 interface AssemblyAreaProps {
@@ -119,26 +114,10 @@ export default function AssemblyArea({
           </div>
         ) : (
           <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
-            {isAutoAssembly ? (
-              // Auto-assembly: words are not sortable, just display them
-              sortedWords.map((word) => (
-                <Word key={word.id} id={word.id} text={word.word} isPlaced={true} />
-              ))
-            ) : (
-              // Manual assembly: words are sortable
-              <SortableContext
-                items={sortedWords.map((w) => w.id)}
-                strategy={horizontalListSortingStrategy}
-              >
-                {sortedWords.map((word) => (
-                  <SortableWord
-                    key={word.id}
-                    id={word.id}
-                    text={word.word}
-                  />
-                ))}
-              </SortableContext>
-            )}
+            {/* Both areas now use auto-assembly - words just display in position */}
+            {sortedWords.map((word) => (
+              <Word key={word.id} id={word.id} text={word.word} isPlaced={true} />
+            ))}
           </div>
         )}
       </div>
