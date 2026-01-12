@@ -209,9 +209,9 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
           {/* Speed Slider - Left Edge */}
           {!gameState.isComplete && (
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-3 rounded-lg shadow-lg">
-              <div className="text-xs text-gray-600 dark:text-gray-400 font-semibold writing-mode-vertical transform rotate-180">
-                SPEED
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 rounded-lg shadow-lg">
+              <div className="text-[10px] text-gray-600 dark:text-gray-400 font-semibold">
+                FAST
               </div>
               <input
                 type="range"
@@ -220,10 +220,17 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 step="0.25"
                 value={vortexSpeed}
                 onChange={(e) => setVortexSpeed(parseFloat(e.target.value))}
-                className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer [writing-mode:bt-lr] [-webkit-appearance:slider-vertical]"
-                style={{ writingMode: 'bt-lr' as any, WebkitAppearance: 'slider-vertical' as any }}
+                className="h-32 cursor-pointer"
+                style={{
+                  WebkitAppearance: 'slider-vertical' as any,
+                  appearance: 'slider-vertical' as any,
+                  width: '8px',
+                }}
               />
-              <div className="text-xs text-gray-600 dark:text-gray-400 font-mono">
+              <div className="text-[10px] text-gray-600 dark:text-gray-400 font-semibold">
+                SLOW
+              </div>
+              <div className="text-[10px] text-gray-600 dark:text-gray-400 font-mono font-bold">
                 {vortexSpeed.toFixed(2)}x
               </div>
             </div>
