@@ -85,10 +85,17 @@ export function useGameState(puzzle: Puzzle | null) {
             return !prev.dismissedForNextCycle.has(wordKey);
           });
 
-          // Create shuffled queue
-          queue = shuffleArray(
-            wordsForQueue.map(w => `${w.belongsTo}-${w.sourceIndex}`)
-          );
+          // If all words dismissed, clear dismissals and use all available
+          if (wordsForQueue.length === 0 && availableWords.length > 0) {
+            queue = shuffleArray(
+              availableWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
+            );
+          } else {
+            // Create shuffled queue from non-dismissed words
+            queue = shuffleArray(
+              wordsForQueue.map(w => `${w.belongsTo}-${w.sourceIndex}`)
+            );
+          }
 
           // Clear dismissed set when starting new cycle
           newDismissedSet = new Set<string>();
@@ -107,15 +114,23 @@ export function useGameState(puzzle: Puzzle | null) {
         }
 
         // If all queued words are in vortex, refill queue and try again
-        if (!nextWordKey && availableWords.length > prev.vortexWords.length) {
+        if (!nextWordKey && availableWords.length > 0) {
           const wordsForQueue = availableWords.filter(w => {
             const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
             return !prev.dismissedForNextCycle.has(wordKey);
           });
 
-          queue = shuffleArray(
-            wordsForQueue.map(w => `${w.belongsTo}-${w.sourceIndex}`)
-          );
+          // If all words dismissed, clear dismissals and use all available
+          if (wordsForQueue.length === 0 && availableWords.length > 0) {
+            queue = shuffleArray(
+              availableWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
+            );
+          } else {
+            queue = shuffleArray(
+              wordsForQueue.map(w => `${w.belongsTo}-${w.sourceIndex}`)
+            );
+          }
+
           remainingQueue = [...queue];
           newDismissedSet = new Set<string>();
 

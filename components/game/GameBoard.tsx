@@ -231,6 +231,14 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
               isActive={!gameState.isComplete && !gameState.isPaused}
             />
           )}
+
+          {/* Debug Info - inside vortex area */}
+          <div className="absolute bottom-2 left-2 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-1.5 rounded shadow text-[10px] leading-tight pointer-events-none">
+            <div>V:{gameState.vortexWords.length}</div>
+            <div>T:{gameState.targetPhraseWords.length}/{puzzle.targetPhrase.words.length}</div>
+            <div>F:{gameState.facsimilePhraseWords.length}/{puzzle.facsimilePhrase.words.length}</div>
+            <div>Seen:{gameState.totalWordsSeen}</div>
+          </div>
         </div>
 
         {/* Bottom 30% - Facsimile Phrase Assembly Area */}
@@ -246,14 +254,6 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             isComplete={isFacsimileComplete}
             completedText={puzzle.facsimilePhrase.text}
           />
-        </div>
-
-        {/* Debug Info (remove in production) */}
-        <div className="fixed top-2 left-2 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-1.5 rounded shadow text-[10px] leading-tight pointer-events-none">
-          <div>V:{gameState.vortexWords.length}</div>
-          <div>T:{gameState.targetPhraseWords.length}/{puzzle.targetPhrase.words.length}</div>
-          <div>F:{gameState.facsimilePhraseWords.length}/{puzzle.facsimilePhrase.words.length}</div>
-          <div>Seen:{gameState.totalWordsSeen}</div>
         </div>
 
         {/* Dismiss Zone - Right Edge */}
