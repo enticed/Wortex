@@ -140,10 +140,49 @@ export function useGameState(puzzle: Puzzle | null) {
           }
         }
 
-        // If we exhausted the queue without finding a valid word, stop
+        // If we exhausted the queue without finding a valid word, refill and try again
         if (!nextWord || !nextWordKey) {
-          console.log('No valid words found in queue - stopping');
-          return prev;
+          console.log('Queue exhausted with no valid words - refilling queue');
+
+          if (availableWords.length === 0) {
+            console.log('No available words - both phrases likely complete');
+            return prev;
+          }
+
+          // Refill queue with fresh words
+          const wordsForQueue = availableWords.filter(w => {
+            const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
+            return !prev.dismissedForNextCycle.has(wordKey);
+          });
+
+          if (wordsForQueue.length === 0) {
+            queue = shuffleArray(
+              availableWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
+            );
+            newDismissedSet = new Set<string>();
+          } else {
+            queue = shuffleArray(
+              wordsForQueue.map(w => `${w.belongsTo}-${w.sourceIndex}`)
+            );
+            newDismissedSet = new Set<string>();
+          }
+
+          // Try to get first word from newly filled queue
+          remainingQueue = [...queue];
+          while (remainingQueue.length > 0 && !nextWord) {
+            nextWordKey = remainingQueue[0];
+            remainingQueue = remainingQueue.slice(1);
+
+            nextWord = availableWords.find(w =>
+              `${w.belongsTo}-${w.sourceIndex}` === nextWordKey
+            );
+          }
+
+          // If still no valid word after refill, give up
+          if (!nextWord || !nextWordKey) {
+            console.log('No valid words even after refill - stopping');
+            return prev;
+          }
         }
 
         // Add word to vortex or replace oldest
