@@ -9,11 +9,10 @@ import type { WordInVortex } from '@/types/game';
 interface VortexProps {
   words: WordInVortex[];
   onWordGrab: (wordId: string) => void;
-  onWordDismiss: (wordId: string) => void;
   isActive: boolean;
 }
 
-export default function Vortex({ words, onWordGrab, onWordDismiss, isActive }: VortexProps) {
+export default function Vortex({ words, onWordGrab, isActive }: VortexProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'vortex',
   });
@@ -22,9 +21,6 @@ export default function Vortex({ words, onWordGrab, onWordDismiss, isActive }: V
   const wordRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const animationRefs = useRef<Map<string, gsap.core.Tween[]>>(new Map());
   const animatedWordIds = useRef<Set<string>>(new Set());
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const touchingWordId = useRef<string | null>(null);
 
   // Handle responsive sizing
   useEffect(() => {
@@ -205,31 +201,6 @@ export default function Vortex({ words, onWordGrab, onWordDismiss, isActive }: V
           const initialPos = getCartesianPosition(spiralPos.angle, spiralPos.radius);
           const initialScale = getScale(spiralPos.radius);
 
-          const handleTouchStart = (e: React.TouchEvent) => {
-            touchStartX.current = e.touches[0].clientX;
-            touchStartY.current = e.touches[0].clientY;
-            touchingWordId.current = word.id;
-          };
-
-          const handleTouchEnd = (e: React.TouchEvent) => {
-            if (touchStartX.current === null || touchStartY.current === null) return;
-
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
-            const deltaX = touchEndX - touchStartX.current;
-            const deltaY = touchEndY - touchStartY.current;
-
-            // Detect right swipe (delta X > 100px and mostly horizontal)
-            if (deltaX > 100 && Math.abs(deltaX) > Math.abs(deltaY) * 2) {
-              // Swipe right detected - dismiss the word
-              onWordDismiss(word.id);
-            }
-
-            touchStartX.current = null;
-            touchStartY.current = null;
-            touchingWordId.current = null;
-          };
-
           return (
             <div
               key={word.id}
@@ -241,8 +212,6 @@ export default function Vortex({ words, onWordGrab, onWordDismiss, isActive }: V
                 transform: `translate(-50%, -50%) translate(${initialPos.x}px, ${initialPos.y}px) scale(${initialScale})`,
                 opacity: 1,
               }}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
             >
               <Word id={word.id} text={word.word} isPlaced={false} />
             </div>

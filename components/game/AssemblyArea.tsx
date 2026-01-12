@@ -81,12 +81,19 @@ export default function AssemblyArea({
         `}
       >
         {isComplete ? (
-          // Completed phrase - show as solid block with punctuation
-          <div className="text-center animate-fade-in">
-            <p className={`text-2xl font-serif italic leading-relaxed ${
+          // Completed phrase - show as solid block with punctuation, auto-sized to fit
+          <div className="text-center animate-fade-in w-full h-full flex items-center justify-center p-2">
+            <p className={`font-serif italic leading-relaxed ${
               id === 'target'
                 ? 'text-blue-900 dark:text-blue-100'
                 : 'text-green-900 dark:text-green-100'
+            } ${
+              // Dynamic sizing based on text length
+              completedText.length <= 50 ? 'text-2xl' :
+              completedText.length <= 100 ? 'text-xl' :
+              completedText.length <= 150 ? 'text-lg' :
+              completedText.length <= 200 ? 'text-base' :
+              'text-sm'
             }`}>
               &ldquo;{completedText}&rdquo;
             </p>

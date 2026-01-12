@@ -10,12 +10,15 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  useDroppable,
 } from '@dnd-kit/core';
 import { useState, useEffect, useRef } from 'react';
 import Vortex from './Vortex';
 import AssemblyArea from './AssemblyArea';
 import Word from './Word';
 import BonusRound from './BonusRound';
+import FinalResults from './FinalResults';
+import DismissZone from './DismissZone';
 import { useGameState } from '@/lib/hooks/useGameState';
 import { isPhraseComplete } from '@/lib/utils/game';
 import { useUser } from '@/lib/contexts/UserContext';
@@ -74,9 +77,19 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     setDraggedWordId(null);
     setDraggedWordText(null);
 
+    const activeId = active.id as string;
+
+    // Check if dragging to right edge to dismiss
+    if (over && over.id === 'dismiss-zone') {
+      const isFromVortex = gameState.vortexWords.some((w) => w.id === activeId);
+      if (isFromVortex) {
+        dismissWord(activeId);
+        return;
+      }
+    }
+
     if (!over) return;
 
-    const activeId = active.id as string;
     const overId = over.id as string;
 
     // Check if reordering within target phrase area
@@ -189,10 +202,18 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           />
         </div>
 
-        {/* Middle 40% - Vortex Area or Bonus Round */}
+        {/* Middle 40% - Vortex Area, Bonus Round, or Final Results */}
         <div className="h-[40%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
-          {gameState.isComplete && !gameState.bonusAnswered ? (
-            // Show bonus round in vortex area - compact version
+          {gameState.bonusAnswered ? (
+            // Show final results in vortex area
+            <FinalResults
+              puzzleScore={gameState.score || 0}
+              finalScore={gameState.finalScore || 0}
+              bonusCorrect={gameState.bonusCorrect}
+              onPlayAgain={() => window.location.reload()}
+            />
+          ) : gameState.isComplete ? (
+            // Show bonus round in vortex area
             <div className="h-full flex items-center justify-center px-2">
               <BonusRound
                 bonusQuestion={puzzle.bonusQuestion}
@@ -203,10 +224,10 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
               />
             </div>
           ) : (
+            // Show vortex
             <Vortex
               words={gameState.vortexWords}
               onWordGrab={grabWord}
-              onWordDismiss={dismissWord}
               isActive={!gameState.isComplete && !gameState.isPaused}
             />
           )}
@@ -227,54 +248,6 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           />
         </div>
 
-        {/* Final Results (after bonus) */}
-        {gameState.bonusAnswered && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md mx-4">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-                Final Results
-              </h2>
-              <div className="space-y-4 mb-6">
-                <div className="bg-blue-100 dark:bg-blue-900 rounded-lg p-4">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    Puzzle Score
-                  </div>
-                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                    {gameState.score?.toFixed(2)}
-                  </div>
-                </div>
-                <div className={`rounded-lg p-4 ${
-                  gameState.bonusCorrect
-                    ? 'bg-green-100 dark:bg-green-900'
-                    : 'bg-gray-100 dark:bg-gray-800'
-                }`}>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    Final Score
-                  </div>
-                  <div className={`text-3xl font-bold ${
-                    gameState.bonusCorrect
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-gray-600 dark:text-gray-400'
-                  }`}>
-                    {gameState.finalScore?.toFixed(2)}
-                  </div>
-                  {gameState.bonusCorrect && (
-                    <div className="text-xs text-green-600 dark:text-green-400 mt-1">
-                      10% bonus reduction applied!
-                    </div>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-              >
-                Play Again Tomorrow
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Debug Info (remove in production) */}
         <div className="fixed top-2 left-2 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-1.5 rounded shadow text-[10px] leading-tight pointer-events-none">
           <div>V:{gameState.vortexWords.length}</div>
@@ -282,6 +255,11 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           <div>F:{gameState.facsimilePhraseWords.length}/{puzzle.facsimilePhrase.words.length}</div>
           <div>Seen:{gameState.totalWordsSeen}</div>
         </div>
+
+        {/* Dismiss Zone - Right Edge */}
+        {draggedWordId && gameState.vortexWords.some((w) => w.id === draggedWordId) && (
+          <DismissZone />
+        )}
       </div>
 
       {/* Drag Overlay - shows the word being dragged */}

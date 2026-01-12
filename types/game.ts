@@ -59,6 +59,7 @@ export interface GameState {
   targetPhraseWords: PlacedWord[];
   facsimilePhraseWords: PlacedWord[];
   wordQueue: string[]; // Queue of word keys to show next (shuffled for fair distribution)
+  dismissedForNextCycle: Set<string>; // Words dismissed via drag-to-right that skip next cycle
   totalWordsSeen: number;
   isComplete: boolean;
   score: number | null; // Base puzzle score

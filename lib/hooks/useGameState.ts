@@ -27,6 +27,7 @@ export function useGameState(puzzle: Puzzle | null) {
     targetPhraseWords: [],
     facsimilePhraseWords: [],
     wordQueue: [],
+    dismissedForNextCycle: new Set<string>(),
     totalWordsSeen: 0,
     isComplete: false,
     score: null,
@@ -49,7 +50,7 @@ export function useGameState(puzzle: Puzzle | null) {
     }
   }, [puzzle]);
 
-  // Add new words to vortex periodically - simple fair distribution of ALL words
+  // Add new words to vortex periodically - fair distribution with smart filtering
   useEffect(() => {
     if (!puzzle || gameState.isComplete || gameState.isPaused) return;
 
@@ -57,18 +58,40 @@ export function useGameState(puzzle: Puzzle | null) {
       setGameState((prev) => {
         const allWords = createVortexWords(puzzle);
 
+        // Check which phrases are complete
+        const targetComplete = prev.targetPhraseWords.length === puzzle.targetPhrase.words.length;
+        const facsimileComplete = prev.facsimilePhraseWords.length === puzzle.facsimilePhrase.words.length;
+
+        // Filter out words from completed phrases
+        const availableWords = allWords.filter(w => {
+          if (targetComplete && w.belongsTo === 'target') return false;
+          if (facsimileComplete && w.belongsTo === 'facsimile') return false;
+          return true;
+        });
+
         // Get words currently in vortex
         const vortexWordKeys = new Set(
           prev.vortexWords.map(vw => `${vw.belongsTo}-${vw.sourceIndex}`)
         );
 
-        // Initialize or refill queue when empty - show ALL words regardless of placement
+        // Initialize or refill queue when empty
         let queue = prev.wordQueue;
+        let newDismissedSet = prev.dismissedForNextCycle;
+
         if (queue.length === 0) {
-          // Create shuffled queue of ALL word keys (no filtering)
+          // Filter out dismissed words for this cycle only
+          const wordsForQueue = availableWords.filter(w => {
+            const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
+            return !prev.dismissedForNextCycle.has(wordKey);
+          });
+
+          // Create shuffled queue
           queue = shuffleArray(
-            allWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
+            wordsForQueue.map(w => `${w.belongsTo}-${w.sourceIndex}`)
           );
+
+          // Clear dismissed set when starting new cycle
+          newDismissedSet = new Set<string>();
         }
 
         // Find next word not currently in vortex
@@ -84,11 +107,17 @@ export function useGameState(puzzle: Puzzle | null) {
         }
 
         // If all queued words are in vortex, refill queue and try again
-        if (!nextWordKey && allWords.length > prev.vortexWords.length) {
+        if (!nextWordKey && availableWords.length > prev.vortexWords.length) {
+          const wordsForQueue = availableWords.filter(w => {
+            const wordKey = `${w.belongsTo}-${w.sourceIndex}`;
+            return !prev.dismissedForNextCycle.has(wordKey);
+          });
+
           queue = shuffleArray(
-            allWords.map(w => `${w.belongsTo}-${w.sourceIndex}`)
+            wordsForQueue.map(w => `${w.belongsTo}-${w.sourceIndex}`)
           );
           remainingQueue = [...queue];
+          newDismissedSet = new Set<string>();
 
           for (let i = 0; i < remainingQueue.length; i++) {
             if (!vortexWordKeys.has(remainingQueue[i])) {
@@ -105,7 +134,7 @@ export function useGameState(puzzle: Puzzle | null) {
         }
 
         // Find the actual word object
-        const nextWord = allWords.find(w =>
+        const nextWord = availableWords.find(w =>
           `${w.belongsTo}-${w.sourceIndex}` === nextWordKey
         );
 
@@ -130,6 +159,7 @@ export function useGameState(puzzle: Puzzle | null) {
           ...prev,
           vortexWords: newVortexWords,
           wordQueue: remainingQueue,
+          dismissedForNextCycle: newDismissedSet,
           totalWordsSeen: prev.totalWordsSeen + 1,
         };
       });
@@ -368,11 +398,19 @@ export function useGameState(puzzle: Puzzle | null) {
     }));
   }, []);
 
-  // Dismiss a word from vortex (swipe gesture) - just removes from vortex, will reappear in next cycle
+  // Dismiss a word from vortex (drag to right edge) - skips next cycle
   const dismissWord = useCallback((wordId: string) => {
     setGameState((prev) => {
+      const word = prev.vortexWords.find((w) => w.id === wordId);
+      if (!word) return prev;
+
+      const wordKey = `${word.belongsTo}-${word.sourceIndex}`;
+      const newDismissedSet = new Set(prev.dismissedForNextCycle);
+      newDismissedSet.add(wordKey);
+
       return {
         ...prev,
+        dismissedForNextCycle: newDismissedSet,
         vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
       };
     });
