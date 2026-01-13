@@ -370,25 +370,25 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         {draggedWordText ? (
           draggedWordBelongsTo === 'spurious' ? (
             // Spurious words: show both above and below finger simultaneously
-            <div className="relative pointer-events-none">
-              {/* Tether line above */}
-              <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50" />
-
+            <div className="relative pointer-events-none" style={{ width: '200px', height: '160px' }}>
               {/* Word above finger */}
-              <div className="absolute left-1/2 -translate-x-1/2 bottom-[50px] whitespace-nowrap">
+              <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap" style={{ top: '0px' }}>
                 <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
                   {draggedWordText}
                 </div>
               </div>
 
-              {/* Finger position marker (invisible but provides reference point) */}
-              <div className="w-1 h-1" />
+              {/* Tether line above */}
+              <div className="absolute left-1/2 -translate-x-1/2 bg-yellow-400 dark:bg-yellow-500 opacity-50" style={{ top: '36px', width: '2px', height: '44px' }} />
+
+              {/* Finger position marker (visible for debugging) */}
+              <div className="absolute left-1/2 -translate-x-1/2 bg-red-500 rounded-full" style={{ top: '78px', width: '4px', height: '4px' }} />
 
               {/* Tether line below */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-full w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50" />
+              <div className="absolute left-1/2 -translate-x-1/2 bg-yellow-400 dark:bg-yellow-500 opacity-50" style={{ top: '82px', width: '2px', height: '44px' }} />
 
               {/* Word below finger */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-[50px] whitespace-nowrap">
+              <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap" style={{ top: '126px' }}>
                 <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
                   {draggedWordText}
                 </div>
