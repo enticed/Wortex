@@ -273,6 +273,7 @@ export function useGameState(puzzle: Puzzle | null) {
         radius: 0.9,
         appearanceCount: 0,
         isGrabbed: false,
+        totalRotation: 0, // Reset rotation when returning to vortex
       };
 
       return {
