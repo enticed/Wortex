@@ -196,14 +196,14 @@ export default function AssemblyArea({
           </div>
         ) : isSortable ? (
           // Phase 2: Manual drag-and-drop without auto-reordering
-          <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
+          <div className={`flex flex-wrap gap-1 items-start content-start w-full ${getWordScale()}`}>
             {sortedWords.map((word, index) => (
-              <div key={word.id} className="flex items-center">
-                {/* Gap before word - with indicator */}
-                <div className="relative w-3 h-8 flex items-center justify-center">
+              <div key={word.id} className="flex items-center gap-0">
+                {/* Invisible hover zone before word - larger area for detection */}
+                <div className="relative w-1 h-12 flex items-center justify-center">
                   {dropIndicatorIndex === index && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-                      {/* Triangle arrow pointing down - positioned so only tip enters gap */}
+                    <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
+                      {/* Triangle arrow pointing down - split difference between -top-3 and top-1/2 */}
                       <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
                     </div>
                   )}
@@ -212,9 +212,9 @@ export default function AssemblyArea({
               </div>
             ))}
             {/* End-of-phrase drop indicator */}
-            <div className="relative w-3 h-8 flex items-center justify-center">
+            <div className="relative w-1 h-12 flex items-center justify-center">
               {dropIndicatorIndex === sortedWords.length && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
                   <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
                 </div>
               )}
