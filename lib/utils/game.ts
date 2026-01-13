@@ -107,13 +107,21 @@ export function createVortexWords(puzzle: Puzzle): WordInVortex[] {
   const allWords: WordInVortex[] = [];
   const timestamp = Date.now();
 
+  // Create sets of words in each phrase (case-insensitive)
+  const targetWordsSet = new Set(puzzle.targetPhrase.words.map(w => w.toLowerCase()));
+  const facsimileWordsSet = new Set(puzzle.facsimilePhrase.words.map(w => w.toLowerCase()));
+
   // Add target phrase words
   puzzle.targetPhrase.words.forEach((word, index) => {
     const seed = timestamp + index;
+    const wordLower = word.toLowerCase();
+    // Mark as spurious if it appears in both phrases
+    const belongsTo = facsimileWordsSet.has(wordLower) ? 'spurious' : 'target';
+
     allWords.push({
       id: generateWordId(word, seed),
       word,
-      belongsTo: 'target',
+      belongsTo,
       sourceIndex: index, // Track original position for duplicate handling
       angle: seededRandom(seed) * 360,
       radius: 0.8 + seededRandom(seed + 1000) * 0.2, // Start near outer edge
@@ -125,10 +133,14 @@ export function createVortexWords(puzzle: Puzzle): WordInVortex[] {
   // Add facsimile phrase words
   puzzle.facsimilePhrase.words.forEach((word, index) => {
     const seed = timestamp + index + 1000;
+    const wordLower = word.toLowerCase();
+    // Mark as spurious if it appears in both phrases
+    const belongsTo = targetWordsSet.has(wordLower) ? 'spurious' : 'facsimile';
+
     allWords.push({
       id: generateWordId(word, seed),
       word,
-      belongsTo: 'facsimile',
+      belongsTo,
       sourceIndex: index, // Track original position for duplicate handling
       angle: seededRandom(seed) * 360,
       radius: 0.8 + seededRandom(seed + 2000) * 0.2,

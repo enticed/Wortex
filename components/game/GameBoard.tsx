@@ -91,11 +91,8 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           // Find the index where we would insert
           const overIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
           if (overIndex !== -1) {
-            // Calculate if we should insert before or after based on pointer position
-            const activeIndex = gameState.targetPhraseWords.findIndex((w) => w.id === activeId);
-            // If dragging from left to right, insert after; if right to left, insert before
-            const insertIndex = activeIndex < overIndex ? overIndex + 1 : overIndex;
-            setDropIndicatorIndex(insertIndex);
+            // Simply use the overIndex - show indicator before the hovered word
+            setDropIndicatorIndex(overIndex);
           }
         }
       }
@@ -129,14 +126,16 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       let newIndex: number;
       if (overId === 'target') {
         // Dropping on target area itself - place at end
-        newIndex = gameState.targetPhraseWords.length - 1;
+        newIndex = gameState.targetPhraseWords.length;
+      } else if (dropIndicatorIndex !== null) {
+        // Use the indicator index
+        newIndex = dropIndicatorIndex;
       } else {
-        // Dropping on a specific word - use the dropIndicatorIndex
-        newIndex = dropIndicatorIndex !== null ? dropIndicatorIndex :
-                   gameState.targetPhraseWords.findIndex((w) => w.id === overId);
+        // Fallback - shouldn't happen
+        newIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
       }
 
-      if (oldIndex !== newIndex && newIndex !== -1) {
+      if (oldIndex !== newIndex && newIndex !== -1 && oldIndex !== -1) {
         const reordered = [...gameState.targetPhraseWords];
         const [removed] = reordered.splice(oldIndex, 1);
         // Adjust insertion index if we removed from before the target position
