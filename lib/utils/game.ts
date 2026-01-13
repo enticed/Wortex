@@ -127,6 +127,7 @@ export function createVortexWords(puzzle: Puzzle): WordInVortex[] {
       radius: 0.8 + seededRandom(seed + 1000) * 0.2, // Start near outer edge
       appearanceCount: 0,
       isGrabbed: false,
+      totalRotation: 0, // Start with no rotation
     });
   });
 
@@ -146,6 +147,7 @@ export function createVortexWords(puzzle: Puzzle): WordInVortex[] {
       radius: 0.8 + seededRandom(seed + 2000) * 0.2,
       appearanceCount: 0,
       isGrabbed: false,
+      totalRotation: 0, // Start with no rotation
     });
   });
 

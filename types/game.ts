@@ -43,6 +43,7 @@ export interface WordInVortex {
   radius: number; // Distance from center (0-1, where 1 is outer edge)
   appearanceCount: number; // How many times this word has appeared
   isGrabbed: boolean;
+  totalRotation: number; // Total degrees rotated since entering vortex (for auto-capture)
 }
 
 export interface PlacedWord {

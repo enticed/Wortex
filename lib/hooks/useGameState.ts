@@ -359,6 +359,56 @@ export function useGameState(puzzle: Puzzle | null) {
     }));
   }, []);
 
+  // Auto-capture facsimile word when it reaches 240° rotation
+  const autoCaptureFacsimileWord = useCallback((wordId: string) => {
+    setGameState((prev) => {
+      if (!prev.puzzle) return prev;
+
+      const word = prev.vortexWords.find((w) => w.id === wordId);
+      if (!word || word.belongsTo !== 'facsimile') return prev;
+
+      // Find correct position for this facsimile word
+      const correctPosition = findCorrectPosition(
+        word.word,
+        prev.puzzle.facsimilePhrase.words,
+        prev.facsimilePhraseWords
+      );
+
+      // If word doesn't belong or all positions filled, keep it in vortex
+      if (correctPosition === null) return prev;
+
+      // Auto-place the word
+      const newWord: PlacedWord = {
+        id: word.id,
+        word: word.word,
+        position: correctPosition,
+        sourceIndex: word.sourceIndex,
+        belongsTo: 'facsimile',
+      };
+
+      const newFacsimileWords = [...prev.facsimilePhraseWords, newWord];
+
+      // Check if Phase 1 is complete
+      const isFacsimileComplete = isPhraseComplete(
+        newFacsimileWords,
+        prev.puzzle!.facsimilePhrase.words
+      );
+
+      const hasAllRequiredWords = prev.puzzle!.targetPhrase.words.every(requiredWord =>
+        prev.targetPhraseWords.some(placed => placed.word.toLowerCase() === requiredWord.toLowerCase())
+      );
+
+      const phase1Complete = isFacsimileComplete && hasAllRequiredWords;
+
+      return {
+        ...prev,
+        facsimilePhraseWords: newFacsimileWords,
+        vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
+        phase: phase1Complete ? 2 : 1,
+      };
+    });
+  }, []);
+
   // Dismiss a word from vortex (drag to right edge) - skips next cycle
   const dismissWord = useCallback((wordId: string) => {
     setGameState((prev) => {
@@ -386,5 +436,6 @@ export function useGameState(puzzle: Puzzle | null) {
     answerBonus,
     skipBonus,
     dismissWord,
+    autoCaptureFacsimileWord,
   };
 }

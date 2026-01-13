@@ -9,11 +9,12 @@ import type { WordInVortex } from '@/types/game';
 interface VortexProps {
   words: WordInVortex[];
   onWordGrab: (wordId: string) => void;
+  onAutoCapture?: (wordId: string) => void; // Called when facsimile word reaches 240° rotation
   isActive: boolean;
   speed?: number; // Speed multiplier: 0.5 = slow, 1.0 = normal, 2.0 = fast
 }
 
-export default function Vortex({ words, onWordGrab, isActive, speed = 1.0 }: VortexProps) {
+export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, speed = 1.0 }: VortexProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'vortex',
   });
@@ -22,6 +23,7 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0 }: Vor
   const wordRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const animationRefs = useRef<Map<string, gsap.core.Tween[]>>(new Map());
   const animatedWordIds = useRef<Set<string>>(new Set());
+  const autoCaptureTriggered = useRef<Set<string>>(new Set()); // Track which words have triggered auto-capture
 
   // Handle responsive sizing
   useEffect(() => {
@@ -91,6 +93,7 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0 }: Vor
 
       // Each word starts at progress 0 (entrance) and animates to progress 1 (center)
       const wordData = { progress: 0 };
+      let previousAngle = 180; // Starting angle
 
       // Animate the word along the spiral path from entrance to center
       const baseDuration = 15; // Base duration in seconds
@@ -111,6 +114,22 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0 }: Vor
             // Fade out as approaching center
             const opacity = wordData.progress < 0.9 ? 1 : (1 - (wordData.progress - 0.9) * 10);
             currentElement.style.opacity = String(Math.max(0, opacity));
+
+            // Track rotation for auto-capture
+            // Calculate rotation since last update (handling 360° wrap-around)
+            let angleDelta = spiralPos.angle - previousAngle;
+            if (angleDelta > 180) angleDelta -= 360;
+            if (angleDelta < -180) angleDelta += 360;
+            const totalRotation = word.totalRotation + Math.abs(angleDelta);
+            previousAngle = spiralPos.angle;
+
+            // Auto-capture facsimile words at 240° rotation (2/3 turn)
+            if (onAutoCapture && word.belongsTo === 'facsimile' &&
+                totalRotation >= 240 &&
+                !autoCaptureTriggered.current.has(word.id)) {
+              autoCaptureTriggered.current.add(word.id);
+              onAutoCapture(word.id);
+            }
           }
         },
         onComplete: () => {
@@ -137,9 +156,10 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0 }: Vor
         }
         wordRefs.current.delete(id);
         animatedWordIds.current.delete(id);
+        autoCaptureTriggered.current.delete(id);
       }
     });
-  }, [words, speed, isActive]); // Re-run when speed changes to update animation durations
+  }, [words, speed, isActive, onAutoCapture]); // Re-run when speed changes to update animation durations
 
   return (
     <div
