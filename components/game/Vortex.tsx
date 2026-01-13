@@ -12,9 +12,10 @@ interface VortexProps {
   onAutoCapture?: (wordId: string) => void; // Called when facsimile word reaches 240° rotation
   isActive: boolean;
   speed?: number; // Speed multiplier: 0.5 = slow, 1.0 = normal, 2.0 = fast
+  isFacsimileComplete?: boolean; // Stop auto-capture when facsimile phrase is complete
 }
 
-export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, speed = 1.0 }: VortexProps) {
+export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, speed = 1.0, isFacsimileComplete = false }: VortexProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'vortex',
   });
@@ -134,19 +135,28 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
             previousAngle = spiralPos.angle;
 
             // Auto-capture words at 240° rotation (2/3 turn)
-            // The handler will check if word belongs to facsimile phrase
+            // Only while facsimile phrase is incomplete
             if (onAutoCapture &&
+                !isFacsimileComplete &&
                 newRotation >= 240 &&
                 !autoCaptureTriggered.current.has(word.id)) {
               autoCaptureTriggered.current.add(word.id);
 
               // Animate word flying to bottom before auto-capture
+              // Calculate tangent point: word leaves spiral ~15° earlier (at ~225°)
+              const departureAngle = spiralPos.angle - 15; // Adjust departure angle
+              const departureRadian = (departureAngle * Math.PI) / 180;
               const centerX = dimensions.width / 2;
-              const bottomY = dimensions.height; // Bottom edge of vortex area
+              const centerY = dimensions.height / 2;
+              const maxRadius = Math.min(dimensions.width, dimensions.height) * 0.45;
+
+              // Calculate exit trajectory toward bottom center
+              const exitX = centerX;
+              const exitY = dimensions.height; // Bottom edge
 
               gsap.to(currentElement, {
-                x: centerX,
-                y: bottomY,
+                x: exitX,
+                y: exitY,
                 scale: 0.5,
                 opacity: 0,
                 duration: 0.4,

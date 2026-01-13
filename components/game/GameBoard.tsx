@@ -275,6 +275,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 onAutoCapture={autoCaptureFacsimileWord}
                 isActive={!gameState.isComplete && !gameState.isPaused}
                 speed={vortexSpeed}
+                isFacsimileComplete={isFacsimileComplete}
               />
             )}
 
