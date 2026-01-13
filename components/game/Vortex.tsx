@@ -24,6 +24,7 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
   const animationRefs = useRef<Map<string, gsap.core.Tween[]>>(new Map());
   const animatedWordIds = useRef<Set<string>>(new Set());
   const autoCaptureTriggered = useRef<Set<string>>(new Set()); // Track which words have triggered auto-capture
+  const wordRotations = useRef<Map<string, number>>(new Map()); // Track accumulated rotation per word
 
   // Handle responsive sizing
   useEffect(() => {
@@ -91,6 +92,11 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
       // Mark this word as animated
       animatedWordIds.current.add(word.id);
 
+      // Initialize rotation tracking for this word
+      if (!wordRotations.current.has(word.id)) {
+        wordRotations.current.set(word.id, 0);
+      }
+
       // Each word starts at progress 0 (entrance) and animates to progress 1 (center)
       const wordData = { progress: 0 };
       let previousAngle = 180; // Starting angle
@@ -120,12 +126,16 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
             let angleDelta = spiralPos.angle - previousAngle;
             if (angleDelta > 180) angleDelta -= 360;
             if (angleDelta < -180) angleDelta += 360;
-            const totalRotation = word.totalRotation + Math.abs(angleDelta);
+
+            // Update accumulated rotation
+            const currentRotation = wordRotations.current.get(word.id) || 0;
+            const newRotation = currentRotation + Math.abs(angleDelta);
+            wordRotations.current.set(word.id, newRotation);
             previousAngle = spiralPos.angle;
 
             // Auto-capture facsimile words at 240° rotation (2/3 turn)
             if (onAutoCapture && word.belongsTo === 'facsimile' &&
-                totalRotation >= 240 &&
+                newRotation >= 240 &&
                 !autoCaptureTriggered.current.has(word.id)) {
               autoCaptureTriggered.current.add(word.id);
               onAutoCapture(word.id);
@@ -157,6 +167,7 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
         wordRefs.current.delete(id);
         animatedWordIds.current.delete(id);
         autoCaptureTriggered.current.delete(id);
+        wordRotations.current.delete(id);
       }
     });
   }, [words, speed, isActive, onAutoCapture]); // Re-run when speed changes to update animation durations
