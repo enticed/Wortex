@@ -217,6 +217,11 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     puzzle.facsimilePhrase.words
   );
 
+  // Create set of facsimile words for auto-capture checking
+  const facsimileWordsSet = new Set(
+    puzzle.facsimilePhrase.words.map(w => w.toLowerCase())
+  );
+
   return (
     <DndContext
       sensors={sensors}
@@ -276,6 +281,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 isActive={!gameState.isComplete && !gameState.isPaused}
                 speed={vortexSpeed}
                 isFacsimileComplete={isFacsimileComplete}
+                facsimileWords={facsimileWordsSet}
               />
             )}
 

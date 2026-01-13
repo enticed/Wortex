@@ -13,9 +13,10 @@ interface VortexProps {
   isActive: boolean;
   speed?: number; // Speed multiplier: 0.5 = slow, 1.0 = normal, 2.0 = fast
   isFacsimileComplete?: boolean; // Stop auto-capture when facsimile phrase is complete
+  facsimileWords?: Set<string>; // Set of facsimile word texts (lowercase) for quick lookup
 }
 
-export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, speed = 1.0, isFacsimileComplete = false }: VortexProps) {
+export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, speed = 1.0, isFacsimileComplete = false, facsimileWords }: VortexProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'vortex',
   });
@@ -136,24 +137,39 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
 
             // Auto-capture words at 240° rotation (2/3 turn)
             // Only while facsimile phrase is incomplete
+            // Trigger at 225° to account for departure angle adjustment
             if (onAutoCapture &&
                 !isFacsimileComplete &&
-                newRotation >= 240 &&
+                newRotation >= 225 &&
                 !autoCaptureTriggered.current.has(word.id)) {
+
+              // Check if this word belongs to the facsimile phrase
+              const wordBelongsToFacsimile = facsimileWords?.has(word.word.toLowerCase());
+
+              if (!wordBelongsToFacsimile) {
+                // Word doesn't belong to facsimile - don't animate, just mark as triggered
+                autoCaptureTriggered.current.add(word.id);
+                return; // Continue spiraling normally
+              }
+
+              // Word belongs to facsimile - animate it flying off
               autoCaptureTriggered.current.add(word.id);
 
-              // Animate word flying to bottom before auto-capture
-              // Calculate tangent point: word leaves spiral ~15° earlier (at ~225°)
-              const departureAngle = spiralPos.angle - 15; // Adjust departure angle
-              const departureRadian = (departureAngle * Math.PI) / 180;
+              // Calculate current position for departure
               const centerX = dimensions.width / 2;
               const centerY = dimensions.height / 2;
               const maxRadius = Math.min(dimensions.width, dimensions.height) * 0.45;
 
-              // Calculate exit trajectory toward bottom center
+              // Calculate departure point from current spiral position
+              const departureRadian = (spiralPos.angle * Math.PI) / 180;
+              const currentX = centerX + Math.cos(departureRadian) * spiralPos.radius * maxRadius;
+              const currentY = centerY + Math.sin(departureRadian) * spiralPos.radius * maxRadius;
+
+              // Calculate exit trajectory: from current position toward bottom center
               const exitX = centerX;
               const exitY = dimensions.height; // Bottom edge
 
+              // Animate word flying to bottom
               gsap.to(currentElement, {
                 x: exitX,
                 y: exitY,
