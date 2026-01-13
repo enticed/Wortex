@@ -74,21 +74,38 @@ export default function AssemblyArea({
   const calculatePhase1Stats = () => {
     if (!expectedWords.length || isAutoAssembly) return null;
 
-    // W: Number of correct/necessary words placed
-    const correctWords = placedWords.filter(placed =>
-      expectedWords.some(expected => expected.toLowerCase() === placed.word.toLowerCase())
-    );
-    const W = correctWords.length;
-
     // X: Total words needed
     const X = expectedLength;
 
-    // N: Number of unnecessary/wrong words
+    // W: Number of correct/necessary words placed (count each word type up to how many times it's needed)
+    let W = 0;
+    const expectedWordCounts = new Map<string, number>();
+
+    // Count how many times each word appears in expected phrase
+    expectedWords.forEach(word => {
+      const key = word.toLowerCase();
+      expectedWordCounts.set(key, (expectedWordCounts.get(key) || 0) + 1);
+    });
+
+    // Count placed words that match expected, but only up to needed count
+    const placedWordCounts = new Map<string, number>();
+    placedWords.forEach(placed => {
+      const key = placed.word.toLowerCase();
+      const needed = expectedWordCounts.get(key) || 0;
+      const currentCount = placedWordCounts.get(key) || 0;
+
+      if (needed > 0 && currentCount < needed) {
+        placedWordCounts.set(key, currentCount + 1);
+        W++;
+      }
+    });
+
+    // N: Number of unnecessary/wrong words (total placed - necessary placed)
     const N = placedWords.length - W;
 
-    // Check if all required words are present (may have extras)
-    const allRequiredPresent = expectedWords.every(required =>
-      placedWords.some(placed => placed.word.toLowerCase() === required.toLowerCase())
+    // Check if all required words are present (considering duplicates)
+    const allRequiredPresent = Array.from(expectedWordCounts.entries()).every(([word, count]) =>
+      (placedWordCounts.get(word) || 0) >= count
     );
 
     return { W, X, N, allRequiredPresent };
