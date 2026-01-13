@@ -231,7 +231,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         }`}>
           <AssemblyArea
             id="target"
-            title={gameState.phase === 2 ? "Famous Quote (Reorder)" : "Famous Quote (Collect Words)"}
+            title={gameState.phase === 2 ? "Original (Reorder)" : "Original (Collect Words)"}
             placedWords={gameState.targetPhraseWords}
             expectedLength={puzzle.targetPhrase.words.length}
             expectedWords={puzzle.targetPhrase.words}
@@ -346,7 +346,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         <div className="h-[25%] border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950">
           <AssemblyArea
             id="facsimile"
-            title="Spoof (Auto-Assembly)"
+            title="Spin-off (Auto-Assembly)"
             placedWords={gameState.facsimilePhraseWords}
             expectedLength={puzzle.facsimilePhrase.words.length}
             bgColor="bg-green-50 dark:bg-green-950"

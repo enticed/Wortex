@@ -133,12 +133,31 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
             wordRotations.current.set(word.id, newRotation);
             previousAngle = spiralPos.angle;
 
-            // Auto-capture facsimile words at 240° rotation (2/3 turn)
-            if (onAutoCapture && word.belongsTo === 'facsimile' &&
+            // Auto-capture words at 240° rotation (2/3 turn)
+            // The handler will check if word belongs to facsimile phrase
+            if (onAutoCapture &&
                 newRotation >= 240 &&
                 !autoCaptureTriggered.current.has(word.id)) {
               autoCaptureTriggered.current.add(word.id);
-              onAutoCapture(word.id);
+
+              // Animate word flying to bottom before auto-capture
+              const centerX = dimensions.width / 2;
+              const bottomY = dimensions.height; // Bottom edge of vortex area
+
+              gsap.to(currentElement, {
+                x: centerX,
+                y: bottomY,
+                scale: 0.5,
+                opacity: 0,
+                duration: 0.4,
+                ease: 'power2.in',
+                onComplete: () => {
+                  onAutoCapture(word.id);
+                }
+              });
+
+              // Kill the spiral animation so it doesn't interfere
+              spiralTween.kill();
             }
           }
         },

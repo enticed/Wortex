@@ -366,16 +366,16 @@ export function useGameState(puzzle: Puzzle | null) {
       if (!prev.puzzle) return prev;
 
       const word = prev.vortexWords.find((w) => w.id === wordId);
-      if (!word || word.belongsTo !== 'facsimile') return prev;
+      if (!word) return prev;
 
-      // Find correct position for this facsimile word
+      // Check if this word belongs to the facsimile phrase by trying to find a position
       const correctPosition = findCorrectPosition(
         word.word,
         prev.puzzle.facsimilePhrase.words,
         prev.facsimilePhraseWords
       );
 
-      // If word doesn't belong or all positions filled, keep it in vortex
+      // If word doesn't belong to facsimile or all positions filled, keep it in vortex
       if (correctPosition === null) return prev;
 
       // Auto-place the word
