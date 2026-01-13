@@ -80,17 +80,6 @@ export default function AssemblyArea({
       (placedWordCounts.get(word) || 0) >= count
     );
 
-    // Debug logging
-    if (typeof window !== 'undefined') {
-      console.log('[Counter Debug]', {
-        placedWords: placedWords.map(p => p.word),
-        expectedWordCounts: Object.fromEntries(expectedWordCounts),
-        placedWordCounts: Object.fromEntries(placedWordCounts),
-        W, X, N,
-        allRequiredPresent
-      });
-    }
-
     return { W, X, N, allRequiredPresent };
   };
 
