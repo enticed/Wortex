@@ -202,7 +202,7 @@ export default function AssemblyArea({
                     <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
                   </div>
                 )}
-                <Word id={word.id} text={word.word} isPlaced={true} />
+                <Word id={word.id} text={word.word} isPlaced={false} />
               </div>
             ))}
             {/* End-of-phrase drop indicator */}
