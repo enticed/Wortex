@@ -36,6 +36,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
   const [showBonusRound, setShowBonusRound] = useState(false);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [vortexSpeed, setVortexSpeed] = useState(1.0); // Speed multiplier for vortex rotation
+  const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null); // Phase 2 insertion indicator
   const gameStartTime = useRef<number>(Date.now());
 
   // Configure sensors for both mouse and touch input
@@ -73,8 +74,25 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    // Don't do anything - let @dnd-kit/sortable handle reordering internally
-    // We'll save the final order in handleDragEnd
+    const { active, over } = event;
+
+    // Phase 2: Show insertion indicator without reordering
+    if (gameState.phase === 2 && over) {
+      const activeId = active.id as string;
+      const overId = over.id as string;
+
+      const isActiveInTarget = gameState.targetPhraseWords.some((w) => w.id === activeId);
+
+      if (isActiveInTarget) {
+        // Find the index where we would insert
+        const overIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
+        if (overIndex !== -1) {
+          setDropIndicatorIndex(overIndex);
+        }
+      }
+    } else {
+      setDropIndicatorIndex(null);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -83,6 +101,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     setDraggedWordId(null);
     setDraggedWordText(null);
     setDraggedWordBelongsTo(null);
+    setDropIndicatorIndex(null); // Clear insertion indicator
 
     const activeId = active.id as string;
     if (!over) return;
@@ -198,6 +217,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             isComplete={isTargetComplete}
             completedText={puzzle.targetPhrase.text}
             onReorder={gameState.phase === 2 ? reorderWords : undefined}
+            dropIndicatorIndex={dropIndicatorIndex}
           />
         </div>
 
@@ -315,41 +335,42 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       </div>
 
       {/* Drag Overlay - shows the word being dragged */}
-      <DragOverlay dropAnimation={null} modifiers={[
-        // Offset the preview based on which phrase the word belongs to
-        ({ transform }) => {
-          // Spurious words (can go in either): keep at finger position
-          // Target phrase (top) words: offset above finger
-          // Facsimile phrase (bottom) words: offset below finger
-          const yOffset = draggedWordBelongsTo === 'spurious' ? 0
-                        : draggedWordBelongsTo === 'facsimile' ? 50
-                        : -50;
-          return {
-            ...transform,
-            y: transform.y + yOffset,
-          };
-        }
-      ]}>
+      <DragOverlay dropAnimation={null} modifiers={
+        draggedWordBelongsTo === 'spurious' ? undefined : [
+          // Only offset target/facsimile words - spurious words render at finger position
+          ({ transform }) => {
+            const yOffset = draggedWordBelongsTo === 'facsimile' ? 50 : -50;
+            return {
+              ...transform,
+              y: transform.y + yOffset,
+            };
+          }
+        ]
+      }>
         {draggedWordText ? (
           draggedWordBelongsTo === 'spurious' ? (
-            // Spurious words: show both above and below finger
-            <div className="relative">
+            // Spurious words: show both above and below finger simultaneously
+            <div className="pointer-events-none">
               {/* Word above finger */}
-              <div className="absolute left-1/2 -translate-x-1/2 bottom-[50px]">
+              <div className="fixed" style={{ transform: 'translate(-50%, -70px)' }}>
                 <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
                   {draggedWordText}
                 </div>
-                {/* Tether line to finger */}
-                <div className="absolute left-1/2 -translate-x-1/2 top-full w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50" />
               </div>
 
               {/* Word below finger */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-[50px]">
-                {/* Tether line from finger */}
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50" />
+              <div className="fixed" style={{ transform: 'translate(-50%, 20px)' }}>
                 <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
                   {draggedWordText}
                 </div>
+              </div>
+
+              {/* Tether lines */}
+              <div className="fixed" style={{ transform: 'translate(-50%, -20px)', width: '2px', height: '40px', left: '50%' }}>
+                <div className="w-full h-full bg-yellow-400 dark:bg-yellow-500 opacity-50" />
+              </div>
+              <div className="fixed" style={{ transform: 'translate(-50%, 0px)', width: '2px', height: '20px', left: '50%' }}>
+                <div className="w-full h-full bg-yellow-400 dark:bg-yellow-500 opacity-50" />
               </div>
             </div>
           ) : (

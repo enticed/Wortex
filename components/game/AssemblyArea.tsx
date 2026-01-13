@@ -22,6 +22,7 @@ interface AssemblyAreaProps {
   isComplete?: boolean;
   completedText?: string;
   onReorder?: (reorderedWords: PlacedWord[]) => void;
+  dropIndicatorIndex?: number | null; // Phase 2: insertion indicator position
 }
 
 // Sortable word wrapper for Phase 2
@@ -35,9 +36,11 @@ function SortableWord({ id, text }: { id: string; text: string }) {
     isDragging,
   } = useSortable({ id });
 
+  // Don't apply transform during drag to prevent jumping
+  // Only the dragged word itself should move (via DragOverlay)
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: isDragging ? undefined : CSS.Transform.toString(transform),
+    transition: isDragging ? undefined : transition,
     opacity: isDragging ? 0.5 : 1,
   };
 
@@ -60,6 +63,7 @@ export default function AssemblyArea({
   isComplete = false,
   completedText = '',
   onReorder,
+  dropIndicatorIndex = null,
 }: AssemblyAreaProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -209,11 +213,19 @@ export default function AssemblyArea({
               : 'Drag words here to assemble the quote'}
           </div>
         ) : isSortable ? (
-          // Phase 2: Sortable reordering
+          // Phase 2: Sortable reordering with insertion indicator
           <SortableContext items={sortedWords.map(w => w.id)} strategy={horizontalListSortingStrategy}>
             <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
-              {sortedWords.map((word) => (
-                <SortableWord key={word.id} id={word.id} text={word.word} />
+              {sortedWords.map((word, index) => (
+                <div key={word.id} className="relative">
+                  {/* Insertion indicator - shows where word will be dropped */}
+                  {dropIndicatorIndex === index && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0.5 h-2 bg-blue-500 dark:bg-blue-400 z-10">
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
+                    </div>
+                  )}
+                  <SortableWord id={word.id} text={word.word} />
+                </div>
               ))}
             </div>
           </SortableContext>
