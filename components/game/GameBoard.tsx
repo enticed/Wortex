@@ -83,13 +83,17 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
       const isActiveInTarget = gameState.targetPhraseWords.some((w) => w.id === activeId);
 
+      console.log('[Phase 2 Drag Over]', { activeId, overId, isActiveInTarget, wordsCount: gameState.targetPhraseWords.length });
+
       if (isActiveInTarget) {
         // If dropping on target area itself (not a word), place at end
         if (overId === 'target') {
+          console.log('  -> Setting indicator at END');
           setDropIndicatorIndex(gameState.targetPhraseWords.length);
         } else {
           // Find the index where we would insert
           const overIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
+          console.log('  -> Found overIndex:', overIndex);
           if (overIndex !== -1) {
             // Simply use the overIndex - show indicator before the hovered word
             setDropIndicatorIndex(overIndex);
@@ -354,23 +358,28 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       </div>
 
       {/* Drag Overlay - shows the word being dragged */}
-      <DragOverlay dropAnimation={null} modifiers={
-        draggedWordBelongsTo === 'spurious' ? undefined : [
-          // Only offset target/facsimile words - spurious words render at finger position
-          ({ transform }) => {
-            const yOffset = draggedWordBelongsTo === 'facsimile' ? 50 : -50;
-            return {
-              ...transform,
-              y: transform.y + yOffset,
-            };
-          }
-        ]
-      }>
+      <DragOverlay
+        dropAnimation={null}
+        style={{ cursor: 'grabbing' }}
+        modifiers={
+          draggedWordBelongsTo === 'spurious' ? undefined : [
+            // Only offset target/facsimile words - spurious words render at finger position
+            ({ transform }) => {
+              const yOffset = draggedWordBelongsTo === 'facsimile' ? 50 : -50;
+              return {
+                ...transform,
+                y: transform.y + yOffset,
+              };
+            }
+          ]
+        }
+      >
         {draggedWordText ? (
           draggedWordBelongsTo === 'spurious' ? (
             // Spurious words: show both above and below finger simultaneously
-            <div className="relative pointer-events-none" style={{ width: '200px', height: '160px' }}>
-              {/* Word above finger */}
+            // Centered at cursor position (not offset)
+            <div className="relative pointer-events-none" style={{ width: '200px', height: '120px', marginLeft: '-100px', marginTop: '-60px' }}>
+              {/* Word above cursor */}
               <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap" style={{ top: '0px' }}>
                 <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
                   {draggedWordText}
@@ -378,16 +387,16 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
               </div>
 
               {/* Tether line above */}
-              <div className="absolute left-1/2 -translate-x-1/2 bg-yellow-400 dark:bg-yellow-500 opacity-50" style={{ top: '36px', width: '2px', height: '44px' }} />
+              <div className="absolute left-1/2 -translate-x-1/2 bg-yellow-400 dark:bg-yellow-500 opacity-50" style={{ top: '36px', width: '2px', height: '20px' }} />
 
-              {/* Finger position marker (visible for debugging) */}
-              <div className="absolute left-1/2 -translate-x-1/2 bg-red-500 rounded-full" style={{ top: '78px', width: '4px', height: '4px' }} />
+              {/* Cursor position marker (centered) */}
+              <div className="absolute left-1/2 -translate-x-1/2 bg-blue-500 rounded-full shadow-lg" style={{ top: '54px', width: '6px', height: '6px' }} />
 
               {/* Tether line below */}
-              <div className="absolute left-1/2 -translate-x-1/2 bg-yellow-400 dark:bg-yellow-500 opacity-50" style={{ top: '82px', width: '2px', height: '44px' }} />
+              <div className="absolute left-1/2 -translate-x-1/2 bg-yellow-400 dark:bg-yellow-500 opacity-50" style={{ top: '62px', width: '2px', height: '20px' }} />
 
-              {/* Word below finger */}
-              <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap" style={{ top: '126px' }}>
+              {/* Word below cursor */}
+              <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap" style={{ top: '82px' }}>
                 <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
                   {draggedWordText}
                 </div>

@@ -185,10 +185,11 @@ export default function AssemblyArea({
           <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
             {sortedWords.map((word, index) => (
               <div key={word.id} className="relative">
-                {/* Insertion indicator - shows where word will be dropped */}
+                {/* Insertion indicator - arrow pointing down */}
                 {dropIndicatorIndex === index && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0.5 h-2 bg-blue-500 dark:bg-blue-400 z-10">
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
+                    {/* Triangle arrow pointing down */}
+                    <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-blue-500 dark:border-t-blue-400" />
                   </div>
                 )}
                 <Word id={word.id} text={word.word} isPlaced={false} />
@@ -196,9 +197,9 @@ export default function AssemblyArea({
             ))}
             {/* End-of-phrase drop indicator */}
             {dropIndicatorIndex === sortedWords.length && (
-              <div className="relative h-8 w-1">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0.5 h-2 bg-blue-500 dark:bg-blue-400 z-10">
-                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
+              <div className="relative h-8 w-4">
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
+                  <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-blue-500 dark:border-t-blue-400" />
                 </div>
               </div>
             )}
