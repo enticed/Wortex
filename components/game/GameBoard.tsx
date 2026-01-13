@@ -84,10 +84,19 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       const isActiveInTarget = gameState.targetPhraseWords.some((w) => w.id === activeId);
 
       if (isActiveInTarget) {
-        // Find the index where we would insert
-        const overIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
-        if (overIndex !== -1) {
-          setDropIndicatorIndex(overIndex);
+        // If dropping on target area itself (not a word), place at end
+        if (overId === 'target') {
+          setDropIndicatorIndex(gameState.targetPhraseWords.length);
+        } else {
+          // Find the index where we would insert
+          const overIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
+          if (overIndex !== -1) {
+            // Calculate if we should insert before or after based on pointer position
+            const activeIndex = gameState.targetPhraseWords.findIndex((w) => w.id === activeId);
+            // If dragging from left to right, insert after; if right to left, insert before
+            const insertIndex = activeIndex < overIndex ? overIndex + 1 : overIndex;
+            setDropIndicatorIndex(insertIndex);
+          }
         }
       }
     } else {
@@ -116,12 +125,23 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     // Phase 2: Handle reordering within target area
     if (gameState.phase === 2 && isActiveInTarget) {
       const oldIndex = gameState.targetPhraseWords.findIndex((w) => w.id === activeId);
-      const newIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
+
+      let newIndex: number;
+      if (overId === 'target') {
+        // Dropping on target area itself - place at end
+        newIndex = gameState.targetPhraseWords.length - 1;
+      } else {
+        // Dropping on a specific word - use the dropIndicatorIndex
+        newIndex = dropIndicatorIndex !== null ? dropIndicatorIndex :
+                   gameState.targetPhraseWords.findIndex((w) => w.id === overId);
+      }
 
       if (oldIndex !== newIndex && newIndex !== -1) {
         const reordered = [...gameState.targetPhraseWords];
         const [removed] = reordered.splice(oldIndex, 1);
-        reordered.splice(newIndex, 0, removed);
+        // Adjust insertion index if we removed from before the target position
+        const adjustedIndex = oldIndex < newIndex ? newIndex - 1 : newIndex;
+        reordered.splice(adjustedIndex, 0, removed);
         reorderWords(reordered);
       }
       return;
@@ -350,27 +370,28 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         {draggedWordText ? (
           draggedWordBelongsTo === 'spurious' ? (
             // Spurious words: show both above and below finger simultaneously
-            <div className="pointer-events-none">
+            <div className="relative pointer-events-none">
+              {/* Tether line above */}
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50" />
+
               {/* Word above finger */}
-              <div className="fixed" style={{ transform: 'translate(-50%, -70px)' }}>
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-[50px] whitespace-nowrap">
                 <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
                   {draggedWordText}
                 </div>
               </div>
+
+              {/* Finger position marker (invisible but provides reference point) */}
+              <div className="w-1 h-1" />
+
+              {/* Tether line below */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-full w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50" />
 
               {/* Word below finger */}
-              <div className="fixed" style={{ transform: 'translate(-50%, 20px)' }}>
+              <div className="absolute left-1/2 -translate-x-1/2 top-[50px] whitespace-nowrap">
                 <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
                   {draggedWordText}
                 </div>
-              </div>
-
-              {/* Tether lines */}
-              <div className="fixed" style={{ transform: 'translate(-50%, -20px)', width: '2px', height: '40px', left: '50%' }}>
-                <div className="w-full h-full bg-yellow-400 dark:bg-yellow-500 opacity-50" />
-              </div>
-              <div className="fixed" style={{ transform: 'translate(-50%, 0px)', width: '2px', height: '20px', left: '50%' }}>
-                <div className="w-full h-full bg-yellow-400 dark:bg-yellow-500 opacity-50" />
               </div>
             </div>
           ) : (

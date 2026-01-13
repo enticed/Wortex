@@ -1,12 +1,6 @@
 'use client';
 
 import { useDroppable } from '@dnd-kit/core';
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import Word from './Word';
 import type { PlacedWord } from '@/types/game';
 
@@ -23,32 +17,6 @@ interface AssemblyAreaProps {
   completedText?: string;
   onReorder?: (reorderedWords: PlacedWord[]) => void;
   dropIndicatorIndex?: number | null; // Phase 2: insertion indicator position
-}
-
-// Sortable word wrapper for Phase 2
-function SortableWord({ id, text }: { id: string; text: string }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id });
-
-  // Don't apply transform during drag to prevent jumping
-  // Only the dragged word itself should move (via DragOverlay)
-  const style = {
-    transform: isDragging ? undefined : CSS.Transform.toString(transform),
-    transition: isDragging ? undefined : transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Word id={id} text={text} isPlaced={true} />
-    </div>
-  );
 }
 
 export default function AssemblyArea({
@@ -111,6 +79,17 @@ export default function AssemblyArea({
     const allRequiredPresent = Array.from(expectedWordCounts.entries()).every(([word, count]) =>
       (placedWordCounts.get(word) || 0) >= count
     );
+
+    // Debug logging
+    if (typeof window !== 'undefined') {
+      console.log('[Counter Debug]', {
+        placedWords: placedWords.map(p => p.word),
+        expectedWordCounts: Object.fromEntries(expectedWordCounts),
+        placedWordCounts: Object.fromEntries(placedWordCounts),
+        W, X, N,
+        allRequiredPresent
+      });
+    }
 
     return { W, X, N, allRequiredPresent };
   };
@@ -213,22 +192,28 @@ export default function AssemblyArea({
               : 'Drag words here to assemble the quote'}
           </div>
         ) : isSortable ? (
-          // Phase 2: Sortable reordering with insertion indicator
-          <SortableContext items={sortedWords.map(w => w.id)} strategy={horizontalListSortingStrategy}>
-            <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
-              {sortedWords.map((word, index) => (
-                <div key={word.id} className="relative">
-                  {/* Insertion indicator - shows where word will be dropped */}
-                  {dropIndicatorIndex === index && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0.5 h-2 bg-blue-500 dark:bg-blue-400 z-10">
-                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
-                    </div>
-                  )}
-                  <SortableWord id={word.id} text={word.word} />
+          // Phase 2: Manual drag-and-drop without auto-reordering
+          <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
+            {sortedWords.map((word, index) => (
+              <div key={word.id} className="relative">
+                {/* Insertion indicator - shows where word will be dropped */}
+                {dropIndicatorIndex === index && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0.5 h-2 bg-blue-500 dark:bg-blue-400 z-10">
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
+                  </div>
+                )}
+                <Word id={word.id} text={word.word} isPlaced={true} />
+              </div>
+            ))}
+            {/* End-of-phrase drop indicator */}
+            {dropIndicatorIndex === sortedWords.length && (
+              <div className="relative h-8 w-1">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0.5 h-2 bg-blue-500 dark:bg-blue-400 z-10">
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
                 </div>
-              ))}
-            </div>
-          </SortableContext>
+              </div>
+            )}
+          </div>
         ) : (
           // Phase 1 or auto-assembly: Words just display in position
           <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
