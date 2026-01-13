@@ -15,6 +15,7 @@ interface AssemblyAreaProps {
   title: string;
   placedWords: PlacedWord[];
   expectedLength: number;
+  expectedWords?: string[]; // For Phase 1 counter calculation
   bgColor: string;
   borderColor: string;
   isAutoAssembly?: boolean;
@@ -52,6 +53,7 @@ export default function AssemblyArea({
   title,
   placedWords,
   expectedLength,
+  expectedWords = [],
   bgColor,
   borderColor,
   isAutoAssembly = false,
@@ -67,6 +69,32 @@ export default function AssemblyArea({
 
   // Sort words by position
   const sortedWords = [...placedWords].sort((a, b) => a.position - b.position);
+
+  // Phase 1 target area: Calculate W / X + N
+  const calculatePhase1Stats = () => {
+    if (!expectedWords.length || isAutoAssembly) return null;
+
+    // W: Number of correct/necessary words placed
+    const correctWords = placedWords.filter(placed =>
+      expectedWords.some(expected => expected.toLowerCase() === placed.word.toLowerCase())
+    );
+    const W = correctWords.length;
+
+    // X: Total words needed
+    const X = expectedLength;
+
+    // N: Number of unnecessary/wrong words
+    const N = placedWords.length - W;
+
+    // Check if all required words are present (may have extras)
+    const allRequiredPresent = expectedWords.every(required =>
+      placedWords.some(placed => placed.word.toLowerCase() === required.toLowerCase())
+    );
+
+    return { W, X, N, allRequiredPresent };
+  };
+
+  const phase1Stats = calculatePhase1Stats();
 
   // Calculate dynamic sizing based on number of words
   // Scale down for longer phrases
@@ -88,21 +116,36 @@ export default function AssemblyArea({
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           {title}
         </h2>
-        <span className={`text-xs ${
-          isComplete
-            ? 'text-green-600 dark:text-green-400 font-semibold'
-            : placedWords.length > expectedLength
-            ? 'text-red-600 dark:text-red-400'
-            : placedWords.length === expectedLength && !isComplete
-            ? 'text-yellow-600 dark:text-yellow-400'
-            : 'text-gray-500 dark:text-gray-400'
-        }`}>
+        <span className="text-xs flex items-center gap-1">
           {isComplete ? (
-            <>✓ Complete</>
-          ) : placedWords.length === expectedLength ? (
-            <>{placedWords.length} / {expectedLength} - Check order</>
+            <span className="text-green-600 dark:text-green-400 font-semibold">✓ Complete</span>
+          ) : phase1Stats ? (
+            // Phase 1 target area: W / X + N format
+            <>
+              {phase1Stats.allRequiredPresent && (
+                <span className="text-green-600 dark:text-green-400 font-semibold mr-1">✓ DONE!</span>
+              )}
+              <span className="text-green-600 dark:text-green-400 font-semibold">{phase1Stats.W}</span>
+              <span className="text-gray-500 dark:text-gray-400">/</span>
+              <span className="text-gray-700 dark:text-gray-300">{phase1Stats.X}</span>
+              {phase1Stats.N > 0 && (
+                <>
+                  <span className="text-gray-500 dark:text-gray-400">+</span>
+                  <span className="text-red-600 dark:text-red-400">{phase1Stats.N}</span>
+                </>
+              )}
+            </>
           ) : (
-            <>{placedWords.length} / {expectedLength} words</>
+            // Auto-assembly or Phase 2: Simple counter
+            <span className={`${
+              placedWords.length > expectedLength
+                ? 'text-red-600 dark:text-red-400'
+                : placedWords.length === expectedLength
+                ? 'text-yellow-600 dark:text-yellow-400'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}>
+              {placedWords.length} / {expectedLength} words
+            </span>
           )}
         </span>
       </div>

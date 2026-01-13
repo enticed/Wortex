@@ -191,6 +191,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             title={gameState.phase === 2 ? "Famous Quote (Reorder)" : "Famous Quote (Collect Words)"}
             placedWords={gameState.targetPhraseWords}
             expectedLength={puzzle.targetPhrase.words.length}
+            expectedWords={puzzle.targetPhrase.words}
             bgColor="bg-blue-50 dark:bg-blue-950"
             borderColor="border-blue-300 dark:border-blue-700"
             isAutoAssembly={false}
