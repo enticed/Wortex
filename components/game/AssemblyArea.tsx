@@ -1,8 +1,22 @@
 'use client';
 
 import { useDroppable } from '@dnd-kit/core';
+import { useDroppable as useWordDroppable } from '@dnd-kit/core';
 import Word from './Word';
 import type { PlacedWord } from '@/types/game';
+
+// Droppable wrapper for Phase 2 words
+function DroppableWord({ word }: { word: PlacedWord }) {
+  const { setNodeRef, isOver } = useWordDroppable({
+    id: word.id,
+  });
+
+  return (
+    <div ref={setNodeRef}>
+      <Word id={word.id} text={word.word} isPlaced={false} />
+    </div>
+  );
+}
 
 interface AssemblyAreaProps {
   id: string;
@@ -184,25 +198,27 @@ export default function AssemblyArea({
           // Phase 2: Manual drag-and-drop without auto-reordering
           <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
             {sortedWords.map((word, index) => (
-              <div key={word.id} className="relative">
-                {/* Insertion indicator - arrow pointing down */}
-                {dropIndicatorIndex === index && (
-                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
-                    {/* Triangle arrow pointing down */}
-                    <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-blue-500 dark:border-t-blue-400" />
-                  </div>
-                )}
-                <Word id={word.id} text={word.word} isPlaced={false} />
+              <div key={word.id} className="flex items-center">
+                {/* Gap before word - with indicator */}
+                <div className="relative w-3 h-8 flex items-center justify-center">
+                  {dropIndicatorIndex === index && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                      {/* Triangle arrow pointing down - positioned so only tip enters gap */}
+                      <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
+                    </div>
+                  )}
+                </div>
+                <DroppableWord word={word} />
               </div>
             ))}
             {/* End-of-phrase drop indicator */}
-            {dropIndicatorIndex === sortedWords.length && (
-              <div className="relative h-8 w-4">
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
-                  <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-blue-500 dark:border-t-blue-400" />
+            <div className="relative w-3 h-8 flex items-center justify-center">
+              {dropIndicatorIndex === sortedWords.length && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                  <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         ) : (
           // Phase 1 or auto-assembly: Words just display in position

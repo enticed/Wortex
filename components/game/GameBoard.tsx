@@ -73,6 +73,11 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     grabWord(wordId);
   };
 
+  // Check if we're dragging a word in Phase 2 reordering mode
+  const isPhase2Reordering = gameState.phase === 2 &&
+    draggedWordId &&
+    gameState.targetPhraseWords.some((w) => w.id === draggedWordId);
+
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
 
@@ -83,19 +88,15 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
       const isActiveInTarget = gameState.targetPhraseWords.some((w) => w.id === activeId);
 
-      console.log('[Phase 2 Drag Over]', { activeId, overId, isActiveInTarget, wordsCount: gameState.targetPhraseWords.length });
-
       if (isActiveInTarget) {
         // If dropping on target area itself (not a word), place at end
         if (overId === 'target') {
-          console.log('  -> Setting indicator at END');
           setDropIndicatorIndex(gameState.targetPhraseWords.length);
         } else {
-          // Find the index where we would insert
+          // Find the index of the word being hovered over
           const overIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
-          console.log('  -> Found overIndex:', overIndex);
           if (overIndex !== -1) {
-            // Simply use the overIndex - show indicator before the hovered word
+            // Show indicator before the hovered word
             setDropIndicatorIndex(overIndex);
           }
         }
@@ -362,8 +363,9 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         dropAnimation={null}
         style={{ cursor: 'grabbing' }}
         modifiers={
-          draggedWordBelongsTo === 'spurious' ? undefined : [
-            // Only offset target/facsimile words - spurious words render at finger position
+          // No offset for spurious words (dual display) or Phase 2 reordering
+          draggedWordBelongsTo === 'spurious' || isPhase2Reordering ? undefined : [
+            // Offset target/facsimile words during Phase 1 placement
             ({ transform }) => {
               const yOffset = draggedWordBelongsTo === 'facsimile' ? 50 : -50;
               return {
@@ -405,13 +407,15 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           ) : (
             // Target or Facsimile words: show in appropriate direction
             <div className="relative">
-              {/* Tether line connecting to finger */}
-              <div
-                className={`absolute left-1/2 w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50 ${
-                  draggedWordBelongsTo === 'facsimile' ? 'bottom-full' : 'top-full'
-                }`}
-                style={{ transformOrigin: draggedWordBelongsTo === 'facsimile' ? 'bottom' : 'top' }}
-              />
+              {/* Tether line connecting to finger - only show during Phase 1 when offset is applied */}
+              {!isPhase2Reordering && (
+                <div
+                  className={`absolute left-1/2 w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50 ${
+                    draggedWordBelongsTo === 'facsimile' ? 'bottom-full' : 'top-full'
+                  }`}
+                  style={{ transformOrigin: draggedWordBelongsTo === 'facsimile' ? 'bottom' : 'top' }}
+                />
+              )}
 
               {/* Dragged word - matches original styling */}
               <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
