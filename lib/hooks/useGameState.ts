@@ -177,14 +177,29 @@ export function useGameState(puzzle: Puzzle | null) {
 
             // Check if Phase 1 is complete:
             // 1. Bottom phrase complete
-            // 2. Top phrase has at least one of each required word
+            // 2. Top phrase has ALL required words (accounting for duplicates)
             const isFacsimileComplete = isPhraseComplete(
               prev.facsimilePhraseWords,
               prev.puzzle.facsimilePhrase.words
             );
 
-            const hasAllRequiredWords = prev.puzzle.targetPhrase.words.every(requiredWord =>
-              newTargetWords.some(placed => placed.word.toLowerCase() === requiredWord.toLowerCase())
+            // Count required instances of each word
+            const requiredWordCounts = new Map<string, number>();
+            prev.puzzle.targetPhrase.words.forEach(word => {
+              const key = word.toLowerCase();
+              requiredWordCounts.set(key, (requiredWordCounts.get(key) || 0) + 1);
+            });
+
+            // Count placed instances of each word
+            const placedWordCounts = new Map<string, number>();
+            newTargetWords.forEach(placed => {
+              const key = placed.word.toLowerCase();
+              placedWordCounts.set(key, (placedWordCounts.get(key) || 0) + 1);
+            });
+
+            // Check if all required words are present with correct counts
+            const hasAllRequiredWords = Array.from(requiredWordCounts.entries()).every(([word, count]) =>
+              (placedWordCounts.get(word) || 0) >= count
             );
 
             const phase1Complete = isFacsimileComplete && hasAllRequiredWords;
@@ -229,8 +244,23 @@ export function useGameState(puzzle: Puzzle | null) {
               prev.puzzle.facsimilePhrase.words
             );
 
-            const hasAllRequiredWords = prev.puzzle.targetPhrase.words.every(requiredWord =>
-              prev.targetPhraseWords.some(placed => placed.word.toLowerCase() === requiredWord.toLowerCase())
+            // Count required instances of each word in target phrase
+            const requiredWordCounts = new Map<string, number>();
+            prev.puzzle.targetPhrase.words.forEach(word => {
+              const key = word.toLowerCase();
+              requiredWordCounts.set(key, (requiredWordCounts.get(key) || 0) + 1);
+            });
+
+            // Count placed instances in target phrase
+            const placedWordCounts = new Map<string, number>();
+            prev.targetPhraseWords.forEach(placed => {
+              const key = placed.word.toLowerCase();
+              placedWordCounts.set(key, (placedWordCounts.get(key) || 0) + 1);
+            });
+
+            // Check if all required words are present with correct counts
+            const hasAllRequiredWords = Array.from(requiredWordCounts.entries()).every(([word, count]) =>
+              (placedWordCounts.get(word) || 0) >= count
             );
 
             const phase1Complete = isFacsimileComplete && hasAllRequiredWords;
@@ -395,8 +425,23 @@ export function useGameState(puzzle: Puzzle | null) {
         prev.puzzle!.facsimilePhrase.words
       );
 
-      const hasAllRequiredWords = prev.puzzle!.targetPhrase.words.every(requiredWord =>
-        prev.targetPhraseWords.some(placed => placed.word.toLowerCase() === requiredWord.toLowerCase())
+      // Count required instances of each word in target phrase
+      const requiredWordCounts = new Map<string, number>();
+      prev.puzzle!.targetPhrase.words.forEach(word => {
+        const key = word.toLowerCase();
+        requiredWordCounts.set(key, (requiredWordCounts.get(key) || 0) + 1);
+      });
+
+      // Count placed instances in target phrase
+      const placedWordCounts = new Map<string, number>();
+      prev.targetPhraseWords.forEach(placed => {
+        const key = placed.word.toLowerCase();
+        placedWordCounts.set(key, (placedWordCounts.get(key) || 0) + 1);
+      });
+
+      // Check if all required words are present with correct counts
+      const hasAllRequiredWords = Array.from(requiredWordCounts.entries()).every(([word, count]) =>
+        (placedWordCounts.get(word) || 0) >= count
       );
 
       const phase1Complete = isFacsimileComplete && hasAllRequiredWords;

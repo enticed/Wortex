@@ -137,10 +137,10 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
 
             // Auto-capture words at 240° rotation (2/3 turn)
             // Only while facsimile phrase is incomplete
-            // Trigger at 220° to account for departure angle adjustment
+            // Trigger at 217° to account for departure angle adjustment
             if (onAutoCapture &&
                 !isFacsimileComplete &&
-                newRotation >= 220 &&
+                newRotation >= 217 &&
                 !autoCaptureTriggered.current.has(word.id)) {
 
               // Check if this word belongs to the facsimile phrase
