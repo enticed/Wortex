@@ -8,9 +8,11 @@ interface WordProps {
   text: string;
   isPlaced?: boolean;
   colorVariant?: 'default' | 'correct' | 'incorrect'; // Color coding for placed words
+  isHighlighted?: boolean; // Temporary highlighting from hints
+  hintType?: 'unnecessary' | 'correctString' | 'nextWord'; // Type of hint for different highlight colors
 }
 
-export default function Word({ id, text, isPlaced = false, colorVariant = 'default' }: WordProps) {
+export default function Word({ id, text, isPlaced = false, colorVariant = 'default', isHighlighted = false, hintType }: WordProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
     disabled: isPlaced,
@@ -20,6 +22,22 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
     transform: CSS.Translate.toString(transform),
     opacity: isDragging ? 0.5 : 1,
     cursor: isPlaced ? 'default' : 'grab',
+  };
+
+  // Determine highlight ring color based on hint type
+  const getHighlightRing = () => {
+    if (!isHighlighted) return '';
+
+    switch (hintType) {
+      case 'unnecessary':
+        return 'ring-4 ring-red-500 dark:ring-red-400 animate-pulse';
+      case 'correctString':
+        return 'ring-4 ring-green-500 dark:ring-green-400 animate-pulse';
+      case 'nextWord':
+        return 'ring-4 ring-yellow-500 dark:ring-yellow-400 animate-pulse';
+      default:
+        return 'ring-4 ring-blue-500 dark:ring-blue-400 animate-pulse';
+    }
   };
 
   return (
@@ -49,6 +67,7 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
               : 'bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100'
             : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-md hover:shadow-lg'
         }
+        ${getHighlightRing()}
         transition-shadow duration-200
       `}>
         {text}

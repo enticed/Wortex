@@ -37,6 +37,8 @@ export function useGameState(puzzle: Puzzle | null) {
     bonusAnswered: false,
     bonusCorrect: null,
     isPaused: false,
+    hintsUsed: 0,
+    activeHint: null,
   });
 
   // Initialize game when puzzle is loaded
@@ -342,23 +344,26 @@ export function useGameState(puzzle: Puzzle | null) {
         // Remove extra words at the end (keep only correct sequence)
         const correctWords = updatedWords.slice(0, expectedWords.length);
 
-        // Calculate score
-        const score = calculateScore(
+        // Calculate score with hint penalty
+        const baseScore = calculateScore(
           prev.totalWordsSeen,
           prev.puzzle.targetPhrase.words.length + prev.puzzle.facsimilePhrase.words.length
         );
+        const score = baseScore + prev.hintsUsed; // Add 1 point per hint used
 
         return {
           ...prev,
           targetPhraseWords: correctWords,
           isComplete: true,
           score,
+          activeHint: null, // Clear any active hint
         };
       }
 
       return {
         ...prev,
         targetPhraseWords: updatedWords,
+        activeHint: null, // Clear highlighting on any reorder move
       };
     });
   }, []);
@@ -473,6 +478,125 @@ export function useGameState(puzzle: Puzzle | null) {
     });
   }, []);
 
+  // Hint 1: Remove first unnecessary word (Phase 2 only)
+  const useUnnecessaryWordHint = useCallback(() => {
+    setGameState((prev) => {
+      if (prev.phase !== 2 || !prev.puzzle) return prev;
+
+      const expectedWords = prev.puzzle.targetPhrase.words;
+
+      // Find first unnecessary word
+      // A word is unnecessary if it's not needed or if we already have enough of this word type
+      const expectedWordCounts = new Map<string, number>();
+      expectedWords.forEach(word => {
+        const key = word.toLowerCase();
+        expectedWordCounts.set(key, (expectedWordCounts.get(key) || 0) + 1);
+      });
+
+      let unnecessaryWordId: string | null = null;
+      const placedWordCounts = new Map<string, number>();
+
+      for (const word of prev.targetPhraseWords) {
+        const key = word.word.toLowerCase();
+        const needed = expectedWordCounts.get(key) || 0;
+        const currentCount = placedWordCounts.get(key) || 0;
+
+        if (needed === 0 || currentCount >= needed) {
+          // This word is unnecessary
+          unnecessaryWordId = word.id;
+          break;
+        }
+
+        placedWordCounts.set(key, currentCount + 1);
+      }
+
+      if (!unnecessaryWordId) {
+        // No unnecessary words found
+        return prev;
+      }
+
+      // Briefly highlight the word before removal (will be auto-removed by UI after animation)
+      return {
+        ...prev,
+        activeHint: { type: 'unnecessary', wordIds: [unnecessaryWordId] },
+        hintsUsed: prev.hintsUsed + 1,
+      };
+    });
+  }, []);
+
+  // Hint 2: Highlight correct string from beginning (Phase 2 only)
+  const useCorrectStringHint = useCallback(() => {
+    setGameState((prev) => {
+      if (prev.phase !== 2 || !prev.puzzle) return prev;
+
+      const expectedWords = prev.puzzle.targetPhrase.words;
+      const correctWordIds: string[] = [];
+
+      // Find all words in correct order from the start
+      for (let i = 0; i < expectedWords.length; i++) {
+        const placedWord = prev.targetPhraseWords[i];
+        if (!placedWord || placedWord.word.toLowerCase() !== expectedWords[i].toLowerCase()) {
+          break;
+        }
+        correctWordIds.push(placedWord.id);
+      }
+
+      if (correctWordIds.length === 0) {
+        // No correct words at the start
+        return prev;
+      }
+
+      return {
+        ...prev,
+        activeHint: { type: 'correctString', wordIds: correctWordIds },
+        hintsUsed: prev.hintsUsed + 1,
+      };
+    });
+  }, []);
+
+  // Hint 3: Highlight next word that should follow correct string (Phase 2 only)
+  const useNextWordHint = useCallback(() => {
+    setGameState((prev) => {
+      if (prev.phase !== 2 || !prev.puzzle) return prev;
+
+      const expectedWords = prev.puzzle.targetPhrase.words;
+
+      // Find length of correct string from start
+      let correctStringLength = 0;
+      for (let i = 0; i < expectedWords.length; i++) {
+        const placedWord = prev.targetPhraseWords[i];
+        if (!placedWord || placedWord.word.toLowerCase() !== expectedWords[i].toLowerCase()) {
+          break;
+        }
+        correctStringLength++;
+      }
+
+      // If already complete, no next word
+      if (correctStringLength >= expectedWords.length) {
+        return prev;
+      }
+
+      // Find the word that should come next
+      const nextExpectedWord = expectedWords[correctStringLength].toLowerCase();
+
+      // Find this word in the placed words (after the correct string)
+      const nextWordId = prev.targetPhraseWords
+        .slice(correctStringLength)
+        .find(w => w.word.toLowerCase() === nextExpectedWord)?.id;
+
+      if (!nextWordId) {
+        // Next word not found in placed words
+        return prev;
+      }
+
+      return {
+        ...prev,
+        activeHint: { type: 'nextWord', wordIds: [nextWordId] },
+        hintsUsed: prev.hintsUsed + 1,
+      };
+    });
+  }, []);
+
   return {
     gameState,
     grabWord,
@@ -483,5 +607,8 @@ export function useGameState(puzzle: Puzzle | null) {
     skipBonus,
     dismissWord,
     autoCaptureFacsimileWord,
+    useUnnecessaryWordHint,
+    useCorrectStringHint,
+    useNextWordHint,
   };
 }

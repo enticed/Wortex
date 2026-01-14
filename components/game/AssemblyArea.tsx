@@ -6,14 +6,31 @@ import Word from './Word';
 import type { PlacedWord } from '@/types/game';
 
 // Droppable wrapper for Phase 2 words
-function DroppableWord({ word, colorVariant }: { word: PlacedWord; colorVariant?: 'default' | 'correct' | 'incorrect' }) {
+function DroppableWord({
+  word,
+  colorVariant,
+  isHighlighted,
+  hintType
+}: {
+  word: PlacedWord;
+  colorVariant?: 'default' | 'correct' | 'incorrect';
+  isHighlighted?: boolean;
+  hintType?: 'unnecessary' | 'correctString' | 'nextWord';
+}) {
   const { setNodeRef, isOver } = useWordDroppable({
     id: word.id,
   });
 
   return (
     <div ref={setNodeRef}>
-      <Word id={word.id} text={word.word} isPlaced={false} colorVariant={colorVariant} />
+      <Word
+        id={word.id}
+        text={word.word}
+        isPlaced={false}
+        colorVariant={colorVariant}
+        isHighlighted={isHighlighted}
+        hintType={hintType}
+      />
     </div>
   );
 }
@@ -31,6 +48,12 @@ interface AssemblyAreaProps {
   completedText?: string;
   onReorder?: (reorderedWords: PlacedWord[]) => void;
   dropIndicatorIndex?: number | null; // Phase 2: insertion indicator position
+  activeHint?: { type: 'unnecessary' | 'correctString' | 'nextWord', wordIds: string[] } | null; // Phase 2: hint highlighting
+  onUseUnnecessaryWordHint?: () => void; // Phase 2: hint callbacks
+  onUseCorrectStringHint?: () => void;
+  onUseNextWordHint?: () => void;
+  hintsUsed?: number; // Phase 2: total hints used for display
+  phase?: 1 | 2; // Game phase
 }
 
 export default function AssemblyArea({
@@ -46,6 +69,12 @@ export default function AssemblyArea({
   completedText = '',
   onReorder,
   dropIndicatorIndex = null,
+  activeHint = null,
+  onUseUnnecessaryWordHint,
+  onUseCorrectStringHint,
+  onUseNextWordHint,
+  hintsUsed = 0,
+  phase = 1,
 }: AssemblyAreaProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -229,20 +258,30 @@ export default function AssemblyArea({
         ) : isSortable ? (
           // Phase 2: Manual drag-and-drop without auto-reordering
           <div className={`flex flex-wrap gap-1 items-start content-start w-full ${getWordScale()}`}>
-            {sortedWords.map((word, index) => (
-              <div key={word.id} className="flex items-center gap-0">
-                {/* Invisible hover zone before word - larger area for detection */}
-                <div className="relative w-1 h-12 flex items-center justify-center">
-                  {dropIndicatorIndex === index && (
-                    <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
-                      {/* Triangle arrow pointing down - split difference between -top-3 and top-1/2 */}
-                      <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
-                    </div>
-                  )}
+            {sortedWords.map((word, index) => {
+              const isHighlighted = activeHint?.wordIds.includes(word.id) || false;
+              const hintType = isHighlighted ? activeHint?.type : undefined;
+
+              return (
+                <div key={word.id} className="flex items-center gap-0">
+                  {/* Invisible hover zone before word - larger area for detection */}
+                  <div className="relative w-1 h-12 flex items-center justify-center">
+                    {dropIndicatorIndex === index && (
+                      <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
+                        {/* Triangle arrow pointing down - split difference between -top-3 and top-1/2 */}
+                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
+                      </div>
+                    )}
+                  </div>
+                  <DroppableWord
+                    word={word}
+                    colorVariant={getWordColorVariant(word)}
+                    isHighlighted={isHighlighted}
+                    hintType={hintType}
+                  />
                 </div>
-                <DroppableWord word={word} colorVariant={getWordColorVariant(word)} />
-              </div>
-            ))}
+              );
+            })}
             {/* End-of-phrase drop indicator */}
             <div className="relative w-1 h-12 flex items-center justify-center">
               {dropIndicatorIndex === sortedWords.length && (
@@ -261,6 +300,41 @@ export default function AssemblyArea({
           </div>
         )}
       </div>
+
+      {/* Phase 2 Hint Buttons */}
+      {phase === 2 && isSortable && !isComplete && (
+        <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+          <div className="flex flex-col gap-2">
+            {/* Hint Buttons */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              <button
+                onClick={onUseUnnecessaryWordHint}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+              >
+                Remove Unnecessary +1
+              </button>
+              <button
+                onClick={onUseCorrectStringHint}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+              >
+                Show Correct String +1
+              </button>
+              <button
+                onClick={onUseNextWordHint}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors"
+              >
+                Show Next Word +1
+              </button>
+            </div>
+            {/* Hints Used Counter */}
+            {hintsUsed > 0 && (
+              <div className="text-center text-xs text-gray-600 dark:text-gray-400">
+                Hints used: {hintsUsed} (+{hintsUsed} point{hintsUsed > 1 ? 's' : ''} penalty)
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

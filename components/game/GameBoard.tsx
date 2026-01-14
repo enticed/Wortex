@@ -28,7 +28,20 @@ interface GameBoardProps {
 }
 
 export default function GameBoard({ puzzle }: GameBoardProps) {
-  const { gameState, grabWord, placeWord, removeWord, reorderWords, answerBonus, skipBonus, dismissWord, autoCaptureFacsimileWord } = useGameState(puzzle);
+  const {
+    gameState,
+    grabWord,
+    placeWord,
+    removeWord,
+    reorderWords,
+    answerBonus,
+    skipBonus,
+    dismissWord,
+    autoCaptureFacsimileWord,
+    useUnnecessaryWordHint,
+    useCorrectStringHint,
+    useNextWordHint,
+  } = useGameState(puzzle);
   const { userId, refreshStats } = useUser();
   const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
   const [draggedWordText, setDraggedWordText] = useState<string | null>(null);
@@ -206,6 +219,21 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     submitScore();
   }, [gameState.bonusAnswered, scoreSubmitted, userId, gameState.finalScore, gameState.bonusCorrect, puzzle.id, refreshStats]);
 
+  // Auto-remove unnecessary word after brief highlight
+  useEffect(() => {
+    if (gameState.activeHint?.type === 'unnecessary' && gameState.activeHint.wordIds.length > 0) {
+      const wordId = gameState.activeHint.wordIds[0];
+
+      // Brief delay to show highlight, then remove word
+      const timeout = setTimeout(() => {
+        const updatedWords = gameState.targetPhraseWords.filter(w => w.id !== wordId);
+        reorderWords(updatedWords);
+      }, 800); // 800ms highlight duration
+
+      return () => clearTimeout(timeout);
+    }
+  }, [gameState.activeHint, gameState.targetPhraseWords, reorderWords]);
+
   // Check if individual phrases are complete
   const isTargetComplete = isPhraseComplete(
     gameState.targetPhraseWords,
@@ -247,6 +275,12 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             completedText={puzzle.targetPhrase.text}
             onReorder={gameState.phase === 2 ? reorderWords : undefined}
             dropIndicatorIndex={dropIndicatorIndex}
+            activeHint={gameState.activeHint}
+            onUseUnnecessaryWordHint={useUnnecessaryWordHint}
+            onUseCorrectStringHint={useCorrectStringHint}
+            onUseNextWordHint={useNextWordHint}
+            hintsUsed={gameState.hintsUsed}
+            phase={gameState.phase}
           />
         </div>
 

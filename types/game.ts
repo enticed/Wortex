@@ -69,6 +69,8 @@ export interface GameState {
   bonusAnswered: boolean;
   bonusCorrect: boolean | null;
   isPaused: boolean;
+  hintsUsed: number; // Total hints used for score penalty calculation
+  activeHint: { type: 'unnecessary' | 'correctString' | 'nextWord', wordIds: string[] } | null; // Currently active hint for highlighting
 }
 
 export interface GameStats {
