@@ -17,7 +17,9 @@
       "Bash(node scripts/add-sample-puzzle.mjs:*)",
       "Bash(node scripts/test-anonymous-auth.mjs:*)",
       "Bash(npm run build:*)",
-      "Bash(node scripts/add-long-test-puzzle.mjs:*)"
+      "Bash(node scripts/add-long-test-puzzle.mjs:*)",
+      "Bash(gettysburg-puzzle.json)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

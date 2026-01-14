@@ -1,0 +1,99 @@
+{
+  "id": "gettysburg-test",
+  "date": "2026-01-13",
+  "targetPhrase": {
+    "id": "target-gettysburg",
+    "text": "Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.",
+    "words": [
+      "Four",
+      "score",
+      "and",
+      "seven",
+      "years",
+      "ago",
+      "our",
+      "fathers",
+      "brought",
+      "forth",
+      "on",
+      "this",
+      "continent,",
+      "a",
+      "new",
+      "nation,",
+      "conceived",
+      "in",
+      "Liberty,",
+      "and",
+      "dedicated",
+      "to",
+      "the",
+      "proposition",
+      "that",
+      "all",
+      "men",
+      "are",
+      "created",
+      "equal."
+    ],
+    "type": "target"
+  },
+  "facsimilePhrase": {
+    "id": "facsimile-gettysburg",
+    "text": "Eighty-seven years back, our ancestors established on this landmass a fresh country, born in Freedom, and committed to the idea that every person is made the same.",
+    "words": [
+      "Eighty-seven",
+      "years",
+      "back,",
+      "our",
+      "ancestors",
+      "established",
+      "on",
+      "this",
+      "landmass",
+      "a",
+      "fresh",
+      "country,",
+      "born",
+      "in",
+      "Freedom,",
+      "and",
+      "committed",
+      "to",
+      "the",
+      "idea",
+      "that",
+      "every",
+      "person",
+      "is",
+      "made",
+      "the",
+      "same."
+    ],
+    "type": "facsimile"
+  },
+  "difficulty": 5,
+  "bonusQuestion": {
+    "type": "quote",
+    "question": "Who delivered this famous address?",
+    "options": [
+      {
+        "id": "lincoln",
+        "person": "Abraham Lincoln",
+        "year": 1863
+      },
+      {
+        "id": "washington",
+        "person": "George Washington",
+        "year": 1776
+      },
+      {
+        "id": "jefferson",
+        "person": "Thomas Jefferson",
+        "year": 1801
+      }
+    ],
+    "correctAnswerId": "lincoln"
+  },
+  "allWords": []
+}
