@@ -7,9 +7,10 @@ interface WordProps {
   id: string;
   text: string;
   isPlaced?: boolean;
+  colorVariant?: 'default' | 'correct' | 'incorrect'; // Color coding for placed words
 }
 
-export default function Word({ id, text, isPlaced = false }: WordProps) {
+export default function Word({ id, text, isPlaced = false, colorVariant = 'default' }: WordProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
     disabled: isPlaced,
@@ -38,10 +39,14 @@ export default function Word({ id, text, isPlaced = false }: WordProps) {
 
       {/* Actual word styling */}
       <div className={`
-        px-3 py-1.5 rounded-lg font-semibold
+        px-2 py-1 rounded-lg font-semibold
         ${
           isPlaced
-            ? 'bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100'
+            ? colorVariant === 'correct'
+              ? 'bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100'
+              : colorVariant === 'incorrect'
+              ? 'bg-red-200 dark:bg-red-800 text-red-900 dark:text-red-100'
+              : 'bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100'
             : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-md hover:shadow-lg'
         }
         transition-shadow duration-200

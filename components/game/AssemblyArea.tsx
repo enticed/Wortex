@@ -6,14 +6,14 @@ import Word from './Word';
 import type { PlacedWord } from '@/types/game';
 
 // Droppable wrapper for Phase 2 words
-function DroppableWord({ word }: { word: PlacedWord }) {
+function DroppableWord({ word, colorVariant }: { word: PlacedWord; colorVariant?: 'default' | 'correct' | 'incorrect' }) {
   const { setNodeRef, isOver } = useWordDroppable({
     id: word.id,
   });
 
   return (
     <div ref={setNodeRef}>
-      <Word id={word.id} text={word.word} isPlaced={false} />
+      <Word id={word.id} text={word.word} isPlaced={false} colorVariant={colorVariant} />
     </div>
   );
 }
@@ -99,6 +99,37 @@ export default function AssemblyArea({
 
   const phase1Stats = calculatePhase1Stats();
 
+  // Helper function to determine if a word is correct (needed) or incorrect (unnecessary)
+  const getWordColorVariant = (word: PlacedWord): 'default' | 'correct' | 'incorrect' => {
+    // Only apply color coding in Phase 1 target area (not auto-assembly, not Phase 2)
+    if (isAutoAssembly || !expectedWords.length) return 'default';
+
+    // Count how many times this word type is needed
+    const wordLower = word.word.toLowerCase();
+    const neededCount = expectedWords.filter(w => w.toLowerCase() === wordLower).length;
+
+    if (neededCount === 0) {
+      // Word doesn't belong in this phrase at all
+      return 'incorrect';
+    }
+
+    // Count how many times this word type has been placed BEFORE this word
+    const placedBeforeCount = placedWords
+      .filter((w, idx) => {
+        const wLower = w.word.toLowerCase();
+        const currentIdx = placedWords.findIndex(pw => pw.id === word.id);
+        return wLower === wordLower && idx < currentIdx;
+      })
+      .length;
+
+    // If we've already placed enough of this word type, this one is extra
+    if (placedBeforeCount >= neededCount) {
+      return 'incorrect';
+    }
+
+    return 'correct';
+  };
+
   // Calculate dynamic sizing based on number of words
   // Scale down for longer phrases
   const getWordScale = () => {
@@ -108,9 +139,9 @@ export default function AssemblyArea({
   };
 
   const getGapSize = () => {
-    if (expectedLength <= 15) return 'gap-2';
-    if (expectedLength <= 25) return 'gap-1.5';
-    return 'gap-1';
+    if (expectedLength <= 15) return 'gap-1.5';
+    if (expectedLength <= 25) return 'gap-1';
+    return 'gap-0.5';
   };
 
   return (
@@ -208,7 +239,7 @@ export default function AssemblyArea({
                     </div>
                   )}
                 </div>
-                <DroppableWord word={word} />
+                <DroppableWord word={word} colorVariant={getWordColorVariant(word)} />
               </div>
             ))}
             {/* End-of-phrase drop indicator */}
@@ -224,7 +255,7 @@ export default function AssemblyArea({
           // Phase 1 or auto-assembly: Words just display in position
           <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
             {sortedWords.map((word) => (
-              <Word key={word.id} id={word.id} text={word.word} isPlaced={true} />
+              <Word key={word.id} id={word.id} text={word.word} isPlaced={true} colorVariant={getWordColorVariant(word)} />
             ))}
           </div>
         )}
