@@ -133,14 +133,15 @@ export default function AssemblyArea({
   // Calculate dynamic sizing based on number of words
   // Scale down for longer phrases
   const getWordScale = () => {
-    if (expectedLength <= 15) return 'text-sm'; // Normal size
-    if (expectedLength <= 25) return 'text-xs'; // Slightly smaller
-    return 'text-[10px]'; // Very small for long phrases
+    if (expectedLength <= 15) return 'text-base leading-tight'; // Normal size
+    if (expectedLength <= 30) return 'text-sm leading-tight'; // Medium
+    if (expectedLength <= 50) return 'text-xs leading-tight'; // Smaller
+    return 'text-[11px] leading-tight'; // Very small for extremely long phrases
   };
 
   const getGapSize = () => {
     if (expectedLength <= 15) return 'gap-1.5';
-    if (expectedLength <= 25) return 'gap-1';
+    if (expectedLength <= 30) return 'gap-1';
     return 'gap-0.5';
   };
 
@@ -187,7 +188,7 @@ export default function AssemblyArea({
       <div
         ref={setNodeRef}
         className={`
-          flex-1 border-2 rounded-lg p-2
+          flex-1 border-2 rounded-lg p-1.5
           flex items-start justify-center
           overflow-y-auto
           transition-all duration-500
