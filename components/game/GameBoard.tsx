@@ -41,6 +41,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     useUnnecessaryWordHint,
     useCorrectStringHint,
     useNextWordHint,
+    confirmPhase1Complete,
   } = useGameState(puzzle);
   const { userId, refreshStats } = useUser();
   const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
@@ -50,6 +51,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [vortexSpeed, setVortexSpeed] = useState(1.0); // Speed multiplier for vortex rotation
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null); // Phase 2 insertion indicator
+  const [allowBonusRound, setAllowBonusRound] = useState(false); // Delay showing bonus round for animation
   const gameStartTime = useRef<number>(Date.now());
 
   // Configure sensors for both mouse and touch input
@@ -234,6 +236,24 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     }
   }, [gameState.activeHint, gameState.targetPhraseWords, reorderWords]);
 
+  // Delay bonus round display to allow completion animation to play
+  useEffect(() => {
+    if (gameState.isComplete && gameState.showCompletionAnimation) {
+      // Reset allowBonusRound when puzzle completes
+      setAllowBonusRound(false);
+
+      // Wait for animation to complete (1.2s) before showing bonus round
+      const timer = setTimeout(() => {
+        setAllowBonusRound(true);
+      }, 1300); // Slightly longer than animation duration
+
+      return () => clearTimeout(timer);
+    } else if (!gameState.isComplete) {
+      // Reset when puzzle is not complete
+      setAllowBonusRound(false);
+    }
+  }, [gameState.isComplete, gameState.showCompletionAnimation]);
+
   // Check if individual phrases are complete
   const isTargetComplete = isPhraseComplete(
     gameState.targetPhraseWords,
@@ -258,13 +278,13 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       onDragEnd={handleDragEnd}
     >
       <div className="h-[calc(100dvh-3rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
-        {/* Top Area - Phase 1: 25%, Phase 2: 75% */}
+        {/* Top Area - Phase 1: 35%, Phase 2: 75% */}
         <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
-          gameState.phase === 2 ? 'h-[75%]' : 'h-[25%]'
+          gameState.phase === 2 ? 'h-[75%]' : 'h-[35%]'
         }`}>
           <AssemblyArea
             id="target"
-            title={gameState.phase === 2 ? "Original (Reorder)" : "Original (Collect Words)"}
+            title={gameState.phase === 2 ? "Original" : "Original"}
             placedWords={gameState.targetPhraseWords}
             expectedLength={puzzle.targetPhrase.words.length}
             expectedWords={puzzle.targetPhrase.words}
@@ -280,7 +300,11 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             onUseCorrectStringHint={useCorrectStringHint}
             onUseNextWordHint={useNextWordHint}
             hintsUsed={gameState.hintsUsed}
+            reorderMoves={gameState.reorderMoves}
             phase={gameState.phase}
+            showCompletionAnimation={gameState.showCompletionAnimation}
+            totalWordsSeen={gameState.totalWordsSeen}
+            totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
           />
         </div>
 
@@ -360,7 +384,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         )}
 
         {/* Phase 2 Complete - Show bonus/results in middle area */}
-        {gameState.phase === 2 && gameState.isComplete && (
+        {gameState.phase === 2 && gameState.isComplete && allowBonusRound && (
           <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
             {gameState.bonusAnswered ? (
               <FinalResults
@@ -383,11 +407,13 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           </div>
         )}
 
-        {/* Bottom 25% - Facsimile Phrase Assembly Area */}
-        <div className="h-[25%] border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950">
+        {/* Bottom Area - Facsimile Phrase Assembly Area - Phase 1: 15%, Phase 2: 25% */}
+        <div className={`border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950 transition-all duration-500 ${
+          gameState.phase === 2 ? 'h-[25%]' : 'h-[15%]'
+        }`}>
           <AssemblyArea
             id="facsimile"
-            title="Spin-off (Auto-Assembly)"
+            title="Spin-off"
             placedWords={gameState.facsimilePhraseWords}
             expectedLength={puzzle.facsimilePhrase.words.length}
             bgColor="bg-green-50 dark:bg-green-950"
@@ -395,6 +421,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             isAutoAssembly={true}
             isComplete={isFacsimileComplete}
             completedText={puzzle.facsimilePhrase.text}
+            phase={gameState.phase}
           />
         </div>
 
@@ -467,6 +494,29 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           )
         ) : null}
       </DragOverlay>
+
+      {/* Phase 1 Complete Confirmation Dialog */}
+      {gameState.showPhase1CompleteDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md mx-4 border-2 border-purple-400 dark:border-purple-600">
+            <div className="text-center">
+              <div className="text-4xl mb-4">🎉</div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                Phase 1 Complete!
+              </h2>
+              <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+                All required words collected! Ready to put them in the correct order?
+              </p>
+              <button
+                onClick={confirmPhase1Complete}
+                className="px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DndContext>
   );
 }

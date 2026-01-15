@@ -13,7 +13,7 @@ export default function AppLayout({ children, showHeader = true }: AppLayoutProp
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <>
+    <div id="game-root">
       {showHeader && <Header onMenuToggle={() => setMenuOpen(true)} />}
       <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
@@ -21,6 +21,6 @@ export default function AppLayout({ children, showHeader = true }: AppLayoutProp
       <main className={showHeader ? 'pt-12' : ''}>
         {children}
       </main>
-    </>
+    </div>
   );
 }

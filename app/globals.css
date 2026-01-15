@@ -25,15 +25,16 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   /* Prevent pull-to-refresh on mobile */
   overscroll-behavior: none;
-  /* Fixed height for mobile to prevent unwanted scrolling */
+}
+
+/* Game-specific: Fixed height and no scrolling for game pages */
+body:has(#game-root) {
   height: 100vh;
   height: 100dvh; /* Use dynamic viewport height on mobile */
   overflow: hidden;
 }
 
-/* Prevent scrolling on HTML element too */
-html {
-  overscroll-behavior: none;
+html:has(#game-root) {
   overflow: hidden;
 }
 
@@ -50,4 +51,17 @@ html {
 
 .animate-fade-in {
   animation: fade-in 0.5s ease-out;
+}
+
+@keyframes scroll-horizontal {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-horizontal {
+  animation: scroll-horizontal 15s linear infinite;
 }

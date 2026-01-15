@@ -38,7 +38,10 @@ export function useGameState(puzzle: Puzzle | null) {
     bonusCorrect: null,
     isPaused: false,
     hintsUsed: 0,
+    reorderMoves: 0,
     activeHint: null,
+    showCompletionAnimation: false,
+    showPhase1CompleteDialog: false,
   });
 
   // Initialize game when puzzle is loaded
@@ -131,7 +134,7 @@ export function useGameState(puzzle: Puzzle | null) {
     }, 1500);
 
     return () => clearInterval(interval);
-  }, [puzzle, gameState.isComplete, gameState.isPaused]);
+  }, [puzzle, gameState.isComplete, gameState.isPaused, gameState.phase]);
 
   // Grab a word from the vortex
   const grabWord = useCallback((wordId: string) => {
@@ -210,7 +213,7 @@ export function useGameState(puzzle: Puzzle | null) {
               ...prev,
               targetPhraseWords: newTargetWords,
               vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
-              phase: phase1Complete ? 2 : 1,
+              showPhase1CompleteDialog: phase1Complete,
             };
           } else {
             // Bottom area (facsimile): Use auto-assembly
@@ -271,7 +274,7 @@ export function useGameState(puzzle: Puzzle | null) {
               ...prev,
               facsimilePhraseWords: newFacsimileWords,
               vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
-              phase: phase1Complete ? 2 : 1,
+              showPhase1CompleteDialog: phase1Complete,
             };
           }
         }
@@ -332,6 +335,14 @@ export function useGameState(puzzle: Puzzle | null) {
         position: index,
       }));
 
+      // Check if positions actually changed (for move counting)
+      const positionsChanged = prev.targetPhraseWords.some((word, idx) =>
+        word.id !== updatedWords[idx]?.id
+      );
+
+      // Increment move counter
+      const newMoveCount = positionsChanged ? prev.reorderMoves + 1 : prev.reorderMoves;
+
       // Check if Phase 2 is complete:
       // Correct sequence must be at the start of the array
       const expectedWords = prev.puzzle.targetPhrase.words;
@@ -344,19 +355,21 @@ export function useGameState(puzzle: Puzzle | null) {
         // Remove extra words at the end (keep only correct sequence)
         const correctWords = updatedWords.slice(0, expectedWords.length);
 
-        // Calculate score with hint penalty
+        // Calculate score with Phase 2 penalties (moves + hints)
         const baseScore = calculateScore(
           prev.totalWordsSeen,
           prev.puzzle.targetPhrase.words.length + prev.puzzle.facsimilePhrase.words.length
         );
-        const score = baseScore + prev.hintsUsed; // Add 1 point per hint used
+        const score = baseScore + newMoveCount + prev.hintsUsed;
 
         return {
           ...prev,
           targetPhraseWords: correctWords,
+          reorderMoves: newMoveCount,
           isComplete: true,
           score,
           activeHint: null, // Clear any active hint
+          showCompletionAnimation: true, // Trigger completion animation
         };
       }
 
@@ -364,6 +377,7 @@ export function useGameState(puzzle: Puzzle | null) {
         ...prev,
         targetPhraseWords: updatedWords,
         activeHint: null, // Clear highlighting on any reorder move
+        reorderMoves: newMoveCount,
       };
     });
   }, []);
@@ -455,9 +469,18 @@ export function useGameState(puzzle: Puzzle | null) {
         ...prev,
         facsimilePhraseWords: newFacsimileWords,
         vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
-        phase: phase1Complete ? 2 : 1,
+        showPhase1CompleteDialog: phase1Complete,
       };
     });
+  }, []);
+
+  // Confirm Phase 1 completion and transition to Phase 2
+  const confirmPhase1Complete = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      phase: 2,
+      showPhase1CompleteDialog: false,
+    }));
   }, []);
 
   // Dismiss a word from vortex (drag to right edge) - skips next cycle
@@ -610,5 +633,6 @@ export function useGameState(puzzle: Puzzle | null) {
     useUnnecessaryWordHint,
     useCorrectStringHint,
     useNextWordHint,
+    confirmPhase1Complete,
   };
 }

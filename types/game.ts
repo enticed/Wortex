@@ -70,7 +70,10 @@ export interface GameState {
   bonusCorrect: boolean | null;
   isPaused: boolean;
   hintsUsed: number; // Total hints used for score penalty calculation
+  reorderMoves: number; // Number of reordering moves made in Phase 2
   activeHint: { type: 'unnecessary' | 'correctString' | 'nextWord', wordIds: string[] } | null; // Currently active hint for highlighting
+  showCompletionAnimation: boolean; // Brief animation when Phase 2 is completed
+  showPhase1CompleteDialog: boolean; // Show confirmation dialog before transitioning to Phase 2
 }
 
 export interface GameStats {

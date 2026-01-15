@@ -2,6 +2,7 @@
 
 import { useDroppable } from '@dnd-kit/core';
 import { useDroppable as useWordDroppable } from '@dnd-kit/core';
+import { useEffect, useState } from 'react';
 import Word from './Word';
 import type { PlacedWord } from '@/types/game';
 
@@ -53,7 +54,11 @@ interface AssemblyAreaProps {
   onUseCorrectStringHint?: () => void;
   onUseNextWordHint?: () => void;
   hintsUsed?: number; // Phase 2: total hints used for display
+  reorderMoves?: number; // Phase 2: number of reordering moves made
   phase?: 1 | 2; // Game phase
+  showCompletionAnimation?: boolean; // Trigger completion animation
+  totalWordsSeen?: number; // For score calculation
+  totalUniqueWords?: number; // Total unique words in both phrases for score calculation
 }
 
 export default function AssemblyArea({
@@ -74,13 +79,32 @@ export default function AssemblyArea({
   onUseCorrectStringHint,
   onUseNextWordHint,
   hintsUsed = 0,
+  reorderMoves = 0,
   phase = 1,
+  showCompletionAnimation = false,
+  totalWordsSeen = 0,
+  totalUniqueWords = 0,
 }: AssemblyAreaProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
   });
 
   const isSortable = !!onReorder;
+
+  // State for completion animation
+  const [animatingCompletion, setAnimatingCompletion] = useState(false);
+
+  // Trigger completion animation when showCompletionAnimation becomes true
+  useEffect(() => {
+    if (showCompletionAnimation && !animatingCompletion) {
+      setAnimatingCompletion(true);
+      // Animation lasts 1.2 seconds
+      const timer = setTimeout(() => {
+        setAnimatingCompletion(false);
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [showCompletionAnimation, animatingCompletion]);
 
   // Sort words by position
   const sortedWords = [...placedWords].sort((a, b) => a.position - b.position);
@@ -174,15 +198,47 @@ export default function AssemblyArea({
     return 'gap-0.5';
   };
 
+  // Calculate ongoing score
+  const calculateOngoingScore = () => {
+    if (isAutoAssembly || !totalUniqueWords) return null;
+
+    // Phase 1: Base score = totalWordsSeen / totalUniqueWords
+    const baseScore = totalUniqueWords > 0 ? totalWordsSeen / totalUniqueWords : 0;
+
+    if (phase === 1) {
+      return baseScore;
+    } else {
+      // Phase 2: Add moves and hints to base score
+      return baseScore + reorderMoves + hintsUsed;
+    }
+  };
+
+  const ongoingScore = calculateOngoingScore();
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           {title}
         </h2>
+        {/* Center Score Display - only for target area */}
+        {!isAutoAssembly && ongoingScore !== null && (
+          <div className="flex-1 flex justify-center">
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+              Score: <span className="text-purple-600 dark:text-purple-400">{ongoingScore.toFixed(2)}</span>
+            </span>
+          </div>
+        )}
         <span className="text-xs flex items-center gap-1">
           {isComplete ? (
             <span className="text-green-600 dark:text-green-400 font-semibold">✓ Complete</span>
+          ) : phase === 2 && !isAutoAssembly ? (
+            // Phase 2 target area: M + H format (Moves + Hints)
+            <>
+              <span className="text-blue-600 dark:text-blue-400 font-semibold">{reorderMoves}</span>
+              <span className="text-gray-500 dark:text-gray-400">+</span>
+              <span className="text-orange-600 dark:text-orange-400 font-semibold">{hintsUsed}</span>
+            </>
           ) : phase1Stats ? (
             // Phase 1 target area: W / X + N format
             <>
@@ -200,7 +256,7 @@ export default function AssemblyArea({
               )}
             </>
           ) : (
-            // Auto-assembly or Phase 2: Simple counter
+            // Auto-assembly: Simple counter
             <span className={`${
               placedWords.length > expectedLength
                 ? 'text-red-600 dark:text-red-400'
@@ -231,22 +287,37 @@ export default function AssemblyArea({
       >
         {isComplete ? (
           // Completed phrase - show as solid block with punctuation, auto-sized to fit
-          <div className="text-center animate-fade-in w-full h-full flex items-center justify-center p-2">
-            <p className={`font-serif italic leading-relaxed ${
-              id === 'target'
-                ? 'text-blue-900 dark:text-blue-100'
-                : 'text-green-900 dark:text-green-100'
-            } ${
-              // Dynamic sizing based on text length
-              completedText.length <= 50 ? 'text-2xl' :
-              completedText.length <= 100 ? 'text-xl' :
-              completedText.length <= 150 ? 'text-lg' :
-              completedText.length <= 200 ? 'text-base' :
-              'text-sm'
-            }`}>
-              &ldquo;{completedText}&rdquo;
-            </p>
-          </div>
+          // Phase 1 facsimile: single line with horizontal scroll animation
+          id === 'facsimile' && phase === 1 ? (
+            <div className="text-center animate-fade-in w-full h-full flex items-center justify-center overflow-hidden p-2">
+              <div className="animate-scroll-horizontal whitespace-nowrap">
+                <p className="font-serif italic text-lg text-green-900 dark:text-green-100 inline-block px-4">
+                  &ldquo;{completedText}&rdquo;
+                </p>
+                {/* Duplicate for seamless loop */}
+                <p className="font-serif italic text-lg text-green-900 dark:text-green-100 inline-block px-4">
+                  &ldquo;{completedText}&rdquo;
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center animate-fade-in w-full h-full flex items-center justify-center p-2">
+              <p className={`font-serif italic leading-relaxed ${
+                id === 'target'
+                  ? 'text-blue-900 dark:text-blue-100'
+                  : 'text-green-900 dark:text-green-100'
+              } ${
+                // Dynamic sizing based on text length
+                completedText.length <= 50 ? 'text-2xl' :
+                completedText.length <= 100 ? 'text-xl' :
+                completedText.length <= 150 ? 'text-lg' :
+                completedText.length <= 200 ? 'text-base' :
+                'text-sm'
+              }`}>
+                &ldquo;{completedText}&rdquo;
+              </p>
+            </div>
+          )
         ) : sortedWords.length === 0 ? (
           <div className="text-gray-400 dark:text-gray-600 text-sm">
             {isSortable
@@ -259,8 +330,11 @@ export default function AssemblyArea({
           // Phase 2: Manual drag-and-drop without auto-reordering
           <div className={`flex flex-wrap gap-1 items-start content-start w-full ${getWordScale()}`}>
             {sortedWords.map((word, index) => {
-              const isHighlighted = activeHint?.wordIds.includes(word.id) || false;
-              const hintType = isHighlighted ? activeHint?.type : undefined;
+              // Check if this word should be highlighted
+              const isHintHighlighted = activeHint?.wordIds.includes(word.id) || false;
+              const isCompletionAnimating = animatingCompletion && index < expectedLength;
+              const isHighlighted = isHintHighlighted || isCompletionAnimating;
+              const hintType = isHintHighlighted ? activeHint?.type : (isCompletionAnimating ? 'correctString' : undefined);
 
               return (
                 <div key={word.id} className="flex items-center gap-0">
