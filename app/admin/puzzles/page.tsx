@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import PuzzleActions from '@/components/admin/PuzzleActions';
+import GeneratePuzzlesButton from '@/components/admin/GeneratePuzzlesButton';
 
 interface Puzzle {
   date: string;
@@ -74,12 +75,15 @@ export default async function PuzzlesPage() {
             {puzzles.length} total puzzles | {upcoming.length} upcoming | {drafts.length} drafts
           </p>
         </div>
-        <Link
-          href="/admin/puzzles/new"
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-        >
-          + Create Puzzle
-        </Link>
+        <div className="flex gap-3">
+          <GeneratePuzzlesButton />
+          <Link
+            href="/admin/puzzles/new"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+          >
+            + Create Puzzle
+          </Link>
+        </div>
       </div>
 
       {/* Drafts Section */}
