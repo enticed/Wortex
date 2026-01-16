@@ -1,14 +1,16 @@
 'use client';
 
 interface FinalResultsProps {
-  puzzleScore: number;
+  phase1Score: number;
+  phase2Score: number;
   finalScore: number;
   bonusCorrect: boolean | null;
   onPlayAgain: () => void;
 }
 
 export default function FinalResults({
-  puzzleScore,
+  phase1Score,
+  phase2Score,
   finalScore,
   bonusCorrect,
   onPlayAgain,
@@ -22,10 +24,18 @@ export default function FinalResults({
         <div className="space-y-3 mb-4">
           <div className="bg-blue-100 dark:bg-blue-900 rounded-lg p-3">
             <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-              Puzzle Score
+              Phase 1 Score (Speed-Adjusted)
             </div>
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              {puzzleScore.toFixed(2)}
+              {phase1Score.toFixed(2)}
+            </div>
+          </div>
+          <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-3">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+              Phase 2 Score (Moves + Hints)
+            </div>
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              {phase2Score.toFixed(2)}
             </div>
           </div>
           <div className={`rounded-lg p-3 ${

@@ -21,7 +21,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function useGameState(puzzle: Puzzle | null) {
+export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
   const [gameState, setGameState] = useState<GameState>({
     puzzle,
     vortexWords: [],
@@ -33,12 +33,14 @@ export function useGameState(puzzle: Puzzle | null) {
     phase: 1,
     isComplete: false,
     score: null,
+    phase2Score: null,
     finalScore: null,
     bonusAnswered: false,
     bonusCorrect: null,
     isPaused: false,
     hintsUsed: 0,
     reorderMoves: 0,
+    speed: speed,
     activeHint: null,
     showCompletionAnimation: false,
     showPhase1CompleteDialog: false,
@@ -56,6 +58,14 @@ export function useGameState(puzzle: Puzzle | null) {
       }));
     }
   }, [puzzle]);
+
+  // Update speed when it changes
+  useEffect(() => {
+    setGameState((prev) => ({
+      ...prev,
+      speed: speed,
+    }));
+  }, [speed]);
 
   // Add new words to vortex periodically - fair distribution with smart filtering
   // Only runs during Phase 1
@@ -131,10 +141,10 @@ export function useGameState(puzzle: Puzzle | null) {
           totalWordsSeen: prev.totalWordsSeen + 1,
         };
       });
-    }, 1500);
+    }, 1500 / speed); // Scale interval inversely with speed to maintain vortex density
 
     return () => clearInterval(interval);
-  }, [puzzle, gameState.isComplete, gameState.isPaused, gameState.phase]);
+  }, [puzzle, gameState.isComplete, gameState.isPaused, gameState.phase, speed]);
 
   // Grab a word from the vortex
   const grabWord = useCallback((wordId: string) => {
@@ -355,19 +365,27 @@ export function useGameState(puzzle: Puzzle | null) {
         // Remove extra words at the end (keep only correct sequence)
         const correctWords = updatedWords.slice(0, expectedWords.length);
 
-        // Calculate score with Phase 2 penalties (moves + hints)
-        const baseScore = calculateScore(
+        // Calculate Phase 1 score (speed-adjusted)
+        const phase1Score = calculateScore(
           prev.totalWordsSeen,
-          prev.puzzle.targetPhrase.words.length + prev.puzzle.facsimilePhrase.words.length
+          prev.puzzle.targetPhrase.words.length + prev.puzzle.facsimilePhrase.words.length,
+          prev.speed
         );
-        const score = baseScore + newMoveCount + prev.hintsUsed;
+
+        // Calculate Phase 2 score (moves + hints)
+        const phase2Score = newMoveCount + prev.hintsUsed;
+
+        // Final score is Phase 1 + Phase 2
+        const finalScore = phase1Score + phase2Score;
 
         return {
           ...prev,
           targetPhraseWords: correctWords,
           reorderMoves: newMoveCount,
           isComplete: true,
-          score,
+          score: phase1Score,
+          phase2Score: phase2Score,
+          finalScore: finalScore,
           activeHint: null, // Clear any active hint
           showCompletionAnimation: true, // Trigger completion animation
         };
@@ -385,10 +403,13 @@ export function useGameState(puzzle: Puzzle | null) {
   // Answer bonus question
   const answerBonus = useCallback((isCorrect: boolean) => {
     setGameState((prev) => {
-      // If correct, apply 10% reduction to base score
-      const finalScore = isCorrect && prev.score !== null
-        ? Math.round((prev.score * 0.9) * 100) / 100
-        : prev.score;
+      // Calculate total score: Phase 1 + Phase 2
+      const totalScore = (prev.score || 0) + (prev.phase2Score || 0);
+
+      // If correct, apply 10% reduction to total score
+      const finalScore = isCorrect
+        ? Math.round((totalScore * 0.9) * 100) / 100
+        : totalScore;
 
       return {
         ...prev,
@@ -401,12 +422,17 @@ export function useGameState(puzzle: Puzzle | null) {
 
   // Skip bonus question
   const skipBonus = useCallback(() => {
-    setGameState((prev) => ({
-      ...prev,
-      bonusAnswered: true,
-      bonusCorrect: false,
-      finalScore: prev.score, // No reduction for skip
-    }));
+    setGameState((prev) => {
+      // Calculate total score: Phase 1 + Phase 2
+      const totalScore = (prev.score || 0) + (prev.phase2Score || 0);
+
+      return {
+        ...prev,
+        bonusAnswered: true,
+        bonusCorrect: false,
+        finalScore: totalScore, // No reduction for skip
+      };
+    });
   }, []);
 
   // Auto-capture facsimile word when it reaches 240° rotation

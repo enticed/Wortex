@@ -49,10 +49,20 @@ export function createPhrase(text: string, type: 'target' | 'facsimile'): Phrase
 
 /**
  * Calculate game score: total words seen / number of unique words
+ * Adjusted by speed to account for difficulty (lower score = better)
  */
-export function calculateScore(totalWordsSeen: number, uniqueWords: number): number {
+export function calculateScore(totalWordsSeen: number, uniqueWords: number, speed: number = 1.0): number {
   if (uniqueWords === 0) return 0;
-  return Math.round((totalWordsSeen / uniqueWords) * 100) / 100;
+
+  // Base score: totalWordsSeen / uniqueWords (lower is better)
+  const baseScore = totalWordsSeen / uniqueWords;
+
+  // Speed adjustment: divide by speed to compensate for difficulty
+  // Faster speeds (harder) = lower adjusted score
+  // Slower speeds (easier) = higher adjusted score
+  const adjustedScore = baseScore / speed;
+
+  return Math.round(adjustedScore * 100) / 100;
 }
 
 /**

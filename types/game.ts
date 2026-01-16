@@ -64,13 +64,15 @@ export interface GameState {
   totalWordsSeen: number;
   phase: 1 | 2; // Phase 1: collect words, Phase 2: reorder target phrase
   isComplete: boolean;
-  score: number | null; // Base puzzle score
-  finalScore: number | null; // Score after bonus adjustment
+  score: number | null; // Phase 1 base score (speed-adjusted)
+  phase2Score: number | null; // Phase 2 score (moves + hints)
+  finalScore: number | null; // Total score (Phase 1 + Phase 2)
   bonusAnswered: boolean;
   bonusCorrect: boolean | null;
   isPaused: boolean;
   hintsUsed: number; // Total hints used for score penalty calculation
   reorderMoves: number; // Number of reordering moves made in Phase 2
+  speed: number; // Vortex speed multiplier (0.25 - 2.0)
   activeHint: { type: 'unnecessary' | 'correctString' | 'nextWord', wordIds: string[] } | null; // Currently active hint for highlighting
   showCompletionAnimation: boolean; // Brief animation when Phase 2 is completed
   showPhase1CompleteDialog: boolean; // Show confirmation dialog before transitioning to Phase 2

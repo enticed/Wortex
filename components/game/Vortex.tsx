@@ -14,9 +14,10 @@ interface VortexProps {
   speed?: number; // Speed multiplier: 0.5 = slow, 1.0 = normal, 2.0 = fast
   isFacsimileComplete?: boolean; // Stop auto-capture when facsimile phrase is complete
   facsimileWords?: Set<string>; // Set of facsimile word texts (lowercase) for quick lookup
+  totalWordsSeen?: number; // Total words seen for display
 }
 
-export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, speed = 1.0, isFacsimileComplete = false, facsimileWords }: VortexProps) {
+export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, speed = 1.0, isFacsimileComplete = false, facsimileWords, totalWordsSeen = 0 }: VortexProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'vortex',
   });
@@ -264,9 +265,12 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
         />
       </svg>
 
-      {/* Center vortex visual */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+      {/* Center vortex visual with word count */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 flex items-center justify-center">
         <div className="w-16 h-16 rounded-full bg-gradient-radial from-purple-500/50 to-transparent animate-pulse" />
+        <div className="absolute text-sm font-bold text-purple-700 dark:text-purple-300">
+          {totalWordsSeen}
+        </div>
       </div>
 
       {/* Draggable words */}

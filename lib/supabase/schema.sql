@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS scores (
   score NUMERIC(10, 2) NOT NULL,
   bonus_correct BOOLEAN DEFAULT FALSE,
   time_taken_seconds INTEGER NOT NULL,
+  speed NUMERIC(3, 2) DEFAULT 1.0 NOT NULL, -- Vortex speed multiplier (0.25 to 2.0)
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, puzzle_id) -- One score per user per puzzle
 );

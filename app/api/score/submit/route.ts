@@ -7,7 +7,7 @@ type ScoreInsert = Database['public']['Tables']['scores']['Insert'];
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, puzzleId, score, bonusCorrect, timeTakenSeconds } = body;
+    const { userId, puzzleId, score, bonusCorrect, timeTakenSeconds, speed } = body;
 
     // Validate inputs
     if (!userId || !puzzleId || score === undefined || timeTakenSeconds === undefined) {
@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
       score: Number(score),
       bonus_correct: bonusCorrect || false,
       time_taken_seconds: Number(timeTakenSeconds),
+      speed: speed ? Number(speed) : 1.0,
     };
 
     // Submit score (upsert to handle replays)

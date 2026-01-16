@@ -28,6 +28,7 @@ interface GameBoardProps {
 }
 
 export default function GameBoard({ puzzle }: GameBoardProps) {
+  const [vortexSpeed, setVortexSpeed] = useState(1.0); // Speed multiplier for vortex rotation
   const {
     gameState,
     grabWord,
@@ -42,14 +43,13 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     useCorrectStringHint,
     useNextWordHint,
     confirmPhase1Complete,
-  } = useGameState(puzzle);
+  } = useGameState(puzzle, vortexSpeed);
   const { userId, refreshStats } = useUser();
   const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
   const [draggedWordText, setDraggedWordText] = useState<string | null>(null);
   const [draggedWordBelongsTo, setDraggedWordBelongsTo] = useState<'target' | 'facsimile' | 'spurious' | null>(null);
   const [showBonusRound, setShowBonusRound] = useState(false);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
-  const [vortexSpeed, setVortexSpeed] = useState(1.0); // Speed multiplier for vortex rotation
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null); // Phase 2 insertion indicator
   const [allowBonusRound, setAllowBonusRound] = useState(false); // Delay showing bonus round for animation
   const gameStartTime = useRef<number>(Date.now());
@@ -203,6 +203,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
               score: gameState.finalScore,
               bonusCorrect: gameState.bonusCorrect || false,
               timeTakenSeconds,
+              speed: gameState.speed,
             }),
           });
 
@@ -305,6 +306,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             showCompletionAnimation={gameState.showCompletionAnimation}
             totalWordsSeen={gameState.totalWordsSeen}
             totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
+            speed={gameState.speed}
           />
         </div>
 
@@ -314,7 +316,8 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
             {gameState.bonusAnswered ? (
               // Show final results in vortex area
               <FinalResults
-                puzzleScore={gameState.score || 0}
+                phase1Score={gameState.score || 0}
+                phase2Score={gameState.phase2Score || 0}
                 finalScore={gameState.finalScore || 0}
                 bonusCorrect={gameState.bonusCorrect}
                 onPlayAgain={() => window.location.reload()}
@@ -340,15 +343,13 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 speed={vortexSpeed}
                 isFacsimileComplete={isFacsimileComplete}
                 facsimileWords={facsimileWordsSet}
+                totalWordsSeen={gameState.totalWordsSeen}
               />
             )}
 
-          {/* Speed Slider - Left Edge */}
+          {/* Speed Slider - Bottom Left */}
           {!gameState.isComplete && (
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 rounded-lg shadow-lg">
-              <div className="text-[10px] text-gray-600 dark:text-gray-400 font-semibold">
-                FAST
-              </div>
+            <div className="absolute bottom-2 left-2 flex flex-col items-center gap-1">
               <input
                 type="range"
                 min="0.25"
@@ -356,30 +357,19 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 step="0.25"
                 value={vortexSpeed}
                 onChange={(e) => setVortexSpeed(parseFloat(e.target.value))}
-                className="h-32 cursor-pointer"
+                className="h-24 cursor-pointer"
                 style={{
                   WebkitAppearance: 'slider-vertical' as any,
                   appearance: 'slider-vertical' as any,
-                  width: '8px',
+                  width: '2px',
+                  background: 'transparent',
                 }}
               />
-              <div className="text-[10px] text-gray-600 dark:text-gray-400 font-semibold">
-                SLOW
-              </div>
-              <div className="text-[10px] text-gray-600 dark:text-gray-400 font-mono font-bold">
+              <div className="text-xs text-gray-700 dark:text-gray-300 font-mono font-bold">
                 {vortexSpeed.toFixed(2)}x
               </div>
             </div>
           )}
-
-            {/* Debug Info - inside vortex area */}
-            <div className="absolute bottom-2 left-2 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm p-1.5 rounded shadow text-[10px] leading-tight pointer-events-none">
-              <div>Phase:{gameState.phase}</div>
-              <div>V:{gameState.vortexWords.length}</div>
-              <div>T:{gameState.targetPhraseWords.length}/{puzzle.targetPhrase.words.length}</div>
-              <div>F:{gameState.facsimilePhraseWords.length}/{puzzle.facsimilePhrase.words.length}</div>
-              <div>Seen:{gameState.totalWordsSeen}</div>
-            </div>
           </div>
         )}
 
@@ -388,7 +378,8 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
             {gameState.bonusAnswered ? (
               <FinalResults
-                puzzleScore={gameState.score || 0}
+                phase1Score={gameState.score || 0}
+                phase2Score={gameState.phase2Score || 0}
                 finalScore={gameState.finalScore || 0}
                 bonusCorrect={gameState.bonusCorrect}
                 onPlayAgain={() => window.location.reload()}

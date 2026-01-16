@@ -33,6 +33,10 @@ export async function PUT(
       }
     );
 
+    // Map status to approved field
+    // 'published' = approved: true, anything else = approved: false
+    const approved = body.status === 'published';
+
     // Update the puzzle
     const { error } = await supabase
       .from('puzzles')
@@ -41,9 +45,7 @@ export async function PUT(
         facsimile_phrase: body.facsimile_phrase,
         difficulty: body.difficulty,
         bonus_question: body.bonus_question,
-        status: body.status,
-        metadata: body.metadata,
-        updated_at: new Date().toISOString(),
+        approved: approved,
       })
       .eq('id', id);
 

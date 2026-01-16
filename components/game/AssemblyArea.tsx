@@ -59,6 +59,7 @@ interface AssemblyAreaProps {
   showCompletionAnimation?: boolean; // Trigger completion animation
   totalWordsSeen?: number; // For score calculation
   totalUniqueWords?: number; // Total unique words in both phrases for score calculation
+  speed?: number; // Vortex speed for score adjustment
 }
 
 export default function AssemblyArea({
@@ -84,6 +85,7 @@ export default function AssemblyArea({
   showCompletionAnimation = false,
   totalWordsSeen = 0,
   totalUniqueWords = 0,
+  speed = 1.0,
 }: AssemblyAreaProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -202,14 +204,15 @@ export default function AssemblyArea({
   const calculateOngoingScore = () => {
     if (isAutoAssembly || !totalUniqueWords) return null;
 
-    // Phase 1: Base score = totalWordsSeen / totalUniqueWords
+    // Phase 1: Speed-adjusted score = (totalWordsSeen / totalUniqueWords) / speed
     const baseScore = totalUniqueWords > 0 ? totalWordsSeen / totalUniqueWords : 0;
+    const phase1Score = baseScore / speed;
 
     if (phase === 1) {
-      return baseScore;
+      return phase1Score;
     } else {
-      // Phase 2: Add moves and hints to base score
-      return baseScore + reorderMoves + hintsUsed;
+      // Phase 2: Phase 1 score + moves + hints
+      return phase1Score + reorderMoves + hintsUsed;
     }
   };
 
