@@ -6,6 +6,9 @@ interface FinalResultsProps {
   finalScore: number;
   bonusCorrect: boolean | null;
   onPlayAgain: () => void;
+  totalWordsSeen?: number;
+  totalUniqueWords?: number;
+  speed?: number;
 }
 
 export default function FinalResults({
@@ -14,6 +17,9 @@ export default function FinalResults({
   finalScore,
   bonusCorrect,
   onPlayAgain,
+  totalWordsSeen,
+  totalUniqueWords,
+  speed,
 }: FinalResultsProps) {
   return (
     <div className="h-full flex items-center justify-center px-4">
@@ -24,11 +30,21 @@ export default function FinalResults({
         <div className="space-y-3 mb-4">
           <div className="bg-blue-100 dark:bg-blue-900 rounded-lg p-3">
             <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-              Phase 1 Score (Speed-Adjusted)
+              Phase 1 Score
             </div>
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {phase1Score.toFixed(2)}
             </div>
+            {totalWordsSeen !== undefined && totalUniqueWords !== undefined && speed !== undefined && (
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-2 space-y-0.5">
+                <div>Words seen: {totalWordsSeen}</div>
+                <div>Total words: {totalUniqueWords}</div>
+                <div>Speed: {speed.toFixed(2)}x</div>
+                <div className="pt-1 border-t border-gray-400 dark:border-gray-600 mt-1">
+                  Score: (Words seen ÷ Total words) ÷ Speed
+                </div>
+              </div>
+            )}
           </div>
           <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-3">
             <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">

@@ -38,7 +38,7 @@ async function getPuzzles() {
 
   const { data: puzzles, error } = await supabase
     .from('puzzles')
-    .select('date, target_phrase, facsimile_phrase, difficulty, status, created_at')
+    .select('date, target_phrase, facsimile_phrase, difficulty, approved, created_at')
     .order('date', { ascending: false })
     .limit(100);
 
@@ -47,7 +47,11 @@ async function getPuzzles() {
     return [];
   }
 
-  return (puzzles || []) as Puzzle[];
+  // Map approved (boolean) to status (string)
+  return (puzzles || []).map(p => ({
+    ...p,
+    status: (p as any).approved ? 'published' : 'draft'
+  })) as Puzzle[];
 }
 
 export default async function PuzzlesPage() {

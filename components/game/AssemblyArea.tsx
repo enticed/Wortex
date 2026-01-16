@@ -211,8 +211,8 @@ export default function AssemblyArea({
     if (phase === 1) {
       return phase1Score;
     } else {
-      // Phase 2: Phase 1 score + moves + hints
-      return phase1Score + reorderMoves + hintsUsed;
+      // Phase 2: Only show Phase 2 score (moves + hints)
+      return reorderMoves + hintsUsed;
     }
   };
 

@@ -357,6 +357,9 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 finalScore={gameState.finalScore || 0}
                 bonusCorrect={gameState.bonusCorrect}
                 onPlayAgain={() => window.location.reload()}
+                totalWordsSeen={gameState.totalWordsSeen}
+                totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
+                speed={gameState.speed}
               />
             ) : gameState.isComplete ? (
               // Show bonus round in vortex area
@@ -375,7 +378,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 words={gameState.vortexWords}
                 onWordGrab={grabWord}
                 onAutoCapture={autoCaptureFacsimileWord}
-                isActive={!gameState.isComplete && !gameState.isPaused}
+                isActive={!gameState.isComplete && !gameState.isPaused && !gameState.showPhase1CompleteDialog}
                 speed={vortexSpeed}
                 isFacsimileComplete={isFacsimileComplete}
                 facsimileWords={facsimileWordsSet}
@@ -393,7 +396,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 step="0.25"
                 value={vortexSpeed}
                 onChange={(e) => setVortexSpeed(parseFloat(e.target.value))}
-                className="h-24 cursor-pointer"
+                className="h-36 cursor-pointer"
                 style={{
                   WebkitAppearance: 'slider-vertical' as any,
                   appearance: 'slider-vertical' as any,
@@ -419,6 +422,9 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 finalScore={gameState.finalScore || 0}
                 bonusCorrect={gameState.bonusCorrect}
                 onPlayAgain={() => window.location.reload()}
+                totalWordsSeen={gameState.totalWordsSeen}
+                totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
+                speed={gameState.speed}
               />
             ) : (
               <div className="h-full flex items-center justify-center px-2">
@@ -484,7 +490,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 {/* Top left */}
                 <div
                   className="absolute left-4"
-                  style={{ top: `calc(${vortexTop}% + 2rem)` }}
+                  style={{ top: `calc(${vortexTop}% + 3rem)` }}
                 >
                   <div className="font-bold text-xl text-white dark:text-gray-200">
                     {draggedWordText}
@@ -494,7 +500,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 {/* Top right */}
                 <div
                   className="absolute right-4"
-                  style={{ top: `calc(${vortexTop}% + 2rem)` }}
+                  style={{ top: `calc(${vortexTop}% + 3rem)` }}
                 >
                   <div className="font-bold text-xl text-white dark:text-gray-200">
                     {draggedWordText}
@@ -504,7 +510,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 {/* Bottom left */}
                 <div
                   className="absolute left-4"
-                  style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 2rem)` }}
+                  style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 0.8125rem)` }}
                 >
                   <div className="font-bold text-xl text-white dark:text-gray-200">
                     {draggedWordText}
@@ -514,7 +520,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 {/* Bottom right */}
                 <div
                   className="absolute right-4"
-                  style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 2rem)` }}
+                  style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 0.8125rem)` }}
                 >
                   <div className="font-bold text-xl text-white dark:text-gray-200">
                     {draggedWordText}
@@ -532,11 +538,8 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md mx-4 border-2 border-purple-400 dark:border-purple-600">
             <div className="text-center">
               <div className="text-4xl mb-4">🎉</div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-                Phase 1 Complete!
-              </h2>
               <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
-                All required words collected! Ready to put them in the correct order?
+                All required words collected!<br />Ready to put them in the correct order?
               </p>
               {/* Phase 1 Score Breakdown */}
               <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 mb-6">
@@ -551,7 +554,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                   <div>Total words: {puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}</div>
                   <div>Speed: {gameState.speed.toFixed(2)}x</div>
                   <div className="pt-1 border-t border-gray-300 dark:border-gray-600 mt-2">
-                    Formula: (Words seen ÷ Total words) ÷ Speed
+                    Score: (Words seen ÷ Total words) ÷ Speed
                   </div>
                 </div>
               </div>

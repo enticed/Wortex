@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { GameState, Puzzle, WordInVortex, PlacedWord } from '@/types/game';
 import {
   createVortexWords,
@@ -22,6 +22,8 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
+  const lastWordSpawnTime = useRef<number>(0); // Track last spawn to prevent simultaneous spawns
+
   const [gameState, setGameState] = useState<GameState>({
     puzzle,
     vortexWords: [],
@@ -70,9 +72,19 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
   // Add new words to vortex periodically - fair distribution with smart filtering
   // Only runs during Phase 1
   useEffect(() => {
-    if (!puzzle || gameState.isComplete || gameState.isPaused || gameState.phase === 2) return;
+    if (!puzzle || gameState.isComplete || gameState.isPaused || gameState.phase === 2 || gameState.showPhase1CompleteDialog) return;
 
     const interval = setInterval(() => {
+      const now = Date.now();
+      const minDelay = 100; // Minimum 100ms between spawns
+
+      // Prevent simultaneous spawns when speed changes
+      if (now - lastWordSpawnTime.current < minDelay) {
+        return;
+      }
+
+      lastWordSpawnTime.current = now;
+
       setGameState((prev) => {
         const allWords = createVortexWords(puzzle);
 
@@ -122,10 +134,13 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
 
         // Add word to vortex or replace oldest
         const timestamp = Date.now();
+        // Add slight random offset to prevent stacking when words release simultaneously
+        const angleOffset = (Math.random() - 0.5) * 10; // ±5 degrees
+        const radiusOffset = (Math.random() - 0.5) * 0.1; // ±0.05
         const newWord = {
           ...nextWord,
-          angle: 180,
-          radius: 1.0,
+          angle: 180 + angleOffset,
+          radius: 1.0 + radiusOffset,
           id: generateWordId(nextWord.word, timestamp),
         };
 
@@ -144,7 +159,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
     }, 1500 / speed); // Scale interval inversely with speed to maintain vortex density
 
     return () => clearInterval(interval);
-  }, [puzzle, gameState.isComplete, gameState.isPaused, gameState.phase, speed]);
+  }, [puzzle, gameState.isComplete, gameState.isPaused, gameState.phase, gameState.showPhase1CompleteDialog, speed]);
 
   // Grab a word from the vortex
   const grabWord = useCallback((wordId: string) => {
@@ -219,11 +234,21 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
 
             const phase1Complete = isFacsimileComplete && hasAllRequiredWords;
 
+            // Calculate Phase 1 score when dialog appears
+            const phase1Score = phase1Complete
+              ? calculateScore(
+                  prev.totalWordsSeen,
+                  prev.puzzle.targetPhrase.words.length + prev.puzzle.facsimilePhrase.words.length,
+                  prev.speed
+                )
+              : prev.score;
+
             return {
               ...prev,
               targetPhraseWords: newTargetWords,
               vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
               showPhase1CompleteDialog: phase1Complete,
+              score: phase1Score,
             };
           } else {
             // Bottom area (facsimile): Use auto-assembly
@@ -280,11 +305,21 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
 
             const phase1Complete = isFacsimileComplete && hasAllRequiredWords;
 
+            // Calculate Phase 1 score when dialog appears
+            const phase1Score = phase1Complete
+              ? calculateScore(
+                  prev.totalWordsSeen,
+                  prev.puzzle.targetPhrase.words.length + prev.puzzle.facsimilePhrase.words.length,
+                  prev.speed
+                )
+              : prev.score;
+
             return {
               ...prev,
               facsimilePhraseWords: newFacsimileWords,
               vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
               showPhase1CompleteDialog: phase1Complete,
+              score: phase1Score,
             };
           }
         }
@@ -491,11 +526,21 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
 
       const phase1Complete = isFacsimileComplete && hasAllRequiredWords;
 
+      // Calculate Phase 1 score when dialog appears
+      const phase1Score = phase1Complete
+        ? calculateScore(
+            prev.totalWordsSeen,
+            prev.puzzle!.targetPhrase.words.length + prev.puzzle!.facsimilePhrase.words.length,
+            prev.speed
+          )
+        : prev.score;
+
       return {
         ...prev,
         facsimilePhraseWords: newFacsimileWords,
         vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
         showPhase1CompleteDialog: phase1Complete,
+        score: phase1Score,
       };
     });
   }, []);
