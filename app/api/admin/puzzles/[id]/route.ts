@@ -34,8 +34,8 @@ export async function PUT(
     );
 
     // Map status to approved field
-    // 'published' = approved: true, anything else = approved: false
-    const approved = body.status === 'published';
+    // 'published' or 'scheduled' = approved: true, 'draft' = approved: false
+    const approved = body.status === 'published' || body.status === 'scheduled';
 
     // Update the puzzle
     const { error } = await supabase

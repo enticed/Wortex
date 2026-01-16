@@ -24,7 +24,8 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(node scripts/test-admin-access.mjs:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(node scripts/refresh-schema-cache.mjs:*)"
     ],
     "deny": [],
     "ask": []
