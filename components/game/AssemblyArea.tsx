@@ -370,7 +370,7 @@ export default function AssemblyArea({
           </div>
         ) : (
           // Phase 1 or auto-assembly: Words just display in position
-          <div className={`flex flex-nowrap ${getGapSize()} items-start w-full min-w-max ${getWordScale()}`}>
+          <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
             {sortedWords.map((word) => (
               <Word key={word.id} id={word.id} text={word.word} isPlaced={true} colorVariant={getWordColorVariant(word)} />
             ))}

@@ -462,7 +462,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         {draggedWordText ? <div className="hidden" /> : null}
       </DragOverlay>
 
-      {/* Corner Word Display - Shows dragged word in vortex corners */}
+      {/* Corner Word Display - Shows dragged word in vortex corners (minimalist) */}
       {draggedWordText && gameState.phase === 1 && !gameState.isComplete && (
         <div className="fixed inset-0 pointer-events-none z-40">
           {/* Calculate vortex area position (middle 50% of screen) */}
@@ -479,10 +479,10 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 {/* Target words: Display in TOP RIGHT corner */}
                 {draggedWordBelongsTo === 'target' && (
                   <div
-                    className="absolute right-3"
-                    style={{ top: `${vortexTop + 2}%` }}
+                    className="absolute right-4"
+                    style={{ top: `calc(${vortexTop}% + 0.75rem)` }}
                   >
-                    <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400 animate-pulse">
+                    <div className="font-bold text-xl text-white dark:text-gray-200">
                       {draggedWordText}
                     </div>
                   </div>
@@ -491,10 +491,10 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                 {/* Facsimile words: Display in BOTTOM RIGHT corner */}
                 {draggedWordBelongsTo === 'facsimile' && (
                   <div
-                    className="absolute right-3"
-                    style={{ top: `${vortexTop + vortexHeight - 6}%` }}
+                    className="absolute right-4"
+                    style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 0.75rem)` }}
                   >
-                    <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400 animate-pulse">
+                    <div className="font-bold text-xl text-white dark:text-gray-200">
                       {draggedWordText}
                     </div>
                   </div>
@@ -505,19 +505,19 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
                   <>
                     {/* Top right */}
                     <div
-                      className="absolute right-3"
-                      style={{ top: `${vortexTop + 2}%` }}
+                      className="absolute right-4"
+                      style={{ top: `calc(${vortexTop}% + 0.75rem)` }}
                     >
-                      <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400 animate-pulse">
+                      <div className="font-bold text-xl text-white dark:text-gray-200">
                         {draggedWordText}
                       </div>
                     </div>
                     {/* Bottom right */}
                     <div
-                      className="absolute right-3"
-                      style={{ top: `${vortexTop + vortexHeight - 6}%` }}
+                      className="absolute right-4"
+                      style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 0.75rem)` }}
                     >
-                      <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400 animate-pulse">
+                      <div className="font-bold text-xl text-white dark:text-gray-200">
                         {draggedWordText}
                       </div>
                     </div>
