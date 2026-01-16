@@ -330,8 +330,8 @@ export default function AssemblyArea({
               : 'Drag words here to assemble the quote'}
           </div>
         ) : isSortable ? (
-          // Phase 2: Manual drag-and-drop without auto-reordering
-          <div className={`flex flex-nowrap gap-1 items-start w-full min-w-max ${getWordScale()}`}>
+          // Phase 2: Manual drag-and-drop with reordering (allow wrapping)
+          <div className={`flex flex-wrap gap-1 items-start content-start w-full ${getWordScale()}`}>
             {sortedWords.map((word, index) => {
               // Check if this word should be highlighted
               const isHintHighlighted = activeHint?.wordIds.includes(word.id) || false;

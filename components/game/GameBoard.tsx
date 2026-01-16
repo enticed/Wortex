@@ -383,9 +383,9 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
               />
             )}
 
-          {/* Speed Slider - Bottom Left */}
+          {/* Speed Slider - Center Left */}
           {!gameState.isComplete && (
-            <div className="absolute bottom-2 left-2 flex flex-col items-center gap-1">
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
               <input
                 type="range"
                 min="0.25"
@@ -454,15 +454,19 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
       </div>
 
-      {/* Drag Overlay - Hidden (word display moved to vortex corners) */}
+      {/* Drag Overlay - Keep word visible for mouse users */}
       <DragOverlay
         dropAnimation={null}
-        style={{ cursor: 'grabbing', opacity: 0 }}
+        style={{ cursor: 'grabbing' }}
       >
-        {draggedWordText ? <div className="hidden" /> : null}
+        {draggedWordText ? (
+          <div className="px-2 py-1 rounded-lg font-semibold text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-md">
+            {draggedWordText}
+          </div>
+        ) : null}
       </DragOverlay>
 
-      {/* Corner Word Display - Shows dragged word in vortex corners (minimalist) */}
+      {/* Corner Word Display - Shows dragged word in ALL FOUR vortex corners */}
       {draggedWordText && gameState.phase === 1 && !gameState.isComplete && (
         <div className="fixed inset-0 pointer-events-none z-40">
           {/* Calculate vortex area position (middle 50% of screen) */}
@@ -476,53 +480,46 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
             return (
               <>
-                {/* Target words: Display in TOP RIGHT corner */}
-                {draggedWordBelongsTo === 'target' && (
-                  <div
-                    className="absolute right-4"
-                    style={{ top: `calc(${vortexTop}% + 0.75rem)` }}
-                  >
-                    <div className="font-bold text-xl text-white dark:text-gray-200">
-                      {draggedWordText}
-                    </div>
+                {/* All words: Display in ALL FOUR corners for maximum visibility */}
+                {/* Top left */}
+                <div
+                  className="absolute left-4"
+                  style={{ top: `calc(${vortexTop}% + 2rem)` }}
+                >
+                  <div className="font-bold text-xl text-white dark:text-gray-200">
+                    {draggedWordText}
                   </div>
-                )}
+                </div>
 
-                {/* Facsimile words: Display in BOTTOM RIGHT corner */}
-                {draggedWordBelongsTo === 'facsimile' && (
-                  <div
-                    className="absolute right-4"
-                    style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 0.75rem)` }}
-                  >
-                    <div className="font-bold text-xl text-white dark:text-gray-200">
-                      {draggedWordText}
-                    </div>
+                {/* Top right */}
+                <div
+                  className="absolute right-4"
+                  style={{ top: `calc(${vortexTop}% + 2rem)` }}
+                >
+                  <div className="font-bold text-xl text-white dark:text-gray-200">
+                    {draggedWordText}
                   </div>
-                )}
+                </div>
 
-                {/* Spurious words: Display in BOTH corners */}
-                {draggedWordBelongsTo === 'spurious' && (
-                  <>
-                    {/* Top right */}
-                    <div
-                      className="absolute right-4"
-                      style={{ top: `calc(${vortexTop}% + 0.75rem)` }}
-                    >
-                      <div className="font-bold text-xl text-white dark:text-gray-200">
-                        {draggedWordText}
-                      </div>
-                    </div>
-                    {/* Bottom right */}
-                    <div
-                      className="absolute right-4"
-                      style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 0.75rem)` }}
-                    >
-                      <div className="font-bold text-xl text-white dark:text-gray-200">
-                        {draggedWordText}
-                      </div>
-                    </div>
-                  </>
-                )}
+                {/* Bottom left */}
+                <div
+                  className="absolute left-4"
+                  style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 2rem)` }}
+                >
+                  <div className="font-bold text-xl text-white dark:text-gray-200">
+                    {draggedWordText}
+                  </div>
+                </div>
+
+                {/* Bottom right */}
+                <div
+                  className="absolute right-4"
+                  style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 2rem)` }}
+                >
+                  <div className="font-bold text-xl text-white dark:text-gray-200">
+                    {draggedWordText}
+                  </div>
+                </div>
               </>
             );
           })()}
