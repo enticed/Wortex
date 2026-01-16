@@ -454,73 +454,80 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
       </div>
 
-      {/* Drag Overlay - shows the word being dragged */}
+      {/* Drag Overlay - Hidden (word display moved to vortex corners) */}
       <DragOverlay
         dropAnimation={null}
-        style={{ cursor: 'grabbing' }}
-        modifiers={
-          // No offset for spurious words (dual display) or Phase 2 reordering
-          draggedWordBelongsTo === 'spurious' || isPhase2Reordering ? undefined : [
-            // Offset target/facsimile words during Phase 1 placement
-            ({ transform }) => {
-              const yOffset = draggedWordBelongsTo === 'facsimile' ? 50 : -50;
-              return {
-                ...transform,
-                y: transform.y + yOffset,
-              };
-            }
-          ]
-        }
+        style={{ cursor: 'grabbing', opacity: 0 }}
       >
-        {draggedWordText ? (
-          draggedWordBelongsTo === 'spurious' ? (
-            // Spurious words: show both above and below finger simultaneously
-            // Centered at cursor position (not offset)
-            <div className="relative pointer-events-none" style={{ width: '200px', height: '120px', marginLeft: '-100px', marginTop: '-60px' }}>
-              {/* Word above cursor */}
-              <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap" style={{ top: '0px' }}>
-                <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
-                  {draggedWordText}
-                </div>
-              </div>
-
-              {/* Tether line above */}
-              <div className="absolute left-1/2 -translate-x-1/2 bg-yellow-400 dark:bg-yellow-500 opacity-50" style={{ top: '36px', width: '2px', height: '20px' }} />
-
-              {/* Cursor position marker (centered) */}
-              <div className="absolute left-1/2 -translate-x-1/2 bg-blue-500 rounded-full shadow-lg" style={{ top: '54px', width: '6px', height: '6px' }} />
-
-              {/* Tether line below */}
-              <div className="absolute left-1/2 -translate-x-1/2 bg-yellow-400 dark:bg-yellow-500 opacity-50" style={{ top: '62px', width: '2px', height: '20px' }} />
-
-              {/* Word below cursor */}
-              <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap" style={{ top: '82px' }}>
-                <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
-                  {draggedWordText}
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Target or Facsimile words: show in appropriate direction
-            <div className="relative">
-              {/* Tether line connecting to finger - only show during Phase 1 when offset is applied */}
-              {!isPhase2Reordering && (
-                <div
-                  className={`absolute left-1/2 w-0.5 h-[50px] bg-yellow-400 dark:bg-yellow-500 opacity-50 ${
-                    draggedWordBelongsTo === 'facsimile' ? 'bottom-full' : 'top-full'
-                  }`}
-                  style={{ transformOrigin: draggedWordBelongsTo === 'facsimile' ? 'bottom' : 'top' }}
-                />
-              )}
-
-              {/* Dragged word - matches original styling */}
-              <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400">
-                {draggedWordText}
-              </div>
-            </div>
-          )
-        ) : null}
+        {draggedWordText ? <div className="hidden" /> : null}
       </DragOverlay>
+
+      {/* Corner Word Display - Shows dragged word in vortex corners */}
+      {draggedWordText && gameState.phase === 1 && !gameState.isComplete && (
+        <div className="fixed inset-0 pointer-events-none z-40">
+          {/* Calculate vortex area position (middle 50% of screen) */}
+          {(() => {
+            // Top area is 35% in Phase 1
+            const topAreaHeight = 35;
+            // Vortex starts after top area
+            const vortexTop = topAreaHeight;
+            // Vortex height is 50%
+            const vortexHeight = 50;
+
+            return (
+              <>
+                {/* Target words: Display in TOP RIGHT corner */}
+                {draggedWordBelongsTo === 'target' && (
+                  <div
+                    className="absolute right-3"
+                    style={{ top: `${vortexTop + 2}%` }}
+                  >
+                    <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400 animate-pulse">
+                      {draggedWordText}
+                    </div>
+                  </div>
+                )}
+
+                {/* Facsimile words: Display in BOTTOM RIGHT corner */}
+                {draggedWordBelongsTo === 'facsimile' && (
+                  <div
+                    className="absolute right-3"
+                    style={{ top: `${vortexTop + vortexHeight - 6}%` }}
+                  >
+                    <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400 animate-pulse">
+                      {draggedWordText}
+                    </div>
+                  </div>
+                )}
+
+                {/* Spurious words: Display in BOTH corners */}
+                {draggedWordBelongsTo === 'spurious' && (
+                  <>
+                    {/* Top right */}
+                    <div
+                      className="absolute right-3"
+                      style={{ top: `${vortexTop + 2}%` }}
+                    >
+                      <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400 animate-pulse">
+                        {draggedWordText}
+                      </div>
+                    </div>
+                    {/* Bottom right */}
+                    <div
+                      className="absolute right-3"
+                      style={{ top: `${vortexTop + vortexHeight - 6}%` }}
+                    >
+                      <div className="px-4 py-2 rounded-lg font-semibold text-sm bg-yellow-300 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 shadow-2xl border-2 border-yellow-500 dark:border-yellow-400 animate-pulse">
+                        {draggedWordText}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Phase 1 Complete Confirmation Dialog */}
       {gameState.showPhase1CompleteDialog && (
