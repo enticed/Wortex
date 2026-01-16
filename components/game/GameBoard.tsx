@@ -142,40 +142,27 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
       // Only handle flicks from vortex during Phase 1
       if (isFromVortex && gameState.phase === 1) {
-        // Determine target based on word type and trajectory
-        const vortexWord = gameState.vortexWords.find((w) => w.id === activeId);
+        // Check for dismiss gesture (strong rightward flick)
+        if (delta.x > 30 && Math.abs(delta.y) < 20) {
+          dismissWord(activeId);
+          return;
+        }
 
-        if (vortexWord) {
-          // Upward flick (negative y) = target area (top)
-          // Downward flick (positive y) = facsimile area (bottom)
-          // Rightward flick (positive x) = dismiss
-
-          // Check for dismiss gesture (strong rightward flick)
-          if (delta.x > 30 && Math.abs(delta.y) < 20) {
-            dismissWord(activeId);
+        // Vertical flick detection - direction determines placement
+        // Players can place ANY word in the target area (it's part of the puzzle!)
+        // Facsimile area is auto-collected, so no manual placement there
+        if (Math.abs(delta.y) > Math.abs(delta.x)) {
+          if (delta.y < -15) {
+            // Strong upward flick → target area (any word allowed)
+            placeWord(activeId, 'target');
             return;
           }
-
-          // Vertical flick detection
-          if (Math.abs(delta.y) > Math.abs(delta.x)) {
-            if (delta.y < -15) {
-              // Strong upward flick → target area
-              if (vortexWord.belongsTo === 'target' || vortexWord.belongsTo === 'spurious') {
-                placeWord(activeId, 'target');
-                return;
-              }
-            } else if (delta.y > 15) {
-              // Strong downward flick → facsimile area
-              if (vortexWord.belongsTo === 'facsimile' || vortexWord.belongsTo === 'spurious') {
-                placeWord(activeId, 'facsimile');
-                return;
-              }
-            }
-          }
+          // Downward flick doesn't place (facsimile is auto-collected)
+          // Word returns to vortex
         }
       }
 
-      // No successful flick detection - word is lost, return to vortex
+      // No successful flick detection - word returns to vortex
       return;
     }
 

@@ -278,7 +278,7 @@ export default function AssemblyArea({
         className={`
           flex-1 border-2 rounded-lg p-1.5
           flex items-start justify-center
-          overflow-y-auto
+          overflow-x-auto overflow-y-hidden
           transition-all duration-500
           ${isComplete ? 'border-solid bg-gradient-to-br' : 'border-dashed'}
           ${isComplete && id === 'target' ? 'from-blue-200 to-blue-300 dark:from-blue-800 dark:to-blue-900 border-blue-500 dark:border-blue-400' : ''}
@@ -331,7 +331,7 @@ export default function AssemblyArea({
           </div>
         ) : isSortable ? (
           // Phase 2: Manual drag-and-drop without auto-reordering
-          <div className={`flex flex-wrap gap-1 items-start content-start w-full ${getWordScale()}`}>
+          <div className={`flex flex-nowrap gap-1 items-start w-full min-w-max ${getWordScale()}`}>
             {sortedWords.map((word, index) => {
               // Check if this word should be highlighted
               const isHintHighlighted = activeHint?.wordIds.includes(word.id) || false;
@@ -370,7 +370,7 @@ export default function AssemblyArea({
           </div>
         ) : (
           // Phase 1 or auto-assembly: Words just display in position
-          <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
+          <div className={`flex flex-nowrap ${getGapSize()} items-start w-full min-w-max ${getWordScale()}`}>
             {sortedWords.map((word) => (
               <Word key={word.id} id={word.id} text={word.word} isPlaced={true} colorVariant={getWordColorVariant(word)} />
             ))}
