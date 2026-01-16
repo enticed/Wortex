@@ -77,6 +77,7 @@ export interface Database {
           score: number;
           bonus_correct: boolean;
           time_taken_seconds: number;
+          speed: number;
           created_at: string;
         };
         Insert: {
@@ -86,6 +87,7 @@ export interface Database {
           score: number;
           bonus_correct?: boolean;
           time_taken_seconds: number;
+          speed?: number;
           created_at?: string;
         };
         Update: {
@@ -95,6 +97,7 @@ export interface Database {
           score?: number;
           bonus_correct?: boolean;
           time_taken_seconds?: number;
+          speed?: number;
           created_at?: string;
         };
       };
