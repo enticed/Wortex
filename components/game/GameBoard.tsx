@@ -63,7 +63,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
 
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      delay: 100, // 100ms delay before drag starts (allows scrolling)
+      delay: 50, // Reduced to 50ms for more responsive flicking
       tolerance: 5, // 5px movement tolerance
     },
   });
@@ -122,7 +122,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    const { active, over, delta } = event;
 
     setDraggedWordId(null);
     setDraggedWordText(null);
@@ -130,6 +130,55 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     setDropIndicatorIndex(null); // Clear insertion indicator
 
     const activeId = active.id as string;
+
+    // Calculate velocity from delta (movement since last frame)
+    // High velocity = flicking gesture
+    const velocity = Math.sqrt(delta.x * delta.x + delta.y * delta.y);
+    const isFlick = velocity > 15; // Threshold for flick detection (pixels)
+
+    // If no collision detected but flicking with upward motion, try trajectory prediction
+    if (!over && isFlick) {
+      const isFromVortex = gameState.vortexWords.some((w) => w.id === activeId);
+
+      // Only handle flicks from vortex during Phase 1
+      if (isFromVortex && gameState.phase === 1) {
+        // Determine target based on word type and trajectory
+        const vortexWord = gameState.vortexWords.find((w) => w.id === activeId);
+
+        if (vortexWord) {
+          // Upward flick (negative y) = target area (top)
+          // Downward flick (positive y) = facsimile area (bottom)
+          // Rightward flick (positive x) = dismiss
+
+          // Check for dismiss gesture (strong rightward flick)
+          if (delta.x > 30 && Math.abs(delta.y) < 20) {
+            dismissWord(activeId);
+            return;
+          }
+
+          // Vertical flick detection
+          if (Math.abs(delta.y) > Math.abs(delta.x)) {
+            if (delta.y < -15) {
+              // Strong upward flick → target area
+              if (vortexWord.belongsTo === 'target' || vortexWord.belongsTo === 'spurious') {
+                placeWord(activeId, 'target');
+                return;
+              }
+            } else if (delta.y > 15) {
+              // Strong downward flick → facsimile area
+              if (vortexWord.belongsTo === 'facsimile' || vortexWord.belongsTo === 'spurious') {
+                placeWord(activeId, 'facsimile');
+                return;
+              }
+            }
+          }
+        }
+      }
+
+      // No successful flick detection - word is lost, return to vortex
+      return;
+    }
+
     if (!over) return;
 
     const overId = over.id as string;
