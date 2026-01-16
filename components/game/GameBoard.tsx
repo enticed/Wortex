@@ -266,7 +266,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
       // Brief delay to show highlight, then remove word
       const timeout = setTimeout(() => {
         const updatedWords = gameState.targetPhraseWords.filter(w => w.id !== wordId);
-        reorderWords(updatedWords);
+        reorderWords(updatedWords, true); // Pass true to skip move count increment
       }, 800); // 800ms highlight duration
 
       return () => clearTimeout(timeout);
@@ -321,7 +321,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         }`}>
           <AssemblyArea
             id="target"
-            title={gameState.phase === 2 ? "Original" : "Original"}
+            title="Mystery Quote"
             placedWords={gameState.targetPhraseWords}
             expectedLength={puzzle.targetPhrase.words.length}
             expectedWords={puzzle.targetPhrase.words}
@@ -440,7 +440,7 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
         }`}>
           <AssemblyArea
             id="facsimile"
-            title="Spin-off"
+            title={isFacsimileComplete ? "Hint Phrase" : "Hint Phrase (will auto-assemble)"}
             placedWords={gameState.facsimilePhraseWords}
             expectedLength={puzzle.facsimilePhrase.words.length}
             bgColor="bg-green-50 dark:bg-green-950"
@@ -535,9 +535,26 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                 Phase 1 Complete!
               </h2>
-              <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
                 All required words collected! Ready to put them in the correct order?
               </p>
+              {/* Phase 1 Score Breakdown */}
+              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 mb-6">
+                <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                  Phase 1 Score
+                </div>
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-3">
+                  {gameState.score?.toFixed(2) || '0.00'}
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                  <div>Words seen: {gameState.totalWordsSeen}</div>
+                  <div>Total words: {puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}</div>
+                  <div>Speed: {gameState.speed.toFixed(2)}x</div>
+                  <div className="pt-1 border-t border-gray-300 dark:border-gray-600 mt-2">
+                    Formula: (Words seen ÷ Total words) ÷ Speed
+                  </div>
+                </div>
+              </div>
               <button
                 onClick={confirmPhase1Complete}
                 className="px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105"

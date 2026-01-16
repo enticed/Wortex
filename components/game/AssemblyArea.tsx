@@ -224,15 +224,8 @@ export default function AssemblyArea({
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           {title}
         </h2>
-        {/* Center Score Display - only for target area */}
-        {!isAutoAssembly && ongoingScore !== null && (
-          <div className="flex-1 flex justify-center">
-            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
-              Score: <span className="text-purple-600 dark:text-purple-400">{ongoingScore.toFixed(2)}</span>
-            </span>
-          </div>
-        )}
-        <span className="text-xs flex items-center gap-1">
+        {/* Center Counters Display */}
+        <span className="flex-1 flex justify-center text-base font-bold flex items-center gap-1">
           {isComplete ? (
             <span className="text-green-600 dark:text-green-400 font-semibold">✓ Complete</span>
           ) : phase === 2 && !isAutoAssembly ? (
@@ -271,6 +264,12 @@ export default function AssemblyArea({
             </span>
           )}
         </span>
+        {/* Right-aligned Score Display - only for target area */}
+        {!isAutoAssembly && ongoingScore !== null && (
+          <span className="text-base font-bold text-purple-600 dark:text-purple-400">
+            {ongoingScore.toFixed(2)}
+          </span>
+        )}
       </div>
 
       <div

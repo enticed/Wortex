@@ -335,7 +335,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
   }, []);
 
   // Reorder words in target phrase (Phase 2 only)
-  const reorderWords = useCallback((reorderedWords: PlacedWord[]) => {
+  const reorderWords = useCallback((reorderedWords: PlacedWord[], skipMoveCount = false) => {
     setGameState((prev) => {
       if (prev.phase !== 2 || !prev.puzzle) return prev;
 
@@ -350,8 +350,8 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
         word.id !== updatedWords[idx]?.id
       );
 
-      // Increment move counter
-      const newMoveCount = positionsChanged ? prev.reorderMoves + 1 : prev.reorderMoves;
+      // Increment move counter (skip for hint-triggered removals)
+      const newMoveCount = (positionsChanged && !skipMoveCount) ? prev.reorderMoves + 1 : prev.reorderMoves;
 
       // Check if Phase 2 is complete:
       // Correct sequence must be at the start of the array
@@ -595,10 +595,15 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
         return prev;
       }
 
+      // Check if this is the same hint as currently active (prevent duplicate penalty)
+      const isSameHint = prev.activeHint?.type === 'correctString' &&
+        prev.activeHint.wordIds.length === correctWordIds.length &&
+        prev.activeHint.wordIds.every((id, idx) => id === correctWordIds[idx]);
+
       return {
         ...prev,
         activeHint: { type: 'correctString', wordIds: correctWordIds },
-        hintsUsed: prev.hintsUsed + 1,
+        hintsUsed: isSameHint ? prev.hintsUsed : prev.hintsUsed + 1,
       };
     });
   }, []);
@@ -638,10 +643,15 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
         return prev;
       }
 
+      // Check if this is the same hint as currently active (prevent duplicate penalty)
+      const isSameHint = prev.activeHint?.type === 'nextWord' &&
+        prev.activeHint.wordIds.length === 1 &&
+        prev.activeHint.wordIds[0] === nextWordId;
+
       return {
         ...prev,
         activeHint: { type: 'nextWord', wordIds: [nextWordId] },
-        hintsUsed: prev.hintsUsed + 1,
+        hintsUsed: isSameHint ? prev.hintsUsed : prev.hintsUsed + 1,
       };
     });
   }, []);

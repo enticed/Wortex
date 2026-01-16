@@ -43,6 +43,8 @@ export default function PuzzleEditorForm({ puzzle, mode }: PuzzleEditorFormProps
   const initializeFormData = (): PuzzleFormData => {
     if (mode === 'edit' && puzzle) {
       const bonusQ = puzzle.bonus_question;
+      // Map database 'approved' field to UI 'status' field
+      const status = puzzle.approved ? 'published' : 'draft';
       return {
         date: puzzle.date,
         targetPhrase: puzzle.target_phrase,
@@ -57,7 +59,7 @@ export default function PuzzleEditorForm({ puzzle, mode }: PuzzleEditorFormProps
           { id: '4', person: '', year: undefined },
         ],
         correctAnswerId: bonusQ?.correctAnswerId || '1',
-        status: puzzle.status || 'published',
+        status: status,
         metadata: puzzle.metadata || {
           source: '',
           theme: '',
