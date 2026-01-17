@@ -133,15 +133,17 @@ CRITICAL VALIDATION:
   try {
     // Remove markdown code blocks if present
     let cleanedText = content.text.trim();
-    // Remove code block markers at start
-    if (cleanedText.startsWith('```json')) {
+    // Remove code block markers at start (using character concatenation to avoid parsing issues)
+    const codeBlockStart = String.fromCharCode(96, 96, 96); // backtick x3
+    const codeBlockJsonStart = codeBlockStart + 'json';
+    if (cleanedText.startsWith(codeBlockJsonStart)) {
       cleanedText = cleanedText.slice(7);
     }
-    if (cleanedText.startsWith('```')) {
+    if (cleanedText.startsWith(codeBlockStart)) {
       cleanedText = cleanedText.slice(3);
     }
     // Remove code block markers at end
-    if (cleanedText.endsWith('```')) {
+    if (cleanedText.endsWith(codeBlockStart)) {
       cleanedText = cleanedText.slice(0, -3);
     }
     cleanedText = cleanedText.trim();
