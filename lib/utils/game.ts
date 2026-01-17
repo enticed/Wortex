@@ -5,32 +5,20 @@
 import type { Phrase, WordInVortex, PlacedWord, Puzzle } from '@/types/game';
 
 /**
- * Parse a phrase into individual words, normalizing to lowercase
- * (except for proper nouns which remain capitalized)
+ * Parse a phrase into individual words, preserving apostrophes and capitalization
  */
 export function parsePhrase(text: string): string[] {
-  // Common proper nouns to keep capitalized (expand this list as needed)
-  const properNouns = new Set([
-    'Shakespeare', 'Hamlet', 'God', 'Jesus', 'Christ', 'Buddha',
-    'America', 'American', 'Europe', 'European', 'Asia', 'Asian',
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-  ]);
-
   return text
     // Split on whitespace AND em/en dashes (treating dashes as word separators)
     .split(/[\s—–]+/)
     .filter((word) => word.length > 0)
     .map((word) => {
       const cleaned = word.trim();
-      // Remove other punctuation (but not dashes since we split on them)
-      const bareWord = cleaned.replace(/[.,!?;:'"()[\]{}]/g, '');
+      // Remove punctuation EXCEPT apostrophes (preserve contractions like "I'll", "don't", etc.)
+      // Remove: . , ! ? ; : " ( ) [ ] { } but KEEP apostrophes (')
+      const bareWord = cleaned.replace(/[.,!?;:"()[\]{}]/g, '');
       if (bareWord.length === 0) return null; // Skip if only punctuation
-      if (properNouns.has(bareWord)) {
-        return bareWord; // Keep capitalized proper nouns
-      }
-      return bareWord.toLowerCase(); // Everything else lowercase
+      return bareWord; // Preserve exact capitalization and apostrophes
     })
     .filter((word): word is string => word !== null); // Remove nulls
 }
