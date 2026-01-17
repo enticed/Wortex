@@ -70,46 +70,48 @@ export async function generatePuzzle(
     5: 'very challenging - obscure or literary quotes with advanced vocabulary',
   };
 
-  const prompt = `Generate a word puzzle based on a ${calculatedQuoteType === 'historical' ? 'historical quote from a famous person' : 'quote from classic literature or poetry'}.
+  const quoteSource = calculatedQuoteType === 'historical'
+    ? 'historical quote from a famous person'
+    : 'quote from classic literature or poetry';
+  const targetPhraseDesc = calculatedQuoteType === 'historical'
+    ? 'A famous historical quote'
+    : 'A memorable line from classic literature or poetry';
+  const difficultyDesc = difficultyDescriptions[calculatedDifficulty as keyof typeof difficultyDescriptions];
 
-STRICT REQUIREMENTS:
-1. Target phrase: ${calculatedQuoteType === 'historical' ? 'A famous historical quote' : 'A memorable line from classic literature or poetry'}
-   - MUST be between 8-25 words (count carefully, this is critical)
-   - Must be the exact, complete quote
-
-2. Difficulty: ${calculatedDifficulty}/5 - ${difficultyDescriptions[calculatedDifficulty as keyof typeof difficultyDescriptions]}
-
-3. Facsimile phrase: Create a semantically similar phrase that:
-   - Maintains the core meaning of the original
-   - Uses different wording (a "spin-off" of the original)
-   - Has similar word count (within ±30% of target phrase length)
-
-4. Bonus question: "Who is the source of this quote?"
-   - MUST include exactly 4 multiple choice options
-   - One correct answer + 3 plausible distractors
-   - All options should be from the same era and context
-
-Return ONLY valid JSON (no markdown, no code blocks) in this exact format:
-{
-  "targetPhrase": "exact quote text here",
-  "facsimilePhrase": "similar meaning phrase here",
-  "source": "Full name of author/speaker",
-  "sourceYear": year as number or null,
-  "theme": "brief theme description",
-  "tags": ["tag1", "tag2"],
-  "bonusOptions": [
-    {"person": "Correct Author Name", "year": 1950},
-    {"person": "Plausible Wrong Author 1", "year": 1945},
-    {"person": "Plausible Wrong Author 2", "year": 1960},
-    {"person": "Plausible Wrong Author 3", "year": 1955}
-  ],
-  "correctAnswerIndex": 0
-}
-
-CRITICAL VALIDATION:
-- Count words in targetPhrase before responding - it MUST be 8-25 words
-- bonusOptions array MUST have exactly 4 elements
-- correctAnswerIndex MUST be 0-3 (the index of the correct answer in bonusOptions)
+  const prompt = 'Generate a word puzzle based on a ' + quoteSource + '.\n\n' +
+    'STRICT REQUIREMENTS:\n' +
+    '1. Target phrase: ' + targetPhraseDesc + '\n' +
+    '   - MUST be between 8-25 words (count carefully, this is critical)\n' +
+    '   - Must be the exact, complete quote\n\n' +
+    '2. Difficulty: ' + calculatedDifficulty + '/5 - ' + difficultyDesc + '\n\n' +
+    '3. Facsimile phrase: Create a semantically similar phrase that:\n' +
+    '   - Maintains the core meaning of the original\n' +
+    '   - Uses different wording (a "spin-off" of the original)\n' +
+    '   - Has similar word count (within ±30% of target phrase length)\n\n' +
+    '4. Bonus question: "Who is the source of this quote?"\n' +
+    '   - MUST include exactly 4 multiple choice options\n' +
+    '   - One correct answer + 3 plausible distractors\n' +
+    '   - All options should be from the same era and context\n\n' +
+    'Return ONLY valid JSON (no markdown, no code blocks) in this exact format:\n' +
+    '{\n' +
+    '  "targetPhrase": "exact quote text here",\n' +
+    '  "facsimilePhrase": "similar meaning phrase here",\n' +
+    '  "source": "Full name of author/speaker",\n' +
+    '  "sourceYear": year as number or null,\n' +
+    '  "theme": "brief theme description",\n' +
+    '  "tags": ["tag1", "tag2"],\n' +
+    '  "bonusOptions": [\n' +
+    '    {"person": "Correct Author Name", "year": 1950},\n' +
+    '    {"person": "Plausible Wrong Author 1", "year": 1945},\n' +
+    '    {"person": "Plausible Wrong Author 2", "year": 1960},\n' +
+    '    {"person": "Plausible Wrong Author 3", "year": 1955}\n' +
+    '  ],\n' +
+    '  "correctAnswerIndex": 0\n' +
+    '}\n\n' +
+    'CRITICAL VALIDATION:\n' +
+    '- Count words in targetPhrase before responding - it MUST be 8-25 words\n' +
+    '- bonusOptions array MUST have exactly 4 elements\n' +
+    '- correctAnswerIndex MUST be 0-3 (the index of the correct answer in bonusOptions)\n';
 
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
