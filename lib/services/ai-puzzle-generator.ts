@@ -163,6 +163,12 @@ export async function generatePuzzle(
     year: opt.year || undefined,
   }));
 
+  // Store the correct answer ID before shuffling
+  const correctAnswerId = bonusOptions[aiResponse.correctAnswerIndex].id;
+
+  // Shuffle the bonus options to randomize answer order
+  const shuffledOptions = [...bonusOptions].sort(() => Math.random() - 0.5);
+
   const puzzle: GeneratedPuzzle = {
     targetPhrase: aiResponse.targetPhrase,
     facsimilePhrase: aiResponse.facsimilePhrase,
@@ -170,8 +176,8 @@ export async function generatePuzzle(
     bonusQuestion: {
       type: calculatedQuoteType === 'historical' ? 'quote' : 'literature',
       question: 'Who is the source of this quote?',
-      options: bonusOptions,
-      correctAnswerId: bonusOptions[aiResponse.correctAnswerIndex].id,
+      options: shuffledOptions,
+      correctAnswerId: correctAnswerId,
     },
     metadata: {
       source: aiResponse.source || 'Unknown',

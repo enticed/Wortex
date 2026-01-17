@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
             difficulty: puzzle.difficulty,
             bonus_question: puzzle.bonusQuestion,
             created_by_ai: true,
-            approved: false, // Require manual approval
+            approved: true, // Auto-approve AI-generated puzzles (Scheduled status)
             metadata: puzzle.metadata,
           })
           .select()
