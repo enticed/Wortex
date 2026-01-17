@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
 import GlobalLeaderboardTable from '@/components/leaderboard/GlobalLeaderboardTable';
@@ -28,6 +29,7 @@ export default function LeaderboardPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [puzzleDate, setPuzzleDate] = useState<string | null>(null);
 
+  const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
@@ -115,7 +117,7 @@ export default function LeaderboardPage() {
               )}
             </div>
             <button
-              onClick={() => window.history.back()}
+              onClick={() => router.back()}
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               aria-label="Close"
             >

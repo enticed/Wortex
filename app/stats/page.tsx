@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import StatsCard from '@/components/stats/StatsCard';
 import RecentGamesTable from '@/components/stats/RecentGamesTable';
@@ -26,6 +27,7 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState<string | null>(null);
 
+  const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
@@ -121,7 +123,7 @@ export default function StatsPage() {
               )}
             </div>
             <button
-              onClick={() => window.history.back()}
+              onClick={() => router.back()}
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               aria-label="Close"
             >
