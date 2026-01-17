@@ -1,5 +1,4 @@
-import PuzzleLoader from '@/components/game/PuzzleLoader';
-import AppLayout from '@/components/layout/AppLayout';
+import PuzzleLoaderWrapper from '@/components/game/PuzzleLoaderWrapper';
 import { createPhrase } from '@/lib/utils/game';
 import type { Puzzle } from '@/types/game';
 
@@ -26,9 +25,5 @@ export default function Home() {
     allWords: [],
   };
 
-  return (
-    <AppLayout>
-      <PuzzleLoader fallbackPuzzle={fallbackPuzzle} />
-    </AppLayout>
-  );
+  return <PuzzleLoaderWrapper fallbackPuzzle={fallbackPuzzle} />;
 }

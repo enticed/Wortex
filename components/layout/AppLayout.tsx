@@ -7,14 +7,15 @@ import SideMenu from './SideMenu';
 interface AppLayoutProps {
   children: ReactNode;
   showHeader?: boolean;
+  isArchiveMode?: boolean;
 }
 
-export default function AppLayout({ children, showHeader = true }: AppLayoutProps) {
+export default function AppLayout({ children, showHeader = true, isArchiveMode = false }: AppLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div id="game-root">
-      {showHeader && <Header onMenuToggle={() => setMenuOpen(true)} />}
+      {showHeader && <Header onMenuToggle={() => setMenuOpen(true)} isArchiveMode={isArchiveMode} />}
       <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
       {/* Main content - full viewport for game, with top padding otherwise */}

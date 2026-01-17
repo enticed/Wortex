@@ -40,9 +40,9 @@ export default function PuzzleCard({
       href={`/?date=${date}&archive=true`}
       className="block bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700 overflow-hidden"
     >
-      <div className="p-6">
+      <div className="p-4">
         {/* Header */}
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between mb-3">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {puzzleDate.toLocaleDateString('en-US', {
@@ -64,12 +64,12 @@ export default function PuzzleCard({
         </div>
 
         {/* Phrase Preview */}
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 italic">
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 italic">
           "{displayPhrase}"
         </p>
 
         {/* Status */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
           {hasPlayed ? (
             <div className="flex items-center gap-2">
               <span className="text-green-600 dark:text-green-400 text-sm font-medium">

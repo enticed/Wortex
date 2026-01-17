@@ -73,14 +73,5 @@ export default function PuzzleLoader({ fallbackPuzzle }: PuzzleLoaderProps) {
     );
   }
 
-  return (
-    <>
-      {isArchiveMode && (
-        <div className="fixed top-12 left-0 right-0 z-10 bg-yellow-500 text-gray-900 py-2 px-4 text-center text-sm font-medium">
-          Practice Mode - Scores won't be saved to leaderboards
-        </div>
-      )}
-      <GameBoard puzzle={puzzle} isArchiveMode={isArchiveMode} />
-    </>
-  );
+  return <GameBoard puzzle={puzzle} isArchiveMode={isArchiveMode} />;
 }
