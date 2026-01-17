@@ -132,7 +132,19 @@ CRITICAL VALIDATION:
   let aiResponse: any;
   try {
     // Remove markdown code blocks if present
-    const cleanedText = content.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    let cleanedText = content.text.trim();
+    // Remove ```json at start
+    if (cleanedText.startsWith('```json')) {
+      cleanedText = cleanedText.slice(7);
+    }
+    if (cleanedText.startsWith('```')) {
+      cleanedText = cleanedText.slice(3);
+    }
+    // Remove ``` at end
+    if (cleanedText.endsWith('```')) {
+      cleanedText = cleanedText.slice(0, -3);
+    }
+    cleanedText = cleanedText.trim();
     aiResponse = JSON.parse(cleanedText);
   } catch (error) {
     console.error('Failed to parse AI response:', content.text);
