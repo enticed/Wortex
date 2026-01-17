@@ -25,9 +25,10 @@ import type { Puzzle } from '@/types/game';
 
 interface GameBoardProps {
   puzzle: Puzzle;
+  isArchiveMode?: boolean;
 }
 
-export default function GameBoard({ puzzle }: GameBoardProps) {
+export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardProps) {
   const [vortexSpeed, setVortexSpeed] = useState(1.0); // Speed multiplier for vortex rotation
   const {
     gameState,
@@ -221,10 +222,10 @@ export default function GameBoard({ puzzle }: GameBoardProps) {
     }
   };
 
-  // Submit score when bonus is answered
+  // Submit score when bonus is answered (skip in archive mode)
   useEffect(() => {
     async function submitScore() {
-      if (gameState.bonusAnswered && !scoreSubmitted && userId && gameState.finalScore !== null) {
+      if (gameState.bonusAnswered && !scoreSubmitted && userId && gameState.finalScore !== null && !isArchiveMode) {
         setScoreSubmitted(true);
 
         const timeTakenSeconds = Math.floor((Date.now() - gameStartTime.current) / 1000);

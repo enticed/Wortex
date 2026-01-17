@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import GameBoard from './GameBoard';
 import { getUserTimezone } from '@/lib/utils/game';
 import type { Puzzle } from '@/types/game';
@@ -12,39 +13,74 @@ interface PuzzleLoaderProps {
 export default function PuzzleLoader({ fallbackPuzzle }: PuzzleLoaderProps) {
   const [puzzle, setPuzzle] = useState<Puzzle>(fallbackPuzzle);
   const [loading, setLoading] = useState(true);
+  const [isArchiveMode, setIsArchiveMode] = useState(false);
+
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     async function loadPuzzle() {
       try {
-        const timezone = getUserTimezone();
-        const response = await fetch(`/api/puzzle/daily?timezone=${encodeURIComponent(timezone)}`);
+        const date = searchParams.get('date');
+        const archive = searchParams.get('archive');
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.puzzle) {
-            setPuzzle(data.puzzle);
+        // Archive mode: load specific past puzzle
+        if (date && archive === 'true') {
+          setIsArchiveMode(true);
+          const timezone = getUserTimezone();
+          const response = await fetch(`/api/puzzle/daily?timezone=${encodeURIComponent(timezone)}&date=${date}`);
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.puzzle) {
+              setPuzzle(data.puzzle);
+            }
+          } else {
+            console.error('Error loading archive puzzle');
+          }
+        } else {
+          // Normal mode: load today's puzzle
+          setIsArchiveMode(false);
+          const timezone = getUserTimezone();
+          const response = await fetch(`/api/puzzle/daily?timezone=${encodeURIComponent(timezone)}`);
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.puzzle) {
+              setPuzzle(data.puzzle);
+            }
           }
         }
       } catch (error) {
-        console.error('Error loading daily puzzle:', error);
+        console.error('Error loading puzzle:', error);
       } finally {
         setLoading(false);
       }
     }
 
     loadPuzzle();
-  }, []);
+  }, [searchParams]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading today&apos;s puzzle...</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            {isArchiveMode ? 'Loading puzzle...' : 'Loading today\'s puzzle...'}
+          </p>
         </div>
       </div>
     );
   }
 
-  return <GameBoard puzzle={puzzle} />;
+  return (
+    <>
+      {isArchiveMode && (
+        <div className="fixed top-12 left-0 right-0 z-10 bg-yellow-500 text-gray-900 py-2 px-4 text-center text-sm font-medium">
+          Practice Mode - Scores won't be saved to leaderboards
+        </div>
+      )}
+      <GameBoard puzzle={puzzle} isArchiveMode={isArchiveMode} />
+    </>
+  );
 }
