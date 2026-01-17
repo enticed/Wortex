@@ -277,7 +277,7 @@ export default function AssemblyArea({
         className={`
           flex-1 border-2 rounded-lg p-1.5
           flex items-start justify-center
-          overflow-x-auto overflow-y-hidden
+          ${id === 'target' ? 'overflow-x-hidden overflow-y-auto' : 'overflow-x-auto overflow-y-hidden'}
           transition-all duration-500
           ${isComplete ? 'border-solid bg-gradient-to-br' : 'border-dashed'}
           ${isComplete && id === 'target' ? 'from-blue-200 to-blue-300 dark:from-blue-800 dark:to-blue-900 border-blue-500 dark:border-blue-400' : ''}
@@ -369,7 +369,7 @@ export default function AssemblyArea({
           </div>
         ) : (
           // Phase 1 or auto-assembly: Words just display in position
-          <div className={`flex flex-wrap ${getGapSize()} items-start content-start w-full ${getWordScale()}`}>
+          <div className={`flex ${id === 'facsimile' ? 'flex-nowrap' : 'flex-wrap'} ${getGapSize()} items-start content-start ${id === 'facsimile' ? '' : 'w-full'} ${getWordScale()}`}>
             {sortedWords.map((word) => (
               <Word key={word.id} id={word.id} text={word.word} isPlaced={true} colorVariant={getWordColorVariant(word)} />
             ))}
