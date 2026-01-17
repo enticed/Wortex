@@ -272,12 +272,20 @@ export default function AssemblyArea({
         )}
       </div>
 
+      {/*
+        IMPORTANT SCROLL BEHAVIOR:
+        - Target area (top): ONLY vertical scrolling (overflow-y-auto, overflow-x-hidden)
+          Words wrap to multiple lines, user scrolls vertically to see all content
+        - Facsimile area (bottom): ONLY horizontal scrolling (overflow-x-auto, overflow-y-hidden)
+          Words display in single line, user scrolls horizontally to see all content
+      */}
       <div
         ref={setNodeRef}
         className={`
           flex-1 border-2 rounded-lg p-1.5
-          flex items-start justify-center
-          ${id === 'target' ? 'overflow-x-hidden overflow-y-auto' : 'overflow-x-auto overflow-y-hidden'}
+          flex items-start
+          ${id === 'facsimile' ? 'justify-start' : 'justify-center'}
+          ${id === 'target' ? 'overflow-y-auto overflow-x-hidden' : 'overflow-x-auto overflow-y-hidden'}
           transition-all duration-500
           ${isComplete ? 'border-solid bg-gradient-to-br' : 'border-dashed'}
           ${isComplete && id === 'target' ? 'from-blue-200 to-blue-300 dark:from-blue-800 dark:to-blue-900 border-blue-500 dark:border-blue-400' : ''}
@@ -289,7 +297,7 @@ export default function AssemblyArea({
       >
         {isComplete ? (
           // Completed phrase - show as solid block with punctuation, auto-sized to fit
-          // Phase 1 facsimile: single line with horizontal scroll animation
+          // Phase 1 facsimile: single line with horizontal auto-scroll animation
           id === 'facsimile' && phase === 1 ? (
             <div className="text-center animate-fade-in w-full h-full flex items-center justify-center overflow-hidden p-2">
               <div className="animate-scroll-horizontal whitespace-nowrap">

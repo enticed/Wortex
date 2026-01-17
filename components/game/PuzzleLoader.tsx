@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import GameBoard from './GameBoard';
+import AppLayout from '@/components/layout/AppLayout';
 import { getUserTimezone } from '@/lib/utils/game';
 import type { Puzzle } from '@/types/game';
 
@@ -62,16 +63,22 @@ export default function PuzzleLoader({ fallbackPuzzle }: PuzzleLoaderProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            {isArchiveMode ? 'Loading puzzle...' : 'Loading today\'s puzzle...'}
-          </p>
+      <AppLayout showHeader={true} isArchiveMode={isArchiveMode}>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">
+              {isArchiveMode ? 'Loading puzzle...' : 'Loading today\'s puzzle...'}
+            </p>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
-  return <GameBoard puzzle={puzzle} isArchiveMode={isArchiveMode} />;
+  return (
+    <AppLayout showHeader={true} isArchiveMode={isArchiveMode}>
+      <GameBoard puzzle={puzzle} isArchiveMode={isArchiveMode} />
+    </AppLayout>
+  );
 }

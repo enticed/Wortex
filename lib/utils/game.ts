@@ -5,10 +5,12 @@
 import type { Phrase, WordInVortex, PlacedWord, Puzzle } from '@/types/game';
 
 /**
- * Parse a phrase into individual words, preserving apostrophes and capitalization
+ * Parse a phrase into individual words, preserving apostrophes.
+ * Normalizes sentence-case capitalization (first letter of sentence) to lowercase
+ * while preserving proper nouns and words that are consistently capitalized.
  */
 export function parsePhrase(text: string): string[] {
-  return text
+  const words = text
     // Split on whitespace AND em/en dashes (treating dashes as word separators)
     .split(/[\s—–]+/)
     .filter((word) => word.length > 0)
@@ -18,9 +20,42 @@ export function parsePhrase(text: string): string[] {
       // Remove: . , ! ? ; : " ( ) [ ] { } but KEEP apostrophes (')
       const bareWord = cleaned.replace(/[.,!?;:"()[\]{}]/g, '');
       if (bareWord.length === 0) return null; // Skip if only punctuation
-      return bareWord; // Preserve exact capitalization and apostrophes
+      return bareWord;
     })
     .filter((word): word is string => word !== null); // Remove nulls
+
+  // Normalize sentence-case capitalization while preserving proper nouns
+  // Strategy: If a word appears both capitalized and lowercase in the text,
+  // assume the lowercase version is correct (capitalized was just sentence-initial)
+  const wordMap = new Map<string, string>(); // lowercase -> canonical form
+
+  words.forEach((word) => {
+    const lower = word.toLowerCase();
+    const existing = wordMap.get(lower);
+
+    if (!existing) {
+      // First occurrence - use this form
+      wordMap.set(lower, word);
+    } else {
+      // Word already exists - check if we should update the canonical form
+      // If existing is capitalized and current is lowercase, prefer lowercase
+      // (This handles sentence-initial capitalization)
+      const existingFirstChar = existing.charAt(0);
+      const currentFirstChar = word.charAt(0);
+
+      if (existingFirstChar === existingFirstChar.toUpperCase() &&
+          currentFirstChar === currentFirstChar.toLowerCase() &&
+          existing.substring(1) === word.substring(1)) {
+        // Existing is capitalized, current is lowercase, rest matches
+        // Prefer the lowercase version (normalize sentence case)
+        wordMap.set(lower, word);
+      }
+      // Otherwise keep existing (preserve proper nouns that are consistently capitalized)
+    }
+  });
+
+  // Return words with normalized capitalization
+  return words.map(word => wordMap.get(word.toLowerCase()) || word);
 }
 
 /**
@@ -31,6 +66,96 @@ export function createPhrase(text: string, type: 'target' | 'facsimile'): Phrase
     id: `${type}-${Date.now()}`,
     text,
     words: parsePhrase(text),
+    type,
+  };
+}
+
+/**
+ * Normalize capitalization across multiple texts.
+ * Strategy: Convert to lowercase UNLESS the word is ALWAYS capitalized across ALL occurrences
+ * (indicating a proper noun like "Shakespeare" or "America").
+ * This handles sentence-initial capitalization by defaulting to lowercase.
+ */
+export function normalizeCapitalizationAcrossTexts(texts: string[]): Map<string, string> {
+  const allWords: string[] = [];
+
+  // Collect all words from all texts
+  texts.forEach(text => {
+    const words = text
+      .split(/[\s—–]+/)
+      .filter((word) => word.length > 0)
+      .map((word) => {
+        const cleaned = word.trim();
+        const bareWord = cleaned.replace(/[.,!?;:"()[\]{}]/g, '');
+        return bareWord;
+      })
+      .filter((word) => word.length > 0);
+
+    allWords.push(...words);
+  });
+
+  // Track capitalization patterns for each unique word (case-insensitive)
+  const wordOccurrences = new Map<string, { capitalized: number; lowercase: number }>();
+
+  allWords.forEach((word) => {
+    const lower = word.toLowerCase();
+    const firstChar = word.charAt(0);
+    const isCapitalized = firstChar === firstChar.toUpperCase() && firstChar !== firstChar.toLowerCase();
+
+    if (!wordOccurrences.has(lower)) {
+      wordOccurrences.set(lower, { capitalized: 0, lowercase: 0 });
+    }
+
+    const counts = wordOccurrences.get(lower)!;
+    if (isCapitalized) {
+      counts.capitalized++;
+    } else {
+      counts.lowercase++;
+    }
+  });
+
+  // Build capitalization map: use lowercase UNLESS word is ALWAYS capitalized
+  const wordMap = new Map<string, string>();
+
+  wordOccurrences.forEach((counts, lower) => {
+    // If word appears lowercase at least once OR never appears capitalized, use lowercase
+    // Only preserve capitalization if word is ALWAYS capitalized (proper noun)
+    if (counts.lowercase > 0 || counts.capitalized === 0) {
+      wordMap.set(lower, lower); // Always use lowercase
+    } else {
+      // Word is ALWAYS capitalized - find the capitalized version to preserve
+      const capitalizedVersion = allWords.find(w => w.toLowerCase() === lower && w.charAt(0) === w.charAt(0).toUpperCase());
+      wordMap.set(lower, capitalizedVersion || lower);
+    }
+  });
+
+  return wordMap;
+}
+
+/**
+ * Create a phrase object with normalized capitalization using a provided word map
+ */
+export function createPhraseWithNormalizedCaps(
+  text: string,
+  type: 'target' | 'facsimile',
+  capMap: Map<string, string>
+): Phrase {
+  const words = text
+    .split(/[\s—–]+/)
+    .filter((word) => word.length > 0)
+    .map((word) => {
+      const cleaned = word.trim();
+      const bareWord = cleaned.replace(/[.,!?;:"()[\]{}]/g, '');
+      if (bareWord.length === 0) return null;
+      // Use the normalized capitalization from the map
+      return capMap.get(bareWord.toLowerCase()) || bareWord;
+    })
+    .filter((word): word is string => word !== null);
+
+  return {
+    id: `${type}-${Date.now()}`,
+    text,
+    words,
     type,
   };
 }

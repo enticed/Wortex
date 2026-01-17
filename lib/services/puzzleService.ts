@@ -3,7 +3,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
-import { createPhrase, getCurrentDateForTimezone } from '@/lib/utils/game';
+import { normalizeCapitalizationAcrossTexts, createPhraseWithNormalizedCaps, getCurrentDateForTimezone } from '@/lib/utils/game';
 import type { Puzzle, BonusQuestion } from '@/types/game';
 
 /**
@@ -25,12 +25,17 @@ export async function getDailyPuzzle(timezone: string = 'UTC'): Promise<Puzzle |
     return null;
   }
 
+  // Normalize capitalization across both phrases
+  const targetText = (data as any).target_phrase;
+  const facsimileText = (data as any).facsimile_phrase;
+  const capMap = normalizeCapitalizationAcrossTexts([targetText, facsimileText]);
+
   // Transform database row to Puzzle type
   const puzzle: Puzzle = {
     id: (data as any).id,
     date: (data as any).date,
-    targetPhrase: createPhrase((data as any).target_phrase, 'target'),
-    facsimilePhrase: createPhrase((data as any).facsimile_phrase, 'facsimile'),
+    targetPhrase: createPhraseWithNormalizedCaps(targetText, 'target', capMap),
+    facsimilePhrase: createPhraseWithNormalizedCaps(facsimileText, 'facsimile', capMap),
     difficulty: (data as any).difficulty,
     bonusQuestion: (data as any).bonus_question as BonusQuestion,
     allWords: [],
@@ -57,11 +62,16 @@ export async function getPuzzleByDate(date: string): Promise<Puzzle | null> {
     return null;
   }
 
+  // Normalize capitalization across both phrases
+  const targetText = (data as any).target_phrase;
+  const facsimileText = (data as any).facsimile_phrase;
+  const capMap = normalizeCapitalizationAcrossTexts([targetText, facsimileText]);
+
   const puzzle: Puzzle = {
     id: (data as any).id,
     date: (data as any).date,
-    targetPhrase: createPhrase((data as any).target_phrase, 'target'),
-    facsimilePhrase: createPhrase((data as any).facsimile_phrase, 'facsimile'),
+    targetPhrase: createPhraseWithNormalizedCaps(targetText, 'target', capMap),
+    facsimilePhrase: createPhraseWithNormalizedCaps(facsimileText, 'facsimile', capMap),
     difficulty: (data as any).difficulty,
     bonusQuestion: (data as any).bonus_question as BonusQuestion,
     allWords: [],
