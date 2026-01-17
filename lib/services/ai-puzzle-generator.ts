@@ -150,7 +150,8 @@ CRITICAL VALIDATION:
     aiResponse = JSON.parse(cleanedText);
   } catch (error) {
     console.error('Failed to parse AI response:', content.text);
-    throw new Error(`Invalid JSON from AI: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error('Invalid JSON from AI: ' + errorMsg);
   }
 
   // Validate and structure the puzzle
@@ -182,12 +183,12 @@ CRITICAL VALIDATION:
   const facsimileWords = puzzle.facsimilePhrase.split(/\s+/).length;
 
   if (targetWords < 8 || targetWords > 25) {
-    throw new Error(`Target phrase word count (${targetWords}) outside 8-25 range`);
+    throw new Error('Target phrase word count (' + targetWords + ') outside 8-25 range');
   }
 
   const lengthDiff = Math.abs(targetWords - facsimileWords) / targetWords;
   if (lengthDiff > 0.3) {
-    console.warn(`Facsimile length differs by ${(lengthDiff * 100).toFixed(1)}% from target`);
+    console.warn('Facsimile length differs by ' + (lengthDiff * 100).toFixed(1) + '% from target');
   }
 
   return puzzle;
@@ -218,7 +219,7 @@ export async function generatePuzzleBatch(
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     } catch (error) {
-      console.error(`Failed to generate puzzle for ${targetDate.toISOString()}:`, error);
+      console.error('Failed to generate puzzle for ' + targetDate.toISOString() + ':', error);
       throw error;
     }
   }
