@@ -72,39 +72,49 @@ export async function generatePuzzle(
 
   const prompt = `Generate a word puzzle based on a ${calculatedQuoteType === 'historical' ? 'historical quote from a famous person' : 'quote from classic literature or poetry'}.
 
-Requirements:
-- Target phrase: ${calculatedQuoteType === 'historical' ? 'A famous historical quote (8-25 words)' : 'A memorable line from classic literature or poetry (8-25 words)'}
-- Difficulty: ${calculatedDifficulty}/5 - ${difficultyDescriptions[calculatedDifficulty as keyof typeof difficultyDescriptions]}
-- Facsimile phrase: Create a semantically similar phrase with similar word count (±30%), but different wording. This is a "spin-off" of the original that maintains the core meaning.
-- Bonus question: "Who is the source of this quote?" with 4 multiple choice options (including correct answer)
+STRICT REQUIREMENTS:
+1. Target phrase: ${calculatedQuoteType === 'historical' ? 'A famous historical quote' : 'A memorable line from classic literature or poetry'}
+   - MUST be between 8-25 words (count carefully, this is critical)
+   - Must be the exact, complete quote
+
+2. Difficulty: ${calculatedDifficulty}/5 - ${difficultyDescriptions[calculatedDifficulty as keyof typeof difficultyDescriptions]}
+
+3. Facsimile phrase: Create a semantically similar phrase that:
+   - Maintains the core meaning of the original
+   - Uses different wording (a "spin-off" of the original)
+   - Has similar word count (within ±30% of target phrase length)
+
+4. Bonus question: "Who is the source of this quote?"
+   - MUST include exactly 4 multiple choice options
+   - One correct answer + 3 plausible distractors
+   - All options should be from the same era and context
 
 Return ONLY valid JSON (no markdown, no code blocks) in this exact format:
 {
-  "targetPhrase": "exact quote text",
-  "facsimilePhrase": "similar meaning phrase",
+  "targetPhrase": "exact quote text here",
+  "facsimilePhrase": "similar meaning phrase here",
   "source": "Full name of author/speaker",
   "sourceYear": year as number or null,
   "theme": "brief theme description",
   "tags": ["tag1", "tag2"],
   "bonusOptions": [
-    {"person": "Correct Author", "year": 1950},
-    {"person": "Wrong Author 1", "year": 1945},
-    {"person": "Wrong Author 2", "year": 1960},
-    {"person": "Wrong Author 3", "year": 1955}
+    {"person": "Correct Author Name", "year": 1950},
+    {"person": "Plausible Wrong Author 1", "year": 1945},
+    {"person": "Plausible Wrong Author 2", "year": 1960},
+    {"person": "Plausible Wrong Author 3", "year": 1955}
   ],
   "correctAnswerIndex": 0
 }
 
-Important:
-- targetPhrase must be 8-25 words
-- facsimilePhrase should be similar length (±30%)
-- All bonus options should be plausible (same era, similar context)
-- correctAnswerIndex is the index (0-3) of the correct option`;
+CRITICAL VALIDATION:
+- Count words in targetPhrase before responding - it MUST be 8-25 words
+- bonusOptions array MUST have exactly 4 elements
+- correctAnswerIndex MUST be 0-3 (the index of the correct answer in bonusOptions)
 
   const message = await anthropic.messages.create({
-    model: 'claude-3-5-haiku-20241022',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
-    temperature: 0.8, // Some creativity but consistent
+    temperature: 0.7, // Balanced creativity and compliance
     messages: [
       {
         role: 'user',
