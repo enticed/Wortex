@@ -48,10 +48,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate puzzles
-    const puzzles = count === 1
-      ? [{ ...await generatePuzzle(start), date: startDate }]
-      : await generatePuzzleBatch(start, count);
+    // Find the next available date starting from startDate
+    let currentDate = new Date(start);
+    let availableDates: Date[] = [];
+    let attempts = 0;
+    const maxAttempts = count + 100; // Check up to count + 100 days to find available slots
+
+    while (availableDates.length < count && attempts < maxAttempts) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+
+      // Check if puzzle exists for this date
+      const { data: existing } = await supabase
+        .from('puzzles')
+        .select('date')
+        .eq('date', dateStr)
+        .single();
+
+      if (!existing) {
+        availableDates.push(new Date(currentDate));
+      }
+
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1);
+      attempts++;
+    }
+
+    if (availableDates.length === 0) {
+      return NextResponse.json(
+        { error: 'No available dates found in the next ' + maxAttempts + ' days' },
+        { status: 400 }
+      );
+    }
+
+    // Generate puzzles for available dates
+    const puzzles = [];
+    for (const date of availableDates) {
+      const puzzle = await generatePuzzle(date);
+      puzzles.push({
+        ...puzzle,
+        date: date.toISOString().split('T')[0],
+      });
+    }
 
     // Save to database
     const savedPuzzles = [];
@@ -59,22 +96,7 @@ export async function POST(request: NextRequest) {
 
     for (const puzzle of puzzles) {
       try {
-        // Check if puzzle already exists for this date
-        const { data: existing } = await supabase
-          .from('puzzles')
-          .select('date')
-          .eq('date', puzzle.date)
-          .single();
-
-        if (existing) {
-          errors.push({
-            date: puzzle.date,
-            error: 'Puzzle already exists for this date',
-          });
-          continue;
-        }
-
-        // Insert puzzle
+        // Insert puzzle (we already verified the date is available)
         const { data, error } = await supabase
           .from('puzzles')
           .insert({
@@ -91,7 +113,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (error) {
-          console.error(`Error saving puzzle for ${puzzle.date}:`, error);
+          console.error('Error saving puzzle for ' + puzzle.date + ':', error);
           errors.push({
             date: puzzle.date,
             error: error.message,
@@ -100,7 +122,7 @@ export async function POST(request: NextRequest) {
           savedPuzzles.push(data);
         }
       } catch (error) {
-        console.error(`Failed to save puzzle for ${puzzle.date}:`, error);
+        console.error('Failed to save puzzle for ' + puzzle.date + ':', error);
         errors.push({
           date: puzzle.date,
           error: error instanceof Error ? error.message : 'Unknown error',
