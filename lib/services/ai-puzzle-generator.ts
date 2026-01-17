@@ -141,7 +141,7 @@ Important:
     facsimilePhrase: aiResponse.facsimilePhrase,
     difficulty: calculatedDifficulty,
     bonusQuestion: {
-      type: calculatedQuoteType,
+      type: calculatedQuoteType === 'historical' ? 'quote' : 'literature',
       question: 'Who is the source of this quote?',
       options: bonusOptions,
       correctAnswerId: bonusOptions[aiResponse.correctAnswerIndex].id,
