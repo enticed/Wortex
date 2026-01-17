@@ -15,9 +15,11 @@ interface VortexProps {
   isFacsimileComplete?: boolean; // Stop auto-capture when facsimile phrase is complete
   facsimileWords?: Set<string>; // Set of facsimile word texts (lowercase) for quick lookup
   totalWordsSeen?: number; // Total words seen for display
+  expectedWords?: string[]; // Expected words for target phrase (for fast-speed highlighting)
+  placedWords?: string[]; // Currently placed words in target area (for fast-speed highlighting)
 }
 
-export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, speed = 1.0, isFacsimileComplete = false, facsimileWords, totalWordsSeen = 0 }: VortexProps) {
+export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, speed = 1.0, isFacsimileComplete = false, facsimileWords, totalWordsSeen = 0, expectedWords = [], placedWords = [] }: VortexProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'vortex',
   });
@@ -77,6 +79,51 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
   const getScale = (radius: number) => {
     // Scale from 1.3 (outer) to 0.4 (inner)
     return 0.4 + (radius * 0.9);
+  };
+
+  // Calculate fog opacity for slow speeds
+  const getFogOpacity = () => {
+    if (speed >= 1.0) return 0; // No fog at normal or fast speeds
+    if (speed >= 0.75) return 0.15; // Subtle fog
+    if (speed >= 0.50) return 0.35; // Moderate fog
+    if (speed >= 0.25) return 0.60; // Heavy fog
+    return 0.85; // Nearly opaque at 0x (paused)
+  };
+
+  // Calculate highlighting opacity for fast speeds
+  const getHighlightOpacity = () => {
+    if (speed <= 1.0) return 0; // No highlighting at normal or slow speeds
+    if (speed <= 1.25) return 0.20; // Barely visible
+    if (speed <= 1.50) return 0.50; // Noticeable
+    if (speed <= 1.75) return 0.75; // Clear
+    return 1.0; // Fully visible at 2.00x
+  };
+
+  // Determine if a word is needed or unnecessary for highlighting
+  const getWordHighlightType = (wordText: string): 'needed' | 'unnecessary' | null => {
+    const highlightOpacity = getHighlightOpacity();
+    if (highlightOpacity === 0) return null; // No highlighting at slow/normal speeds
+
+    const wordLower = wordText.toLowerCase();
+
+    // Count how many times this word is needed
+    const neededCount = expectedWords.filter(w => w.toLowerCase() === wordLower).length;
+
+    if (neededCount === 0) {
+      // Word doesn't belong in target phrase at all
+      return 'unnecessary';
+    }
+
+    // Count how many times this word has been placed
+    const placedCount = placedWords.filter(w => w.toLowerCase() === wordLower).length;
+
+    if (placedCount >= neededCount) {
+      // Already have enough of this word
+      return 'unnecessary';
+    }
+
+    // Still need this word
+    return 'needed';
   };
 
   // Animate words in the vortex
@@ -265,6 +312,14 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
         />
       </svg>
 
+      {/* Fog overlay for slow speeds */}
+      {getFogOpacity() > 0 && (
+        <div
+          className="absolute inset-0 pointer-events-none z-20 bg-gray-500 dark:bg-gray-800 transition-opacity duration-500"
+          style={{ opacity: getFogOpacity() }}
+        />
+      )}
+
       {/* Center vortex visual with word count */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 flex items-center justify-center">
         <div className="w-16 h-16 rounded-full bg-gradient-radial from-purple-500/50 to-transparent animate-pulse" />
@@ -283,6 +338,10 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
           const initialPos = getCartesianPosition(spiralPos.angle, spiralPos.radius);
           const initialScale = getScale(spiralPos.radius);
 
+          // Determine highlight type for fast speeds
+          const highlightType = getWordHighlightType(word.word);
+          const highlightOpacity = getHighlightOpacity();
+
           return (
             <div
               key={word.id}
@@ -295,7 +354,13 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
                 opacity: 1,
               }}
             >
-              <Word id={word.id} text={word.word} isPlaced={false} />
+              <Word
+                id={word.id}
+                text={word.word}
+                isPlaced={false}
+                vortexHighlightType={highlightType}
+                vortexHighlightOpacity={highlightOpacity}
+              />
             </div>
           );
         })}

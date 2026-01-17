@@ -384,6 +384,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
                 isFacsimileComplete={isFacsimileComplete}
                 facsimileWords={facsimileWordsSet}
                 totalWordsSeen={gameState.totalWordsSeen}
+                expectedWords={puzzle.targetPhrase.words}
+                placedWords={gameState.targetPhraseWords.map(w => w.word)}
               />
             )}
 
