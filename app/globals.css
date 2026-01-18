@@ -70,6 +70,9 @@ html:has(#game-root) {
 .speed-slider {
   -webkit-appearance: slider-vertical;
   width: 2px;
+  /* Use background gradient on the input element for Chrome/Safari */
+  background: linear-gradient(to bottom, #9333ea 0%, #6366f1 100%);
+  border-radius: 1px;
 }
 
 /* Firefox-specific vertical slider support using writing-mode */
@@ -80,10 +83,11 @@ html:has(#game-root) {
     background: linear-gradient(to top, #9333ea 0%, #6366f1 100%);
     border-radius: 1px;
     width: 2px;
+    height: 194px; /* 10% shorter than h-54 (216px) */
   }
 
   .speed-slider::-moz-range-track {
-    background: linear-gradient(to top, #9333ea 0%, #6366f1 100%);
+    background: transparent; /* Gradient is on the input element */
     border-radius: 1px;
     width: 2px;
   }
@@ -100,7 +104,7 @@ html:has(#game-root) {
 
 /* Webkit browsers (Chrome, Safari) - vertical slider with 2px track */
 .speed-slider::-webkit-slider-track {
-  background: linear-gradient(to bottom, #9333ea 0%, #6366f1 100%);
+  background: transparent; /* Gradient is on the input element */
   border-radius: 1px;
   width: 2px;
 }
@@ -114,12 +118,22 @@ html:has(#game-root) {
   cursor: pointer;
   height: 18px;
   width: 18px;
-  /* Center the thumb on the 2px track: thumb is 18px, so offset by (18-2)/2 = 8px */
-  margin-left: -8px;
+  /* Center the thumb: no horizontal offset needed when track and input have same width */
+  margin-left: 0;
 }
 
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
+  .speed-slider {
+    background: linear-gradient(to bottom, #8b5cf6 0%, #6366f1 100%);
+  }
+
+  @-moz-document url-prefix() {
+    .speed-slider {
+      background: linear-gradient(to top, #8b5cf6 0%, #6366f1 100%);
+    }
+  }
+
   .speed-slider::-webkit-slider-thumb,
   .speed-slider::-moz-range-thumb {
     background: #1f2937;

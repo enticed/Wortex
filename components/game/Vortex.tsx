@@ -154,11 +154,12 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
       let previousAngle = 180 + angularOffset; // Starting angle with offset
 
       // Animate the word along the spiral path from entrance to center
-      const baseDuration = 15; // Base duration in seconds
+      const baseDuration = 15; // Base duration in seconds at 1x speed
       const spiralTween = gsap.to(wordData, {
         progress: 1,
-        duration: baseDuration / speed, // Adjust duration based on speed
+        duration: baseDuration, // Base duration - will be scaled by timeScale
         ease: 'none', // Linear progression
+        paused: speed === 0, // Start paused if speed is 0
         onUpdate: () => {
           // Get fresh element ref in case it changed
           const currentElement = wordRefs.current.get(word.id);
@@ -245,9 +246,28 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
         },
       });
 
+      // Set initial timeScale based on current speed
+      if (speed !== 0) {
+        spiralTween.timeScale(speed);
+      }
+
       animationRefs.current.set(word.id, [spiralTween]);
     });
-  }, [words, isActive, speed]); // Re-run when speed changes
+  }, [words, isActive, speed]); // Re-run when speed changes to set initial timeScale for new words
+
+  // Update animation speed/pause state when speed changes
+  useEffect(() => {
+    animationRefs.current.forEach((anims) => {
+      anims.forEach((anim) => {
+        if (speed === 0) {
+          anim.pause(); // Pause animation at 0x
+        } else {
+          anim.timeScale(speed); // Update playback speed
+          anim.resume(); // Resume if paused
+        }
+      });
+    });
+  }, [speed]);
 
   // Clean up animations for removed words
   useEffect(() => {

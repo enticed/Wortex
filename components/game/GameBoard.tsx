@@ -389,9 +389,9 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
               />
             )}
 
-          {/* Speed Slider - Center Left */}
+          {/* Speed Slider - Center Left (z-50 keeps it above fog overlay at z-30) */}
           {!gameState.isComplete && (
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1 z-50">
               <input
                 type="range"
                 min="0"
