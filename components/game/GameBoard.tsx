@@ -349,7 +349,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
         {/* Middle Area - Vortex (Phase 1), Bonus Round, or Final Results */}
         {gameState.phase === 1 && (
-          <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
+          <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
             {gameState.bonusAnswered ? (
               // Show final results in vortex area
               <FinalResults
@@ -399,7 +399,6 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
                 step="0.25"
                 value={vortexSpeed}
                 onChange={(e) => setVortexSpeed(parseFloat(e.target.value))}
-                orient="vertical"
                 className="speed-slider h-36 cursor-pointer"
                 style={{
                   WebkitAppearance: 'slider-vertical' as any,

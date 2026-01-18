@@ -5,7 +5,7 @@ import Link from 'next/link';
 interface PuzzleCardProps {
   date: string;
   difficulty: number;
-  targetPhrase: string;
+  facsimilePhrase: string; // Show AI hint phrase instead of target answer
   hasPlayed: boolean;
   score?: number;
 }
@@ -13,7 +13,7 @@ interface PuzzleCardProps {
 export default function PuzzleCard({
   date,
   difficulty,
-  targetPhrase,
+  facsimilePhrase,
   hasPlayed,
   score
 }: PuzzleCardProps) {
@@ -21,9 +21,9 @@ export default function PuzzleCard({
   const isToday = puzzleDate.toDateString() === new Date().toDateString();
 
   // Truncate long phrases for display
-  const displayPhrase = targetPhrase.length > 60
-    ? targetPhrase.substring(0, 60) + '...'
-    : targetPhrase;
+  const displayPhrase = facsimilePhrase.length > 60
+    ? facsimilePhrase.substring(0, 60) + '...'
+    : facsimilePhrase;
 
   const difficultyColors = [
     'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
@@ -63,7 +63,7 @@ export default function PuzzleCard({
           </div>
         </div>
 
-        {/* Phrase Preview */}
+        {/* Hint Phrase Preview (AI-generated facsimile) */}
         <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 italic">
           "{displayPhrase}"
         </p>

@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 interface PuzzleWithScore {
   id: string;
   date: string;
-  target_phrase: string;
+  facsimile_phrase: string; // Show AI hint phrase instead of target
   difficulty: number;
   hasPlayed: boolean;
   score?: number;
@@ -38,7 +38,7 @@ export default function ArchivePage() {
       const today = new Date().toISOString().split('T')[0];
       const { data: puzzlesData, error: puzzlesError } = await supabase
         .from('puzzles')
-        .select('id, date, target_phrase, difficulty')
+        .select('id, date, facsimile_phrase, difficulty')
         .eq('approved', true)
         .lt('date', today)
         .order('date', { ascending: false });
@@ -69,7 +69,7 @@ export default function ArchivePage() {
         const puzzlesWithScores: PuzzleWithScore[] = puzzlesData.map((puzzle: any) => ({
           id: puzzle.id,
           date: puzzle.date,
-          target_phrase: puzzle.target_phrase,
+          facsimile_phrase: puzzle.facsimile_phrase,
           difficulty: puzzle.difficulty,
           hasPlayed: scoresMap.has(puzzle.id),
           score: scoresMap.get(puzzle.id),
@@ -81,7 +81,7 @@ export default function ArchivePage() {
         const puzzlesWithScores: PuzzleWithScore[] = puzzlesData.map((puzzle: any) => ({
           id: puzzle.id,
           date: puzzle.date,
-          target_phrase: puzzle.target_phrase,
+          facsimile_phrase: puzzle.facsimile_phrase,
           difficulty: puzzle.difficulty,
           hasPlayed: false,
         }));
@@ -216,7 +216,7 @@ export default function ArchivePage() {
                     key={puzzle.id}
                     date={puzzle.date}
                     difficulty={puzzle.difficulty}
-                    targetPhrase={puzzle.target_phrase}
+                    facsimilePhrase={puzzle.facsimile_phrase}
                     hasPlayed={puzzle.hasPlayed}
                     score={puzzle.score}
                   />
