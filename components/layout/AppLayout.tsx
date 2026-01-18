@@ -8,13 +8,14 @@ interface AppLayoutProps {
   children: ReactNode;
   showHeader?: boolean;
   isArchiveMode?: boolean;
+  isGamePage?: boolean; // New prop to indicate if this is a game page (prevents scrolling)
 }
 
-export default function AppLayout({ children, showHeader = true, isArchiveMode = false }: AppLayoutProps) {
+export default function AppLayout({ children, showHeader = true, isArchiveMode = false, isGamePage = false }: AppLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div id="game-root">
+    <div id={isGamePage ? 'game-root' : undefined}>
       {showHeader && <Header onMenuToggle={() => setMenuOpen(true)} isArchiveMode={isArchiveMode} />}
       <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 

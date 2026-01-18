@@ -148,8 +148,10 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
       }
 
       // Each word starts at progress 0 (entrance) and animates to progress 1 (center)
+      // Add angular offset to prevent stacking at entrance
+      const angularOffset = (word.angle % 30) - 15; // Random offset between -15° and +15°
       const wordData = { progress: 0 };
-      let previousAngle = 180; // Starting angle
+      let previousAngle = 180 + angularOffset; // Starting angle with offset
 
       // Animate the word along the spiral path from entrance to center
       const baseDuration = 15; // Base duration in seconds
@@ -162,7 +164,9 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
           const currentElement = wordRefs.current.get(word.id);
           if (currentElement) {
             const spiralPos = getSpiralPosition(wordData.progress);
-            const pos = getCartesianPosition(spiralPos.angle, spiralPos.radius);
+            // Apply angular offset to prevent stacking at entrance
+            const adjustedAngle = spiralPos.angle + angularOffset;
+            const pos = getCartesianPosition(adjustedAngle, spiralPos.radius);
             const currentScale = getScale(spiralPos.radius);
 
             currentElement.style.transform = `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px) scale(${currentScale})`;
@@ -173,7 +177,7 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
 
             // Track rotation for auto-capture
             // Calculate rotation since last update (handling 360° wrap-around)
-            let angleDelta = spiralPos.angle - previousAngle;
+            let angleDelta = adjustedAngle - previousAngle;
             if (angleDelta > 180) angleDelta -= 360;
             if (angleDelta < -180) angleDelta += 360;
 
@@ -181,7 +185,7 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
             const currentRotation = wordRotations.current.get(word.id) || 0;
             const newRotation = currentRotation + Math.abs(angleDelta);
             wordRotations.current.set(word.id, newRotation);
-            previousAngle = spiralPos.angle;
+            previousAngle = adjustedAngle;
 
             // Auto-capture words at 240° rotation (2/3 turn)
             // Only while facsimile phrase is incomplete
@@ -208,8 +212,8 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
               const centerY = dimensions.height / 2;
               const maxRadius = Math.min(dimensions.width, dimensions.height) * 0.45;
 
-              // Calculate departure point from current spiral position
-              const departureRadian = (spiralPos.angle * Math.PI) / 180;
+              // Calculate departure point from current spiral position (with angular offset)
+              const departureRadian = (adjustedAngle * Math.PI) / 180;
               const currentX = centerX + Math.cos(departureRadian) * spiralPos.radius * maxRadius;
               const currentY = centerY + Math.sin(departureRadian) * spiralPos.radius * maxRadius;
 
@@ -315,7 +319,7 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
       {/* Fog overlay for slow speeds - light gray for fog-like appearance */}
       {getFogOpacity() > 0 && (
         <div
-          className="absolute inset-0 pointer-events-none z-20 bg-gray-300 dark:bg-gray-600 transition-opacity duration-500"
+          className="absolute top-0 bottom-0 left-0 right-0 pointer-events-none z-30 bg-gray-300 dark:bg-gray-600 transition-opacity duration-500"
           style={{ opacity: getFogOpacity() }}
         />
       )}
@@ -333,9 +337,12 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
         {words.map((word) => {
           if (word.isGrabbed) return null;
 
-          // All words start at the entrance (progress = 0)
+          // All words start at the entrance (progress = 0) but with random angular offset
+          // to prevent stacking. Use word.angle as seed for consistent positioning.
+          const angularOffset = (word.angle % 30) - 15; // Random offset between -15° and +15°
           const spiralPos = getSpiralPosition(0);
-          const initialPos = getCartesianPosition(spiralPos.angle, spiralPos.radius);
+          const adjustedAngle = spiralPos.angle + angularOffset;
+          const initialPos = getCartesianPosition(adjustedAngle, spiralPos.radius);
           const initialScale = getScale(spiralPos.radius);
 
           // Determine highlight type for fast speeds

@@ -63,7 +63,7 @@ export default function PuzzleLoader({ fallbackPuzzle }: PuzzleLoaderProps) {
 
   if (loading) {
     return (
-      <AppLayout showHeader={true} isArchiveMode={isArchiveMode}>
+      <AppLayout showHeader={true} isArchiveMode={isArchiveMode} isGamePage={true}>
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -77,7 +77,7 @@ export default function PuzzleLoader({ fallbackPuzzle }: PuzzleLoaderProps) {
   }
 
   return (
-    <AppLayout showHeader={true} isArchiveMode={isArchiveMode}>
+    <AppLayout showHeader={true} isArchiveMode={isArchiveMode} isGamePage={true}>
       <GameBoard puzzle={puzzle} isArchiveMode={isArchiveMode} />
     </AppLayout>
   );

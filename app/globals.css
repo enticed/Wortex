@@ -65,3 +65,61 @@ html:has(#game-root) {
 .animate-scroll-horizontal {
   animation: scroll-horizontal 15s linear infinite;
 }
+
+/* Speed Slider - Cross-browser vertical slider styling */
+.speed-slider {
+  -webkit-appearance: slider-vertical;
+}
+
+/* Firefox-specific vertical slider support using writing-mode */
+@-moz-document url-prefix() {
+  .speed-slider {
+    -moz-appearance: none;
+    appearance: none;
+    background: linear-gradient(to top, #9333ea 0%, #6366f1 100%);
+    border-radius: 4px;
+  }
+
+  .speed-slider::-moz-range-track {
+    background: linear-gradient(to top, #9333ea 0%, #6366f1 100%);
+    border-radius: 4px;
+    width: 4px;
+  }
+
+  .speed-slider::-moz-range-thumb {
+    background: white;
+    border: 2px solid #6366f1;
+    border-radius: 50%;
+    cursor: pointer;
+    height: 20px;
+    width: 20px;
+  }
+}
+
+/* Webkit browsers (Chrome, Safari) - vertical slider */
+.speed-slider::-webkit-slider-track {
+  background: linear-gradient(to bottom, #9333ea 0%, #6366f1 100%);
+  border-radius: 4px;
+  width: 4px;
+}
+
+.speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: white;
+  border: 2px solid #6366f1;
+  border-radius: 50%;
+  cursor: pointer;
+  height: 20px;
+  width: 20px;
+  margin-left: -8px;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .speed-slider::-webkit-slider-thumb,
+  .speed-slider::-moz-range-thumb {
+    background: #1f2937;
+    border-color: #8b5cf6;
+  }
+}

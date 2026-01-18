@@ -399,12 +399,13 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
                 step="0.25"
                 value={vortexSpeed}
                 onChange={(e) => setVortexSpeed(parseFloat(e.target.value))}
-                className="h-36 cursor-pointer"
+                orient="vertical"
+                className="speed-slider h-36 cursor-pointer"
                 style={{
                   WebkitAppearance: 'slider-vertical' as any,
-                  appearance: 'slider-vertical' as any,
-                  width: '2px',
-                  background: 'transparent',
+                  writingMode: 'vertical-lr' as any,
+                  direction: 'rtl' as any,
+                  width: '20px',
                 }}
               />
               <div className="text-xs text-gray-700 dark:text-gray-300 font-mono font-bold">
