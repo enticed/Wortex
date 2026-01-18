@@ -39,7 +39,6 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
     answerBonus,
     skipBonus,
     dismissWord,
-    autoCaptureFacsimileWord,
     useUnnecessaryWordHint,
     useCorrectStringHint,
     useNextWordHint,
@@ -298,16 +297,6 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
     puzzle.targetPhrase.words
   );
 
-  const isFacsimileComplete = isPhraseComplete(
-    gameState.facsimilePhraseWords,
-    puzzle.facsimilePhrase.words
-  );
-
-  // Create set of facsimile words for auto-capture checking
-  const facsimileWordsSet = new Set(
-    puzzle.facsimilePhrase.words.map(w => w.toLowerCase())
-  );
-
   return (
     <DndContext
       sensors={sensors}
@@ -378,11 +367,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
               <Vortex
                 words={gameState.vortexWords}
                 onWordGrab={grabWord}
-                onAutoCapture={autoCaptureFacsimileWord}
                 isActive={!gameState.isComplete && !gameState.isPaused && !gameState.showPhase1CompleteDialog}
                 speed={vortexSpeed}
-                isFacsimileComplete={isFacsimileComplete}
-                facsimileWords={facsimileWordsSet}
                 totalWordsSeen={gameState.totalWordsSeen}
                 expectedWords={puzzle.targetPhrase.words}
                 placedWords={gameState.targetPhraseWords.map(w => w.word)}
@@ -443,21 +429,22 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           </div>
         )}
 
-        {/* Bottom Area - Facsimile Phrase Assembly Area - Phase 1: 15%, Phase 2: 25% */}
+        {/* Bottom Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 25% */}
         <div className={`border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950 transition-all duration-500 ${
           gameState.phase === 2 ? 'h-[25%]' : 'h-[15%]'
         }`}>
           <AssemblyArea
             id="facsimile"
-            title={isFacsimileComplete ? "Hint Phrase" : "Hint Phrase (will auto-assemble)"}
+            title="Hint Phrase"
             placedWords={gameState.facsimilePhraseWords}
             expectedLength={puzzle.facsimilePhrase.words.length}
             bgColor="bg-green-50 dark:bg-green-950"
             borderColor="border-green-300 dark:border-green-700"
             isAutoAssembly={true}
-            isComplete={isFacsimileComplete}
+            isComplete={true}
             completedText={puzzle.facsimilePhrase.text}
             phase={gameState.phase}
+            showCompletedHeader={false}
           />
         </div>
 

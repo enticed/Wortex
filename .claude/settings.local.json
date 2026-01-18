@@ -26,7 +26,8 @@
       "Bash(node scripts/test-admin-access.mjs:*)",
       "Bash(rm:*)",
       "Bash(node scripts/refresh-schema-cache.mjs:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

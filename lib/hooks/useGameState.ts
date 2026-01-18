@@ -470,81 +470,6 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
     });
   }, []);
 
-  // Auto-capture facsimile word when it reaches 240° rotation
-  const autoCaptureFacsimileWord = useCallback((wordId: string) => {
-    setGameState((prev) => {
-      if (!prev.puzzle) return prev;
-
-      const word = prev.vortexWords.find((w) => w.id === wordId);
-      if (!word) return prev;
-
-      // Check if this word belongs to the facsimile phrase by trying to find a position
-      const correctPosition = findCorrectPosition(
-        word.word,
-        prev.puzzle.facsimilePhrase.words,
-        prev.facsimilePhraseWords
-      );
-
-      // If word doesn't belong to facsimile or all positions filled, keep it in vortex
-      if (correctPosition === null) return prev;
-
-      // Auto-place the word
-      const newWord: PlacedWord = {
-        id: word.id,
-        word: word.word,
-        position: correctPosition,
-        sourceIndex: word.sourceIndex,
-        belongsTo: 'facsimile',
-      };
-
-      const newFacsimileWords = [...prev.facsimilePhraseWords, newWord];
-
-      // Check if Phase 1 is complete
-      const isFacsimileComplete = isPhraseComplete(
-        newFacsimileWords,
-        prev.puzzle!.facsimilePhrase.words
-      );
-
-      // Count required instances of each word in target phrase
-      const requiredWordCounts = new Map<string, number>();
-      prev.puzzle!.targetPhrase.words.forEach(word => {
-        const key = word.toLowerCase();
-        requiredWordCounts.set(key, (requiredWordCounts.get(key) || 0) + 1);
-      });
-
-      // Count placed instances in target phrase
-      const placedWordCounts = new Map<string, number>();
-      prev.targetPhraseWords.forEach(placed => {
-        const key = placed.word.toLowerCase();
-        placedWordCounts.set(key, (placedWordCounts.get(key) || 0) + 1);
-      });
-
-      // Check if all required words are present with correct counts
-      const hasAllRequiredWords = Array.from(requiredWordCounts.entries()).every(([word, count]) =>
-        (placedWordCounts.get(word) || 0) >= count
-      );
-
-      const phase1Complete = isFacsimileComplete && hasAllRequiredWords;
-
-      // Calculate Phase 1 score when dialog appears
-      const phase1Score = phase1Complete
-        ? calculateScore(
-            prev.totalWordsSeen,
-            prev.puzzle!.targetPhrase.words.length + prev.puzzle!.facsimilePhrase.words.length,
-            prev.speed
-          )
-        : prev.score;
-
-      return {
-        ...prev,
-        facsimilePhraseWords: newFacsimileWords,
-        vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
-        showPhase1CompleteDialog: phase1Complete,
-        score: phase1Score,
-      };
-    });
-  }, []);
-
   // Confirm Phase 1 completion and transition to Phase 2
   const confirmPhase1Complete = useCallback(() => {
     setGameState((prev) => ({
@@ -710,7 +635,6 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
     answerBonus,
     skipBonus,
     dismissWord,
-    autoCaptureFacsimileWord,
     useUnnecessaryWordHint,
     useCorrectStringHint,
     useNextWordHint,

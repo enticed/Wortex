@@ -9,17 +9,14 @@ import type { WordInVortex } from '@/types/game';
 interface VortexProps {
   words: WordInVortex[];
   onWordGrab: (wordId: string) => void;
-  onAutoCapture?: (wordId: string) => void; // Called when facsimile word reaches 240° rotation
   isActive: boolean;
   speed?: number; // Speed multiplier: 0.5 = slow, 1.0 = normal, 2.0 = fast
-  isFacsimileComplete?: boolean; // Stop auto-capture when facsimile phrase is complete
-  facsimileWords?: Set<string>; // Set of facsimile word texts (lowercase) for quick lookup
   totalWordsSeen?: number; // Total words seen for display
   expectedWords?: string[]; // Expected words for target phrase (for fast-speed highlighting)
   placedWords?: string[]; // Currently placed words in target area (for fast-speed highlighting)
 }
 
-export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, speed = 1.0, isFacsimileComplete = false, facsimileWords, totalWordsSeen = 0, expectedWords = [], placedWords = [] }: VortexProps) {
+export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, totalWordsSeen = 0, expectedWords = [], placedWords = [] }: VortexProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'vortex',
   });
@@ -28,8 +25,6 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
   const wordRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const animationRefs = useRef<Map<string, gsap.core.Tween[]>>(new Map());
   const animatedWordIds = useRef<Set<string>>(new Set());
-  const autoCaptureTriggered = useRef<Set<string>>(new Set()); // Track which words have triggered auto-capture
-  const wordRotations = useRef<Map<string, number>>(new Map()); // Track accumulated rotation per word
 
   // Handle responsive sizing
   useEffect(() => {
@@ -142,16 +137,10 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
       // Mark this word as animated
       animatedWordIds.current.add(word.id);
 
-      // Initialize rotation tracking for this word
-      if (!wordRotations.current.has(word.id)) {
-        wordRotations.current.set(word.id, 0);
-      }
-
       // Each word starts at progress 0 (entrance) and animates to progress 1 (center)
       // Add angular offset to prevent stacking at entrance
       const angularOffset = (word.angle % 30) - 15; // Random offset between -15° and +15°
       const wordData = { progress: 0 };
-      let previousAngle = 180 + angularOffset; // Starting angle with offset
 
       // Animate the word along the spiral path from entrance to center
       const baseDuration = 15; // Base duration in seconds at 1x speed
@@ -175,69 +164,6 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
             // Fade out as approaching center
             const opacity = wordData.progress < 0.9 ? 1 : (1 - (wordData.progress - 0.9) * 10);
             currentElement.style.opacity = String(Math.max(0, opacity));
-
-            // Track rotation for auto-capture
-            // Calculate rotation since last update (handling 360° wrap-around)
-            let angleDelta = adjustedAngle - previousAngle;
-            if (angleDelta > 180) angleDelta -= 360;
-            if (angleDelta < -180) angleDelta += 360;
-
-            // Update accumulated rotation
-            const currentRotation = wordRotations.current.get(word.id) || 0;
-            const newRotation = currentRotation + Math.abs(angleDelta);
-            wordRotations.current.set(word.id, newRotation);
-            previousAngle = adjustedAngle;
-
-            // Auto-capture words at 240° rotation (2/3 turn)
-            // Only while facsimile phrase is incomplete
-            // Trigger at 215° to account for departure angle adjustment
-            if (onAutoCapture &&
-                !isFacsimileComplete &&
-                newRotation >= 215 &&
-                !autoCaptureTriggered.current.has(word.id)) {
-
-              // Check if this word belongs to the facsimile phrase
-              const wordBelongsToFacsimile = facsimileWords?.has(word.word.toLowerCase());
-
-              if (!wordBelongsToFacsimile) {
-                // Word doesn't belong to facsimile - don't animate, just mark as triggered
-                autoCaptureTriggered.current.add(word.id);
-                return; // Continue spiraling normally
-              }
-
-              // Word belongs to facsimile - animate it flying off
-              autoCaptureTriggered.current.add(word.id);
-
-              // Calculate current position for departure
-              const centerX = dimensions.width / 2;
-              const centerY = dimensions.height / 2;
-              const maxRadius = Math.min(dimensions.width, dimensions.height) * 0.45;
-
-              // Calculate departure point from current spiral position (with angular offset)
-              const departureRadian = (adjustedAngle * Math.PI) / 180;
-              const currentX = centerX + Math.cos(departureRadian) * spiralPos.radius * maxRadius;
-              const currentY = centerY + Math.sin(departureRadian) * spiralPos.radius * maxRadius;
-
-              // Calculate exit trajectory: from current position toward bottom center
-              const exitX = centerX;
-              const exitY = dimensions.height; // Bottom edge
-
-              // Animate word flying to bottom
-              gsap.to(currentElement, {
-                x: exitX,
-                y: exitY,
-                scale: 0.5,
-                opacity: 0,
-                duration: 0.4,
-                ease: 'power2.in',
-                onComplete: () => {
-                  onAutoCapture(word.id);
-                }
-              });
-
-              // Kill the spiral animation so it doesn't interfere
-              spiralTween.kill();
-            }
           }
         },
         onComplete: () => {
@@ -253,7 +179,7 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
 
       animationRefs.current.set(word.id, [spiralTween]);
     });
-  }, [words, isActive, speed]); // Re-run when speed changes to set initial timeScale for new words
+  }, [words, isActive]); // Only re-run when words or isActive changes, not speed
 
   // Update animation speed/pause state when speed changes
   useEffect(() => {
@@ -283,11 +209,9 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
         }
         wordRefs.current.delete(id);
         animatedWordIds.current.delete(id);
-        autoCaptureTriggered.current.delete(id);
-        wordRotations.current.delete(id);
       }
     });
-  }, [words, speed, isActive, onAutoCapture]); // Re-run when speed changes to update animation durations
+  }, [words, isActive]); // Clean up removed words
 
   return (
     <div

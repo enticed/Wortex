@@ -60,6 +60,7 @@ interface AssemblyAreaProps {
   totalWordsSeen?: number; // For score calculation
   totalUniqueWords?: number; // Total unique words in both phrases for score calculation
   speed?: number; // Vortex speed for score adjustment
+  showCompletedHeader?: boolean; // Whether to show "✓ Complete" message
 }
 
 export default function AssemblyArea({
@@ -86,6 +87,7 @@ export default function AssemblyArea({
   totalWordsSeen = 0,
   totalUniqueWords = 0,
   speed = 1.0,
+  showCompletedHeader = true,
 }: AssemblyAreaProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -226,9 +228,12 @@ export default function AssemblyArea({
         </h2>
         {/* Center Counters Display */}
         <span className="flex-1 flex justify-center text-base font-bold flex items-center gap-1">
-          {isComplete ? (
+          {isComplete && showCompletedHeader ? (
             <span className="text-green-600 dark:text-green-400 font-semibold">✓ Complete</span>
-          ) : phase === 2 && !isAutoAssembly ? (
+          ) : isComplete && !showCompletedHeader ? (
+            // Complete but header hidden (e.g., hint phrase shown from start) - show nothing
+            null
+          ) : !isComplete && phase === 2 && !isAutoAssembly ? (
             // Phase 2 target area: M + H format (Moves + Hints)
             <>
               <span className="text-blue-600 dark:text-blue-400 font-semibold">{reorderMoves}</span>
@@ -252,7 +257,7 @@ export default function AssemblyArea({
               )}
             </>
           ) : (
-            // Auto-assembly: Simple counter
+            // Auto-assembly: Simple counter (only when not complete)
             <span className={`${
               placedWords.length > expectedLength
                 ? 'text-red-600 dark:text-red-400'
