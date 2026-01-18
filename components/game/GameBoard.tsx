@@ -394,17 +394,17 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
             <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
               <input
                 type="range"
-                min="0.25"
+                min="0"
                 max="2"
                 step="0.25"
                 value={vortexSpeed}
                 onChange={(e) => setVortexSpeed(parseFloat(e.target.value))}
-                className="speed-slider h-36 cursor-pointer"
+                className="speed-slider h-54 cursor-pointer"
                 style={{
                   WebkitAppearance: 'slider-vertical' as any,
                   writingMode: 'vertical-lr' as any,
                   direction: 'rtl' as any,
-                  width: '20px',
+                  width: '2px',
                 }}
               />
               <div className="text-xs text-gray-700 dark:text-gray-300 font-mono font-bold">
