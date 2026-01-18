@@ -74,15 +74,15 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
           transition-shadow duration-200
         `}
       >
-        {/* Vortex highlighting overlay for fast speeds */}
+        {/* Vortex highlighting overlay for fast speeds - matches target area colors */}
         {vortexHighlightType && vortexHighlightOpacity > 0 && (
           <div
             className={`absolute inset-0 rounded-lg pointer-events-none ${
               vortexHighlightType === 'needed'
-                ? 'bg-green-500 dark:bg-green-400'
-                : 'bg-red-500 dark:bg-red-400'
+                ? 'bg-green-200 dark:bg-green-800'
+                : 'bg-red-200 dark:bg-red-800'
             }`}
-            style={{ opacity: vortexHighlightOpacity * 0.4 }} // Scale down to max 40% for readability
+            style={{ opacity: vortexHighlightOpacity }} // Full opacity at max speed
           />
         )}
         <span className="relative z-10">{text}</span>

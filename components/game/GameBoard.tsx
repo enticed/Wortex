@@ -360,7 +360,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
                 onPlayAgain={() => window.location.reload()}
                 totalWordsSeen={gameState.totalWordsSeen}
                 totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
-                speed={gameState.speed}
+                isArchiveMode={isArchiveMode}
               />
             ) : gameState.isComplete ? (
               // Show bonus round in vortex area
@@ -427,7 +427,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
                 onPlayAgain={() => window.location.reload()}
                 totalWordsSeen={gameState.totalWordsSeen}
                 totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
-                speed={gameState.speed}
+                isArchiveMode={isArchiveMode}
               />
             ) : (
               <div className="h-full flex items-center justify-center px-2">
@@ -555,9 +555,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
                 <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
                   <div>Words seen: {gameState.totalWordsSeen}</div>
                   <div>Total words: {puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}</div>
-                  <div>Speed: {gameState.speed.toFixed(2)}x</div>
                   <div className="pt-1 border-t border-gray-300 dark:border-gray-600 mt-2">
-                    Score: (Words seen ÷ Total words) ÷ Speed
+                    Score: Words seen ÷ Total words
                   </div>
                 </div>
               </div>

@@ -8,7 +8,7 @@ interface FinalResultsProps {
   onPlayAgain: () => void;
   totalWordsSeen?: number;
   totalUniqueWords?: number;
-  speed?: number;
+  isArchiveMode?: boolean;
 }
 
 export default function FinalResults({
@@ -19,7 +19,7 @@ export default function FinalResults({
   onPlayAgain,
   totalWordsSeen,
   totalUniqueWords,
-  speed,
+  isArchiveMode = false,
 }: FinalResultsProps) {
   return (
     <div className="h-full flex items-center justify-center px-4">
@@ -35,13 +35,12 @@ export default function FinalResults({
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {phase1Score.toFixed(2)}
             </div>
-            {totalWordsSeen !== undefined && totalUniqueWords !== undefined && speed !== undefined && (
+            {totalWordsSeen !== undefined && totalUniqueWords !== undefined && (
               <div className="text-xs text-gray-600 dark:text-gray-400 mt-2 space-y-0.5">
                 <div>Words seen: {totalWordsSeen}</div>
                 <div>Total words: {totalUniqueWords}</div>
-                <div>Speed: {speed.toFixed(2)}x</div>
                 <div className="pt-1 border-t border-gray-400 dark:border-gray-600 mt-1">
-                  Score: (Words seen ÷ Total words) ÷ Speed
+                  Score: Words seen ÷ Total words
                 </div>
               </div>
             )}
@@ -80,7 +79,7 @@ export default function FinalResults({
           onClick={onPlayAgain}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
         >
-          Play Again Tomorrow
+          {isArchiveMode ? 'Play Again' : 'Play Again Tomorrow'}
         </button>
       </div>
     </div>

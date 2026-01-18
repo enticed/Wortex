@@ -162,20 +162,17 @@ export function createPhraseWithNormalizedCaps(
 
 /**
  * Calculate game score: total words seen / number of unique words
- * Adjusted by speed to account for difficulty (lower score = better)
+ * Lower score is better (indicates efficiency - fewer words seen to complete puzzle)
+ * Speed is NOT factored into scoring - visual handicapping balances difficulty instead
  */
 export function calculateScore(totalWordsSeen: number, uniqueWords: number, speed: number = 1.0): number {
   if (uniqueWords === 0) return 0;
 
-  // Base score: totalWordsSeen / uniqueWords (lower is better)
-  const baseScore = totalWordsSeen / uniqueWords;
+  // Score = totalWordsSeen / uniqueWords (lower is better)
+  // Perfect play = 1.0 (saw exactly the unique words needed)
+  const score = totalWordsSeen / uniqueWords;
 
-  // Speed adjustment: divide by speed to compensate for difficulty
-  // Faster speeds (harder) = lower adjusted score
-  // Slower speeds (easier) = higher adjusted score
-  const adjustedScore = baseScore / speed;
-
-  return Math.round(adjustedScore * 100) / 100;
+  return Math.round(score * 100) / 100;
 }
 
 /**

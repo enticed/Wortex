@@ -81,13 +81,13 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
     return 0.4 + (radius * 0.9);
   };
 
-  // Calculate fog opacity for slow speeds
+  // Calculate fog opacity for slow speeds (increased by 15%)
   const getFogOpacity = () => {
     if (speed >= 1.0) return 0; // No fog at normal or fast speeds
-    if (speed >= 0.75) return 0.15; // Subtle fog
-    if (speed >= 0.50) return 0.35; // Moderate fog
-    if (speed >= 0.25) return 0.60; // Heavy fog
-    return 0.85; // Nearly opaque at 0x (paused)
+    if (speed >= 0.75) return 0.30; // Subtle fog (was 0.15)
+    if (speed >= 0.50) return 0.50; // Moderate fog (was 0.35)
+    if (speed >= 0.25) return 0.75; // Heavy fog (was 0.60)
+    return 1.0; // Fully opaque at 0x (paused, was 0.85)
   };
 
   // Calculate highlighting opacity for fast speeds
@@ -312,10 +312,10 @@ export default function Vortex({ words, onWordGrab, onAutoCapture, isActive, spe
         />
       </svg>
 
-      {/* Fog overlay for slow speeds */}
+      {/* Fog overlay for slow speeds - light gray for fog-like appearance */}
       {getFogOpacity() > 0 && (
         <div
-          className="absolute inset-0 pointer-events-none z-20 bg-gray-500 dark:bg-gray-800 transition-opacity duration-500"
+          className="absolute inset-0 pointer-events-none z-20 bg-gray-300 dark:bg-gray-600 transition-opacity duration-500"
           style={{ opacity: getFogOpacity() }}
         />
       )}
