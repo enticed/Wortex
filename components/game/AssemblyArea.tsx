@@ -383,7 +383,7 @@ export default function AssemblyArea({
                     completedText.length <= 150 ? 'text-sm' :
                     'text-xs'
                   }`}>
-                    - {bonusAnswer.person || bonusAnswer.author}{bonusAnswer.year ? ', ' + bonusAnswer.year : ''}
+                    - {bonusAnswer.author || bonusAnswer.person}{bonusAnswer.book || bonusAnswer.year}
                   </p>
                 )}
               </div>
