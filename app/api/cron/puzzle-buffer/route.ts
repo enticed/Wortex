@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generatePuzzleBatch } from '@/lib/services/ai-puzzle-generator';
 
+// Prevent caching of this route - required for cron jobs
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300; // 5 minutes max for puzzle generation
+
 /**
  * GET /api/cron/puzzle-buffer
  * Cron job to maintain 30-day puzzle buffer
