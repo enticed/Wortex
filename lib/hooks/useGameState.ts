@@ -206,12 +206,8 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
             const newTargetWords = [...currentWords, newWord];
 
             // Check if Phase 1 is complete:
-            // 1. Bottom phrase complete
-            // 2. Top phrase has ALL required words (accounting for duplicates)
-            const isFacsimileComplete = isPhraseComplete(
-              prev.facsimilePhraseWords,
-              prev.puzzle.facsimilePhrase.words
-            );
+            // Target phrase has ALL required words (accounting for duplicates)
+            // Note: Facsimile phrase is just a hint shown from the start, not assembled during gameplay
 
             // Count required instances of each word
             const requiredWordCounts = new Map<string, number>();
@@ -232,7 +228,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
               (placedWordCounts.get(word) || 0) >= count
             );
 
-            const phase1Complete = isFacsimileComplete && hasAllRequiredWords;
+            const phase1Complete = hasAllRequiredWords;
 
             // Calculate Phase 1 score when dialog appears
             const phase1Score = phase1Complete
@@ -279,10 +275,8 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
             const newFacsimileWords = [...currentWords, newWord];
 
             // Check if Phase 1 is complete
-            const isFacsimileComplete = isPhraseComplete(
-              newFacsimileWords,
-              prev.puzzle.facsimilePhrase.words
-            );
+            // Target phrase has ALL required words (accounting for duplicates)
+            // Note: Facsimile phrase is just a hint shown from the start, not assembled during gameplay
 
             // Count required instances of each word in target phrase
             const requiredWordCounts = new Map<string, number>();
@@ -303,7 +297,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
               (placedWordCounts.get(word) || 0) >= count
             );
 
-            const phase1Complete = isFacsimileComplete && hasAllRequiredWords;
+            const phase1Complete = hasAllRequiredWords;
 
             // Calculate Phase 1 score when dialog appears
             const phase1Score = phase1Complete
