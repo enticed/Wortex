@@ -324,7 +324,38 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           />
         </div>
 
-        {/* Middle Area - Vortex (Phase 1), Bonus Round, or Final Results */}
+        {/* Middle Area - Mystery Quote - Phase 1: 35%, Phase 2: 75% */}
+        <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
+          gameState.phase === 2 ? 'h-[75%]' : 'h-[35%]'
+        }`}>
+          <AssemblyArea
+            id="target"
+            title="Mystery Quote"
+            placedWords={gameState.targetPhraseWords}
+            expectedLength={puzzle.targetPhrase.words.length}
+            expectedWords={puzzle.targetPhrase.words}
+            bgColor="bg-blue-50 dark:bg-blue-950"
+            borderColor="border-blue-300 dark:border-blue-700"
+            isAutoAssembly={false}
+            isComplete={isTargetComplete}
+            completedText={puzzle.targetPhrase.text}
+            onReorder={gameState.phase === 2 ? reorderWords : undefined}
+            dropIndicatorIndex={dropIndicatorIndex}
+            activeHint={gameState.activeHint}
+            onUseUnnecessaryWordHint={useUnnecessaryWordHint}
+            onUseCorrectStringHint={useCorrectStringHint}
+            onUseNextWordHint={useNextWordHint}
+            hintsUsed={gameState.hintsUsed}
+            reorderMoves={gameState.reorderMoves}
+            phase={gameState.phase}
+            showCompletionAnimation={gameState.showCompletionAnimation}
+            totalWordsSeen={gameState.totalWordsSeen}
+            totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
+            speed={gameState.speed}
+          />
+        </div>
+
+        {/* Bottom Area - Vortex (Phase 1), Bonus Round, or Final Results */}
         {gameState.phase === 1 && (
           <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
             {gameState.bonusAnswered ? (
@@ -389,7 +420,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           </div>
         )}
 
-        {/* Phase 2 Complete - Show bonus/results in middle area */}
+        {/* Phase 2 Complete - Show bonus/results in bottom area */}
         {gameState.phase === 2 && gameState.isComplete && allowBonusRound && (
           <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
             {gameState.bonusAnswered ? (
@@ -417,37 +448,6 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           </div>
         )}
 
-        {/* Bottom Area - Mystery Quote - Phase 1: 35%, Phase 2: 75% */}
-        <div className={`border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
-          gameState.phase === 2 ? 'h-[75%]' : 'h-[35%]'
-        }`}>
-          <AssemblyArea
-            id="target"
-            title="Mystery Quote"
-            placedWords={gameState.targetPhraseWords}
-            expectedLength={puzzle.targetPhrase.words.length}
-            expectedWords={puzzle.targetPhrase.words}
-            bgColor="bg-blue-50 dark:bg-blue-950"
-            borderColor="border-blue-300 dark:border-blue-700"
-            isAutoAssembly={false}
-            isComplete={isTargetComplete}
-            completedText={puzzle.targetPhrase.text}
-            onReorder={gameState.phase === 2 ? reorderWords : undefined}
-            dropIndicatorIndex={dropIndicatorIndex}
-            activeHint={gameState.activeHint}
-            onUseUnnecessaryWordHint={useUnnecessaryWordHint}
-            onUseCorrectStringHint={useCorrectStringHint}
-            onUseNextWordHint={useNextWordHint}
-            hintsUsed={gameState.hintsUsed}
-            reorderMoves={gameState.reorderMoves}
-            phase={gameState.phase}
-            showCompletionAnimation={gameState.showCompletionAnimation}
-            totalWordsSeen={gameState.totalWordsSeen}
-            totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
-            speed={gameState.speed}
-          />
-        </div>
-
       </div>
 
       {/* Drag Overlay - Keep word visible for mouse users */}
@@ -465,11 +465,11 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
       {/* Corner Word Display - Shows dragged word in ALL FOUR vortex corners */}
       {draggedWordText && gameState.phase === 1 && !gameState.isComplete && (
         <div className="fixed inset-0 pointer-events-none z-40">
-          {/* Calculate vortex area position (middle 50% of screen) */}
+          {/* Calculate vortex area position (bottom 50% of screen) */}
           {(() => {
-            // Top area is 15% in Phase 1 (hint phrase)
-            const topAreaHeight = 15;
-            // Vortex starts after top area
+            // Top area is 15% (hint phrase) + 35% (mystery quote) = 50% in Phase 1
+            const topAreaHeight = 50;
+            // Vortex starts after top areas
             const vortexTop = topAreaHeight;
             // Vortex height is 50%
             const vortexHeight = 50;
