@@ -361,9 +361,9 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           </div>
         )}
 
-        {/* Middle Area - Mystery Quote - Phase 1: 35%, Phase 2: 80%, Final Results: 50% */}
+        {/* Middle Area - Mystery Quote - Phase 1: 35%, Phase 2: 80%, Final Results: 40% */}
         <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
-          gameState.phase === 2 && gameState.bonusAnswered ? 'h-[50%]' :
+          gameState.bonusAnswered ? 'h-[40%]' :
           gameState.phase === 2 ? 'h-[80%]' : 'h-[35%]'
         }`}>
           <AssemblyArea
@@ -400,21 +400,9 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
         </div>
 
         {/* Bottom Area - Vortex (Phase 1), Bonus Round, or Final Results */}
-        {gameState.phase === 1 && (
+        {gameState.phase === 1 && !gameState.bonusAnswered && (
           <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
-            {gameState.bonusAnswered ? (
-              // Show final results in vortex area
-              <FinalResults
-                phase1Score={gameState.score || 0}
-                phase2Score={gameState.phase2Score || 0}
-                finalScore={gameState.finalScore || 0}
-                bonusCorrect={gameState.bonusCorrect}
-                onPlayAgain={() => window.location.reload()}
-                totalWordsSeen={gameState.totalWordsSeen}
-                totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
-                isArchiveMode={isArchiveMode}
-              />
-            ) : gameState.isComplete ? (
+            {gameState.isComplete ? (
               // Show bonus round in vortex area
               <div className="h-full flex items-center justify-center px-2">
                 <BonusRound
@@ -465,30 +453,33 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
         )}
 
         {/* Phase 2 Complete - Show bonus/results in bottom area */}
-        {gameState.phase === 2 && gameState.isComplete && allowBonusRound && (
+        {gameState.phase === 2 && gameState.isComplete && allowBonusRound && !gameState.bonusAnswered && (
           <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
-            {gameState.bonusAnswered ? (
-              <FinalResults
-                phase1Score={gameState.score || 0}
-                phase2Score={gameState.phase2Score || 0}
-                finalScore={gameState.finalScore || 0}
-                bonusCorrect={gameState.bonusCorrect}
-                onPlayAgain={() => window.location.reload()}
-                totalWordsSeen={gameState.totalWordsSeen}
-                totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
-                isArchiveMode={isArchiveMode}
+            <div className="h-full flex items-center justify-center px-2">
+              <BonusRound
+                bonusQuestion={puzzle.bonusQuestion}
+                onAnswer={(selectedAnswerId, isCorrect) => {
+                  answerBonus(isCorrect);
+                }}
+                onSkip={skipBonus}
               />
-            ) : (
-              <div className="h-full flex items-center justify-center px-2">
-                <BonusRound
-                  bonusQuestion={puzzle.bonusQuestion}
-                  onAnswer={(selectedAnswerId, isCorrect) => {
-                    answerBonus(isCorrect);
-                  }}
-                  onSkip={skipBonus}
-                />
-              </div>
-            )}
+            </div>
+          </div>
+        )}
+
+        {/* Final Results Section - Full-width bottom 60% when bonus is answered */}
+        {gameState.bonusAnswered && (
+          <div className="h-[60%] bg-gray-100 dark:bg-gray-900">
+            <FinalResults
+              phase1Score={gameState.score || 0}
+              phase2Score={gameState.phase2Score || 0}
+              finalScore={gameState.finalScore || 0}
+              bonusCorrect={gameState.bonusCorrect}
+              onPlayAgain={() => window.location.reload()}
+              totalWordsSeen={gameState.totalWordsSeen}
+              totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
+              isArchiveMode={isArchiveMode}
+            />
           </div>
         )}
 
