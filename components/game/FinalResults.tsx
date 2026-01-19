@@ -9,6 +9,8 @@ interface FinalResultsProps {
   totalWordsSeen?: number;
   totalUniqueWords?: number;
   isArchiveMode?: boolean;
+  reorderMoves?: number;
+  hintsUsed?: number;
 }
 
 export default function FinalResults({
@@ -20,12 +22,14 @@ export default function FinalResults({
   totalWordsSeen,
   totalUniqueWords,
   isArchiveMode = false,
+  reorderMoves = 0,
+  hintsUsed = 0,
 }: FinalResultsProps) {
   return (
     <div className="h-full w-full flex flex-col overflow-y-auto">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-gray-700 to-gray-800 dark:from-gray-800 dark:to-gray-900 py-3 px-4">
-        <h2 className="text-xl font-bold text-white text-center">
+      {/* Header - Match Mystery Quote header style */}
+      <div className="flex items-center justify-center py-2 px-3 bg-gray-200 dark:bg-gray-800">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           Final Results
         </h2>
       </div>
@@ -44,25 +48,15 @@ export default function FinalResults({
               </div>
             </div>
             {totalWordsSeen !== undefined && totalUniqueWords !== undefined && (
-              <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1 pt-2 border-t border-blue-200 dark:border-blue-800">
-                <div className="flex justify-between">
-                  <span>Words seen:</span>
-                  <span className="font-semibold">{totalWordsSeen}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Total words:</span>
-                  <span className="font-semibold">{totalUniqueWords}</span>
-                </div>
-                <div className="text-center pt-1 italic">
-                  Score: Words seen ÷ Total words
-                </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 pt-2 border-t border-blue-200 dark:border-blue-800 text-center italic">
+                Score: Words seen ({totalWordsSeen}) ÷ Total words ({totalUniqueWords})
               </div>
             )}
           </div>
 
           {/* Phase 2 Score */}
           <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-2">
               <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Phase 2 Score
               </div>
@@ -70,8 +64,8 @@ export default function FinalResults({
                 {phase2Score.toFixed(2)}
               </div>
             </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center italic">
-              Moves + Hints
+            <div className="text-xs text-gray-600 dark:text-gray-400 pt-2 border-t border-purple-200 dark:border-purple-800 text-center italic">
+              Score: Moves ({reorderMoves} × 0.25) + Hints ({hintsUsed} × 0.5)
             </div>
           </div>
 
@@ -105,7 +99,7 @@ export default function FinalResults({
             onClick={onPlayAgain}
             className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base mt-4"
           >
-            {isArchiveMode ? 'Play Again' : 'Play Again Tomorrow'}
+            Play Again
           </button>
         </div>
       </div>

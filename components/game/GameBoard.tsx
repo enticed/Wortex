@@ -479,6 +479,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
               totalWordsSeen={gameState.totalWordsSeen}
               totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
               isArchiveMode={isArchiveMode}
+              reorderMoves={gameState.reorderMoves}
+              hintsUsed={gameState.hintsUsed}
             />
           </div>
         )}
