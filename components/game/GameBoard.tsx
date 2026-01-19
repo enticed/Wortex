@@ -305,34 +305,22 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
       onDragEnd={handleDragEnd}
     >
       <div className="h-[calc(100dvh-3rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
-        {/* Top Area - Phase 1: 35%, Phase 2: 75% */}
-        <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
-          gameState.phase === 2 ? 'h-[75%]' : 'h-[35%]'
+        {/* Top Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 25% */}
+        <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950 transition-all duration-500 ${
+          gameState.phase === 2 ? 'h-[25%]' : 'h-[15%]'
         }`}>
           <AssemblyArea
-            id="target"
-            title="Mystery Quote"
-            placedWords={gameState.targetPhraseWords}
-            expectedLength={puzzle.targetPhrase.words.length}
-            expectedWords={puzzle.targetPhrase.words}
-            bgColor="bg-blue-50 dark:bg-blue-950"
-            borderColor="border-blue-300 dark:border-blue-700"
-            isAutoAssembly={false}
-            isComplete={isTargetComplete}
-            completedText={puzzle.targetPhrase.text}
-            onReorder={gameState.phase === 2 ? reorderWords : undefined}
-            dropIndicatorIndex={dropIndicatorIndex}
-            activeHint={gameState.activeHint}
-            onUseUnnecessaryWordHint={useUnnecessaryWordHint}
-            onUseCorrectStringHint={useCorrectStringHint}
-            onUseNextWordHint={useNextWordHint}
-            hintsUsed={gameState.hintsUsed}
-            reorderMoves={gameState.reorderMoves}
+            id="facsimile"
+            title="Hint Phrase"
+            placedWords={gameState.facsimilePhraseWords}
+            expectedLength={puzzle.facsimilePhrase.words.length}
+            bgColor="bg-green-50 dark:bg-green-950"
+            borderColor="border-green-300 dark:border-green-700"
+            isAutoAssembly={true}
+            isComplete={true}
+            completedText={puzzle.facsimilePhrase.text}
             phase={gameState.phase}
-            showCompletionAnimation={gameState.showCompletionAnimation}
-            totalWordsSeen={gameState.totalWordsSeen}
-            totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
-            speed={gameState.speed}
+            showCompletedHeader={false}
           />
         </div>
 
@@ -429,22 +417,34 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           </div>
         )}
 
-        {/* Bottom Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 25% */}
-        <div className={`border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950 transition-all duration-500 ${
-          gameState.phase === 2 ? 'h-[25%]' : 'h-[15%]'
+        {/* Bottom Area - Mystery Quote - Phase 1: 35%, Phase 2: 75% */}
+        <div className={`border-t-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
+          gameState.phase === 2 ? 'h-[75%]' : 'h-[35%]'
         }`}>
           <AssemblyArea
-            id="facsimile"
-            title="Hint Phrase"
-            placedWords={gameState.facsimilePhraseWords}
-            expectedLength={puzzle.facsimilePhrase.words.length}
-            bgColor="bg-green-50 dark:bg-green-950"
-            borderColor="border-green-300 dark:border-green-700"
-            isAutoAssembly={true}
-            isComplete={true}
-            completedText={puzzle.facsimilePhrase.text}
+            id="target"
+            title="Mystery Quote"
+            placedWords={gameState.targetPhraseWords}
+            expectedLength={puzzle.targetPhrase.words.length}
+            expectedWords={puzzle.targetPhrase.words}
+            bgColor="bg-blue-50 dark:bg-blue-950"
+            borderColor="border-blue-300 dark:border-blue-700"
+            isAutoAssembly={false}
+            isComplete={isTargetComplete}
+            completedText={puzzle.targetPhrase.text}
+            onReorder={gameState.phase === 2 ? reorderWords : undefined}
+            dropIndicatorIndex={dropIndicatorIndex}
+            activeHint={gameState.activeHint}
+            onUseUnnecessaryWordHint={useUnnecessaryWordHint}
+            onUseCorrectStringHint={useCorrectStringHint}
+            onUseNextWordHint={useNextWordHint}
+            hintsUsed={gameState.hintsUsed}
+            reorderMoves={gameState.reorderMoves}
             phase={gameState.phase}
-            showCompletedHeader={false}
+            showCompletionAnimation={gameState.showCompletionAnimation}
+            totalWordsSeen={gameState.totalWordsSeen}
+            totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
+            speed={gameState.speed}
           />
         </div>
 
@@ -467,8 +467,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
         <div className="fixed inset-0 pointer-events-none z-40">
           {/* Calculate vortex area position (middle 50% of screen) */}
           {(() => {
-            // Top area is 35% in Phase 1
-            const topAreaHeight = 35;
+            // Top area is 15% in Phase 1 (hint phrase)
+            const topAreaHeight = 15;
             // Vortex starts after top area
             const vortexTop = topAreaHeight;
             // Vortex height is 50%
