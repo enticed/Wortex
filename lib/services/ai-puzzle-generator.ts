@@ -39,7 +39,8 @@ interface GeneratedPuzzle {
  */
 export function getDifficultyForDay(dayOfWeek: DayOfWeek): number {
   if (dayOfWeek === 0) return 5; // Sunday - hardest
-  return dayOfWeek; // Monday=1, Tuesday=2, ..., Saturday=6 -> capped at 5
+  if (dayOfWeek === 6) return 5; // Saturday - also hardest
+  return dayOfWeek; // Monday=1, Tuesday=2, ..., Friday=5
 }
 
 /**
@@ -81,8 +82,13 @@ export async function generatePuzzle(
   const prompt = 'Generate a word puzzle based on a ' + quoteSource + '.\n\n' +
     'STRICT REQUIREMENTS:\n' +
     '1. Target phrase: ' + targetPhraseDesc + '\n' +
-    '   - MUST be between 8-25 words (count carefully, this is critical)\n' +
-    '   - Must be the exact, complete quote\n\n' +
+    '   - CRITICAL: MUST be between 8-25 words total (count every single word)\n' +
+    '   - Must be the exact, complete quote (no truncation)\n' +
+    '   - Examples of valid lengths:\n' +
+    '     * "To be or not to be that is the question" (10 words) ✓\n' +
+    '     * "Ask not what your country can do for you" (9 words) ✓\n' +
+    '   - TOO SHORT: "I have a dream" (4 words) ✗\n' +
+    '   - Choose quotes with at least 8 words or use a complete sentence\n\n' +
     '2. Difficulty: ' + calculatedDifficulty + '/5 - ' + difficultyDesc + '\n\n' +
     '3. Facsimile phrase: Create a semantically similar phrase that:\n' +
     '   - Maintains the core meaning of the original\n' +
@@ -108,8 +114,9 @@ export async function generatePuzzle(
     '  ],\n' +
     '  "correctAnswerIndex": 0\n' +
     '}\n\n' +
-    'CRITICAL VALIDATION:\n' +
-    '- Count words in targetPhrase before responding - it MUST be 8-25 words\n' +
+    'CRITICAL VALIDATION (your response will be rejected if these fail):\n' +
+    '- Count words in targetPhrase by splitting on spaces - MUST be 8-25 words\n' +
+    '- If your quote has fewer than 8 words, choose a different quote or add context\n' +
     '- bonusOptions array MUST have exactly 4 elements\n' +
     '- correctAnswerIndex MUST be 0-3 (the index of the correct answer in bonusOptions)\n';
 
@@ -203,32 +210,52 @@ export async function generatePuzzle(
 }
 
 /**
- * Generate multiple puzzles in batch
+ * Generate multiple puzzles in batch with retry logic
  */
 export async function generatePuzzleBatch(
   startDate: Date,
   count: number
 ): Promise<Array<GeneratedPuzzle & { date: string }>> {
   const puzzles: Array<GeneratedPuzzle & { date: string }> = [];
+  const maxRetries = 3;
 
   for (let i = 0; i < count; i++) {
     const targetDate = new Date(startDate);
     targetDate.setDate(startDate.getDate() + i);
+    let lastError: Error | null = null;
 
-    try {
-      const puzzle = await generatePuzzle(targetDate);
-      puzzles.push({
-        ...puzzle,
-        date: targetDate.toISOString().split('T')[0], // YYYY-MM-DD
-      });
+    // Retry up to maxRetries times if validation fails
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const puzzle = await generatePuzzle(targetDate);
+        puzzles.push({
+          ...puzzle,
+          date: targetDate.toISOString().split('T')[0], // YYYY-MM-DD
+        });
 
-      // Small delay to avoid rate limiting
-      if (i < count - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Success - break retry loop
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.warn(`Attempt ${attempt + 1}/${maxRetries} failed for ${targetDate.toISOString().split('T')[0]}: ${lastError.message}`);
+
+        // Wait before retrying (exponential backoff)
+        if (attempt < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        }
       }
-    } catch (error) {
-      console.error('Failed to generate puzzle for ' + targetDate.toISOString() + ':', error);
-      throw error;
+    }
+
+    // If all retries failed, throw the last error
+    if (lastError) {
+      console.error('Failed to generate puzzle for ' + targetDate.toISOString() + ' after ' + maxRetries + ' attempts:', lastError);
+      throw lastError;
+    }
+
+    // Small delay to avoid rate limiting
+    if (i < count - 1) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 
