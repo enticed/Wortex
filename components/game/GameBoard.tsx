@@ -339,19 +339,19 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="h-[calc(100dvh-3rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
+      <div className="h-[calc(100dvh-2.5rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
         {/* Top Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 20%, Hidden when showing final results */}
         {!(gameState.phase === 2 && gameState.bonusAnswered) && (
-          <div className={`border-b-2 border-gray-300 dark:border-gray-700 bg-green-50 dark:bg-green-950 transition-all duration-500 ${
-            gameState.phase === 2 ? 'h-[20%] p-1.5' : 'h-[15%] p-3'
+          <div className={`border-b-2 border-gray-300 dark:border-gray-700 bg-purple-50 dark:bg-purple-950 transition-all duration-500 ${
+            gameState.phase === 2 ? 'h-[20%] p-1' : 'h-[15%] p-1.5'
           }`}>
             <AssemblyArea
               id="facsimile"
               title="Hint Phrase"
               placedWords={gameState.facsimilePhraseWords}
               expectedLength={puzzle.facsimilePhrase.words.length}
-              bgColor="bg-green-50 dark:bg-green-950"
-              borderColor="border-green-300 dark:border-green-700"
+              bgColor="bg-purple-50 dark:bg-purple-950"
+              borderColor="border-purple-300 dark:border-purple-700"
               isAutoAssembly={true}
               isComplete={true}
               completedText={puzzle.facsimilePhrase.text}

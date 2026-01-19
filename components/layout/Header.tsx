@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 interface HeaderProps {
   onMenuToggle: () => void;
   isArchiveMode?: boolean;
@@ -9,7 +7,7 @@ interface HeaderProps {
 
 export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderProps) {
   return (
-    <header className="fixed top-0 left-0 right-0 h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-50 flex items-center justify-between px-4">
+    <header className="fixed top-0 left-0 right-0 h-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-50 flex items-center justify-between px-4">
       {/* Logo/Title */}
       <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
         Wortex{isArchiveMode && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">Archive</span>}

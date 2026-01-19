@@ -249,7 +249,7 @@ export default function AssemblyArea({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-1">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           {title}
         </h2>
@@ -301,7 +301,7 @@ export default function AssemblyArea({
         </span>
         {/* Right-aligned Score Display - only for target area, hidden in final results */}
         {!isAutoAssembly && ongoingScore !== null && !showFinalResults && (
-          <span className="text-base font-bold text-purple-600 dark:text-purple-400">
+          <span className="text-base font-bold text-green-600 dark:text-green-400">
             {ongoingScore.toFixed(2)}
           </span>
         )}
@@ -317,14 +317,14 @@ export default function AssemblyArea({
       <div
         ref={setNodeRef}
         className={`
-          flex-1 border-2 rounded-lg p-1.5
+          flex-1 border-2 rounded-lg p-1
           flex items-start
           ${id === 'facsimile' ? 'justify-start' : 'justify-center'}
           ${id === 'target' ? 'overflow-y-auto overflow-x-hidden' : 'overflow-x-auto overflow-y-hidden'}
           transition-all duration-500
           ${isComplete ? 'border-solid bg-gradient-to-br' : 'border-dashed'}
           ${isComplete && id === 'target' ? 'from-blue-200 to-blue-300 dark:from-blue-800 dark:to-blue-900 border-blue-500 dark:border-blue-400' : ''}
-          ${isComplete && id === 'facsimile' ? 'from-green-200 to-green-300 dark:from-green-800 dark:to-green-900 border-green-500 dark:border-green-400' : ''}
+          ${isComplete && id === 'facsimile' ? 'from-purple-200 to-purple-300 dark:from-purple-800 dark:to-purple-900 border-purple-500 dark:border-purple-400' : ''}
           ${!isComplete ? bgColor : ''}
           ${!isComplete ? borderColor : ''}
           ${isOver && !isComplete ? 'ring-2 ring-blue-400 dark:ring-blue-600' : ''}
@@ -336,11 +336,11 @@ export default function AssemblyArea({
           id === 'facsimile' && phase === 1 ? (
             <div className="text-center animate-fade-in w-full h-full flex items-center justify-center overflow-hidden p-2">
               <div className="animate-scroll-horizontal whitespace-nowrap">
-                <p className="font-serif italic text-lg text-green-900 dark:text-green-100 inline-block px-4">
+                <p className="font-serif italic text-lg text-purple-900 dark:text-purple-100 inline-block px-4">
                   &ldquo;{completedText}&rdquo;
                 </p>
                 {/* Duplicate for seamless loop */}
-                <p className="font-serif italic text-lg text-green-900 dark:text-green-100 inline-block px-4">
+                <p className="font-serif italic text-lg text-purple-900 dark:text-purple-100 inline-block px-4">
                   &ldquo;{completedText}&rdquo;
                 </p>
               </div>
@@ -353,13 +353,13 @@ export default function AssemblyArea({
                 <p className={`font-serif italic leading-relaxed ${
                   id === 'target'
                     ? 'text-blue-900 dark:text-blue-100'
-                    : 'text-green-900 dark:text-green-100'
+                    : 'text-purple-900 dark:text-purple-100'
                 } ${
-                  // Dynamic sizing based on text length - smaller for facsimile in Phase 2
+                  // Dynamic sizing based on text length - larger for facsimile in Phase 2
                   id === 'facsimile' && phase === 2 ? (
-                    completedText.length <= 50 ? 'text-sm' :
-                    completedText.length <= 100 ? 'text-xs' :
-                    'text-[11px]'
+                    completedText.length <= 50 ? 'text-lg' :
+                    completedText.length <= 100 ? 'text-base' :
+                    'text-sm'
                   ) : (
                     completedText.length <= 50 ? 'text-2xl' :
                     completedText.length <= 100 ? 'text-xl' :
@@ -375,7 +375,7 @@ export default function AssemblyArea({
                   <p className={`font-serif ${
                     id === 'target'
                       ? 'text-blue-800 dark:text-blue-200'
-                      : 'text-green-800 dark:text-green-200'
+                      : 'text-purple-800 dark:text-purple-200'
                   } ${
                     // Dynamic sizing based on text length (slightly smaller than quote)
                     completedText.length <= 50 ? 'text-lg' :
@@ -399,7 +399,7 @@ export default function AssemblyArea({
           </div>
         ) : isSortable ? (
           // Phase 2: Manual drag-and-drop with reordering (allow wrapping)
-          <div className={`flex flex-wrap gap-1 items-start content-start w-full ${getWordScale()}`}>
+          <div className={`flex flex-wrap gap-0.5 items-start content-start w-full ${getWordScale()}`}>
             {sortedWords.map((word, index) => {
               // Check if this word should be highlighted
               const isHintHighlighted = activeHint?.wordIds.includes(word.id) || false;
@@ -458,43 +458,43 @@ export default function AssemblyArea({
 
       {/* Phase 2 Hint Buttons */}
       {phase === 2 && isSortable && !isComplete && (
-        <div className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
-          <div className="flex flex-col gap-2">
-            {/* Hint Buttons - Vertical layout with external explanations */}
-            <div>
+        <div className="mt-1.5 pt-1.5 border-t border-gray-300 dark:border-gray-600">
+          <div className="flex flex-col gap-1.5">
+            {/* Hint Buttons - Horizontal layout with text on right */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={onUseCorrectStringHint}
-                className="px-3 py-2 rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 hover:bg-green-200 dark:hover:bg-green-800 transition-colors font-semibold text-sm"
+                className="px-2 py-1 rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 hover:bg-green-200 dark:hover:bg-green-800 transition-colors font-semibold text-sm whitespace-nowrap w-32 flex-shrink-0"
               >
                 Correct String
               </button>
-              <div className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5 leading-tight flex items-center justify-between">
-                <span>Shows longest correct string from first word (+0.5)</span>
-                {correctStringHintsUsed > 0 && <span className="font-semibold">×{correctStringHintsUsed}</span>}
+              <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight flex-1">
+                Shows longest correct string from first word (+0.5)
+                {correctStringHintsUsed > 0 && <span className="font-semibold ml-1">×{correctStringHintsUsed}</span>}
               </div>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
               <button
                 onClick={onUseNextWordHint}
-                className="px-3 py-2 rounded-lg bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors font-semibold text-sm"
+                className="px-2 py-1 rounded-lg bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors font-semibold text-sm whitespace-nowrap w-32 flex-shrink-0"
               >
                 Next Word
               </button>
-              <div className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5 leading-tight flex items-center justify-between">
-                <span>Highlights word that should go after correct string (+0.5)</span>
-                {nextWordHintsUsed > 0 && <span className="font-semibold">×{nextWordHintsUsed}</span>}
+              <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight flex-1">
+                Highlights word that should go after correct string (+0.5)
+                {nextWordHintsUsed > 0 && <span className="font-semibold ml-1">×{nextWordHintsUsed}</span>}
               </div>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
               <button
                 onClick={onUseUnnecessaryWordHint}
-                className="px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 hover:bg-red-200 dark:hover:bg-red-800 transition-colors font-semibold text-sm"
+                className="px-2 py-1 rounded-lg bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 hover:bg-red-200 dark:hover:bg-red-800 transition-colors font-semibold text-sm whitespace-nowrap w-32 flex-shrink-0"
               >
                 Unneeded Word
               </button>
-              <div className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5 leading-tight flex items-center justify-between">
-                <span>Removes first unnecessary word in list (+0.5)</span>
-                {unnecessaryWordHintsUsed > 0 && <span className="font-semibold">×{unnecessaryWordHintsUsed}</span>}
+              <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight flex-1">
+                Removes first unnecessary word in list (+0.5)
+                {unnecessaryWordHintsUsed > 0 && <span className="font-semibold ml-1">×{unnecessaryWordHintsUsed}</span>}
               </div>
             </div>
           </div>
