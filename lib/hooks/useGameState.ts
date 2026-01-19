@@ -41,6 +41,9 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
     bonusCorrect: null,
     isPaused: false,
     hintsUsed: 0,
+    correctStringHintsUsed: 0,
+    nextWordHintsUsed: 0,
+    unnecessaryWordHintsUsed: 0,
     reorderMoves: 0,
     speed: speed,
     activeHint: null,
@@ -401,8 +404,8 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
           prev.speed
         );
 
-        // Calculate Phase 2 score (moves + hints)
-        const phase2Score = newMoveCount + prev.hintsUsed;
+        // Calculate Phase 2 score (moves * 0.25 + hints * 0.5)
+        const phase2Score = (newMoveCount * 0.25) + (prev.hintsUsed * 0.5);
 
         // Final score is Phase 1 + Phase 2
         const finalScore = phase1Score + phase2Score;
@@ -533,6 +536,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
         ...prev,
         activeHint: { type: 'unnecessary', wordIds: [unnecessaryWordId] },
         hintsUsed: prev.hintsUsed + 1,
+        unnecessaryWordHintsUsed: prev.unnecessaryWordHintsUsed + 1,
       };
     });
   }, []);
@@ -568,6 +572,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
         ...prev,
         activeHint: { type: 'correctString', wordIds: correctWordIds },
         hintsUsed: isSameHint ? prev.hintsUsed : prev.hintsUsed + 1,
+        correctStringHintsUsed: isSameHint ? prev.correctStringHintsUsed : prev.correctStringHintsUsed + 1,
       };
     });
   }, []);
@@ -616,6 +621,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
         ...prev,
         activeHint: { type: 'nextWord', wordIds: [nextWordId] },
         hintsUsed: isSameHint ? prev.hintsUsed : prev.hintsUsed + 1,
+        nextWordHintsUsed: isSameHint ? prev.nextWordHintsUsed : prev.nextWordHintsUsed + 1,
       };
     });
   }, []);

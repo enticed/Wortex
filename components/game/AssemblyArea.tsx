@@ -4,7 +4,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { useDroppable as useWordDroppable } from '@dnd-kit/core';
 import { useEffect, useState } from 'react';
 import Word from './Word';
-import type { PlacedWord } from '@/types/game';
+import type { PlacedWord, BonusOption } from '@/types/game';
 
 // Droppable wrapper for Phase 2 words
 function DroppableWord({
@@ -23,7 +23,7 @@ function DroppableWord({
   });
 
   return (
-    <div ref={setNodeRef}>
+    <div ref={setNodeRef} data-word-id={word.id}>
       <Word
         id={word.id}
         text={word.word}
@@ -34,6 +34,21 @@ function DroppableWord({
       />
     </div>
   );
+}
+
+// Droppable zone for "after word" positioning
+function DroppableZone({
+  id,
+  children
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef } = useWordDroppable({
+    id,
+  });
+
+  return <div ref={setNodeRef}>{children}</div>;
 }
 
 interface AssemblyAreaProps {
@@ -54,6 +69,9 @@ interface AssemblyAreaProps {
   onUseCorrectStringHint?: () => void;
   onUseNextWordHint?: () => void;
   hintsUsed?: number; // Phase 2: total hints used for display
+  correctStringHintsUsed?: number; // Individual hint counts
+  nextWordHintsUsed?: number;
+  unnecessaryWordHintsUsed?: number;
   reorderMoves?: number; // Phase 2: number of reordering moves made
   phase?: 1 | 2; // Game phase
   showCompletionAnimation?: boolean; // Trigger completion animation
@@ -61,6 +79,9 @@ interface AssemblyAreaProps {
   totalUniqueWords?: number; // Total unique words in both phrases for score calculation
   speed?: number; // Vortex speed for score adjustment
   showCompletedHeader?: boolean; // Whether to show "✓ Complete" message
+  showFinalResults?: boolean; // Whether showing final results (hide header stats)
+  bonusAnswer?: BonusOption; // Bonus question answer to display with completed quote
+  draggedWord?: string; // Phase 2: Currently dragged word to display in header
 }
 
 export default function AssemblyArea({
@@ -81,6 +102,9 @@ export default function AssemblyArea({
   onUseCorrectStringHint,
   onUseNextWordHint,
   hintsUsed = 0,
+  correctStringHintsUsed = 0,
+  nextWordHintsUsed = 0,
+  unnecessaryWordHintsUsed = 0,
   reorderMoves = 0,
   phase = 1,
   showCompletionAnimation = false,
@@ -88,6 +112,9 @@ export default function AssemblyArea({
   totalUniqueWords = 0,
   speed = 1.0,
   showCompletedHeader = true,
+  showFinalResults = false,
+  bonusAnswer,
+  draggedWord,
 }: AssemblyAreaProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -213,8 +240,8 @@ export default function AssemblyArea({
     if (phase === 1) {
       return phase1Score;
     } else {
-      // Phase 2: Only show Phase 2 score (moves + hints)
-      return reorderMoves + hintsUsed;
+      // Phase 2: Only show Phase 2 score (moves * 0.25 + hints * 0.5)
+      return (reorderMoves * 0.25) + (hintsUsed * 0.5);
     }
   };
 
@@ -228,18 +255,21 @@ export default function AssemblyArea({
         </h2>
         {/* Center Counters Display */}
         <span className="flex-1 flex justify-center text-base font-bold flex items-center gap-1">
-          {isComplete && showCompletedHeader ? (
+          {showFinalResults ? (
+            // Final results mode: Hide completion message and counters
+            null
+          ) : isComplete && showCompletedHeader ? (
             <span className="text-green-600 dark:text-green-400 font-semibold">✓ Complete</span>
           ) : isComplete && !showCompletedHeader ? (
             // Complete but header hidden (e.g., hint phrase shown from start) - show nothing
             null
           ) : !isComplete && phase === 2 && !isAutoAssembly ? (
-            // Phase 2 target area: M + H format (Moves + Hints)
-            <>
-              <span className="text-blue-600 dark:text-blue-400 font-semibold">{reorderMoves}</span>
-              <span className="text-gray-500 dark:text-gray-400">+</span>
-              <span className="text-orange-600 dark:text-orange-400 font-semibold">{hintsUsed}</span>
-            </>
+            // Phase 2 target area: Show dragged word if dragging, otherwise show nothing
+            draggedWord ? (
+              <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 font-semibold text-base">
+                {draggedWord}
+              </span>
+            ) : null
           ) : phase1Stats ? (
             // Phase 1 target area: W / X + N format
             <>
@@ -269,8 +299,8 @@ export default function AssemblyArea({
             </span>
           )}
         </span>
-        {/* Right-aligned Score Display - only for target area */}
-        {!isAutoAssembly && ongoingScore !== null && (
+        {/* Right-aligned Score Display - only for target area, hidden in final results */}
+        {!isAutoAssembly && ongoingScore !== null && !showFinalResults && (
           <span className="text-base font-bold text-purple-600 dark:text-purple-400">
             {ongoingScore.toFixed(2)}
           </span>
@@ -316,21 +346,47 @@ export default function AssemblyArea({
               </div>
             </div>
           ) : (
-            <div className="text-center animate-fade-in w-full h-full flex items-center justify-center p-2">
-              <p className={`font-serif italic leading-relaxed ${
-                id === 'target'
-                  ? 'text-blue-900 dark:text-blue-100'
-                  : 'text-green-900 dark:text-green-100'
-              } ${
-                // Dynamic sizing based on text length
-                completedText.length <= 50 ? 'text-2xl' :
-                completedText.length <= 100 ? 'text-xl' :
-                completedText.length <= 150 ? 'text-lg' :
-                completedText.length <= 200 ? 'text-base' :
-                'text-sm'
-              }`}>
-                &ldquo;{completedText}&rdquo;
-              </p>
+            <div className={`text-center animate-fade-in w-full h-full flex items-center justify-center ${
+              id === 'facsimile' && phase === 2 ? 'p-1' : 'p-2'
+            }`}>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <p className={`font-serif italic leading-relaxed ${
+                  id === 'target'
+                    ? 'text-blue-900 dark:text-blue-100'
+                    : 'text-green-900 dark:text-green-100'
+                } ${
+                  // Dynamic sizing based on text length - smaller for facsimile in Phase 2
+                  id === 'facsimile' && phase === 2 ? (
+                    completedText.length <= 50 ? 'text-sm' :
+                    completedText.length <= 100 ? 'text-xs' :
+                    'text-[11px]'
+                  ) : (
+                    completedText.length <= 50 ? 'text-2xl' :
+                    completedText.length <= 100 ? 'text-xl' :
+                    completedText.length <= 150 ? 'text-lg' :
+                    completedText.length <= 200 ? 'text-base' :
+                    'text-sm'
+                  )
+                }`}>
+                  &ldquo;{completedText}&rdquo;
+                </p>
+                {/* Show bonus answer (author/year) in final results mode */}
+                {showFinalResults && bonusAnswer && (
+                  <p className={`font-serif ${
+                    id === 'target'
+                      ? 'text-blue-800 dark:text-blue-200'
+                      : 'text-green-800 dark:text-green-200'
+                  } ${
+                    // Dynamic sizing based on text length (slightly smaller than quote)
+                    completedText.length <= 50 ? 'text-lg' :
+                    completedText.length <= 100 ? 'text-base' :
+                    completedText.length <= 150 ? 'text-sm' :
+                    'text-xs'
+                  }`}>
+                    - {bonusAnswer.person || bonusAnswer.author}{bonusAnswer.year ? ', ' + bonusAnswer.year : ''}
+                  </p>
+                )}
+              </div>
             </div>
           )
         ) : sortedWords.length === 0 ? (
@@ -357,7 +413,7 @@ export default function AssemblyArea({
                   <div className="relative w-1 h-12 flex items-center justify-center">
                     {dropIndicatorIndex === index && (
                       <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
-                        {/* Triangle arrow pointing down - split difference between -top-3 and top-1/2 */}
+                        {/* Triangle arrow pointing down */}
                         <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
                       </div>
                     )}
@@ -368,6 +424,16 @@ export default function AssemblyArea({
                     isHighlighted={isHighlighted}
                     hintType={hintType}
                   />
+                  {/* Invisible hover zone after word - allows dropping at end of any line */}
+                  <DroppableZone id={`after-${word.id}`}>
+                    <div className="relative w-1 h-12 flex items-center justify-center">
+                      {dropIndicatorIndex === index + 1 && (
+                        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
+                          <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
+                        </div>
+                      )}
+                    </div>
+                  </DroppableZone>
                 </div>
               );
             })}
@@ -392,35 +458,45 @@ export default function AssemblyArea({
 
       {/* Phase 2 Hint Buttons */}
       {phase === 2 && isSortable && !isComplete && (
-        <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+        <div className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
           <div className="flex flex-col gap-2">
-            {/* Hint Buttons */}
-            <div className="flex flex-wrap gap-2 justify-center">
-              <button
-                onClick={onUseUnnecessaryWordHint}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
-              >
-                Remove Unnecessary +1
-              </button>
+            {/* Hint Buttons - Vertical layout with external explanations */}
+            <div>
               <button
                 onClick={onUseCorrectStringHint}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                className="px-3 py-2 rounded-lg bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 hover:bg-green-200 dark:hover:bg-green-800 transition-colors font-semibold text-sm"
               >
-                Show Correct String +1
+                Correct String
               </button>
+              <div className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5 leading-tight flex items-center justify-between">
+                <span>Shows longest correct string from first word (+0.5)</span>
+                {correctStringHintsUsed > 0 && <span className="font-semibold">×{correctStringHintsUsed}</span>}
+              </div>
+            </div>
+            <div>
               <button
                 onClick={onUseNextWordHint}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors"
+                className="px-3 py-2 rounded-lg bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors font-semibold text-sm"
               >
-                Show Next Word +1
+                Next Word
               </button>
-            </div>
-            {/* Hints Used Counter */}
-            {hintsUsed > 0 && (
-              <div className="text-center text-xs text-gray-600 dark:text-gray-400">
-                Hints used: {hintsUsed} (+{hintsUsed} point{hintsUsed > 1 ? 's' : ''} penalty)
+              <div className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5 leading-tight flex items-center justify-between">
+                <span>Highlights word that should go after correct string (+0.5)</span>
+                {nextWordHintsUsed > 0 && <span className="font-semibold">×{nextWordHintsUsed}</span>}
               </div>
-            )}
+            </div>
+            <div>
+              <button
+                onClick={onUseUnnecessaryWordHint}
+                className="px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 hover:bg-red-200 dark:hover:bg-red-800 transition-colors font-semibold text-sm"
+              >
+                Unneeded Word
+              </button>
+              <div className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5 leading-tight flex items-center justify-between">
+                <span>Removes first unnecessary word in list (+0.5)</span>
+                {unnecessaryWordHintsUsed > 0 && <span className="font-semibold">×{unnecessaryWordHintsUsed}</span>}
+              </div>
+            </div>
           </div>
         </div>
       )}

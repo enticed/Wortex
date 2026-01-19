@@ -53,6 +53,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null); // Phase 2 insertion indicator
   const [allowBonusRound, setAllowBonusRound] = useState(false); // Delay showing bonus round for animation
   const gameStartTime = useRef<number>(Date.now());
+  const dragOverlayRef = useRef<{ x: number; y: number } | null>(null); // Track drag position
 
   // Configure sensors for both mouse and touch input
   const mouseSensor = useSensor(MouseSensor, {
@@ -64,7 +65,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
       delay: 50, // Reduced to 50ms for more responsive flicking
-      tolerance: 5, // 5px movement tolerance
+      tolerance: 10, // Increased tolerance to prevent accidental indicator movement
     },
   });
 
@@ -94,7 +95,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
     gameState.targetPhraseWords.some((w) => w.id === draggedWordId);
 
   const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
+    const { active, over, collisions } = event;
 
     // Phase 2: Show insertion indicator without reordering
     if (gameState.phase === 2 && over) {
@@ -104,17 +105,51 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
       const isActiveInTarget = gameState.targetPhraseWords.some((w) => w.id === activeId);
 
       if (isActiveInTarget) {
+        let targetIndex: number | null = null;
+
         // If dropping on target area itself (not a word), place at end
         if (overId === 'target') {
-          setDropIndicatorIndex(gameState.targetPhraseWords.length);
+          targetIndex = gameState.targetPhraseWords.length;
+        } else if (overId.startsWith('after-')) {
+          // Hovering over "after word" zone - extract word ID and place after it
+          const wordId = overId.substring(6); // Remove 'after-' prefix
+          const wordIndex = gameState.targetPhraseWords.findIndex((w) => w.id === wordId);
+          if (wordIndex !== -1) {
+            // Show indicator after the word (at index + 1)
+            targetIndex = wordIndex + 1;
+          }
         } else {
           // Find the index of the word being hovered over
           const overIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
           if (overIndex !== -1) {
             // Show indicator before the hovered word
-            setDropIndicatorIndex(overIndex);
+            targetIndex = overIndex;
           }
         }
+
+        // Vertical collision detection: If dragged element is within 30px above the indicator position,
+        // move the indicator to the next line up
+        if (targetIndex !== null && active.rect.current?.translated) {
+          const draggedY = active.rect.current.translated.top;
+
+          // Get the target word element at the indicator position to check its Y position
+          const wordAtIndicator = gameState.targetPhraseWords[targetIndex - 1];
+          if (wordAtIndicator) {
+            const wordElement = document.querySelector(`[data-word-id="${wordAtIndicator.id}"]`);
+            if (wordElement) {
+              const wordRect = wordElement.getBoundingClientRect();
+              const verticalDistance = wordRect.top - draggedY;
+
+              // If dragged word is within 30px above the indicator, move indicator to previous position
+              if (verticalDistance > 0 && verticalDistance < 30) {
+                // Move indicator up by one position (closer to start)
+                targetIndex = Math.max(0, targetIndex - 1);
+              }
+            }
+          }
+        }
+
+        setDropIndicatorIndex(targetIndex);
       }
     } else {
       setDropIndicatorIndex(null);
@@ -305,28 +340,31 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
       onDragEnd={handleDragEnd}
     >
       <div className="h-[calc(100dvh-3rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
-        {/* Top Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 25% */}
-        <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-green-50 dark:bg-green-950 transition-all duration-500 ${
-          gameState.phase === 2 ? 'h-[25%]' : 'h-[15%]'
-        }`}>
-          <AssemblyArea
-            id="facsimile"
-            title="Hint Phrase"
-            placedWords={gameState.facsimilePhraseWords}
-            expectedLength={puzzle.facsimilePhrase.words.length}
-            bgColor="bg-green-50 dark:bg-green-950"
-            borderColor="border-green-300 dark:border-green-700"
-            isAutoAssembly={true}
-            isComplete={true}
-            completedText={puzzle.facsimilePhrase.text}
-            phase={gameState.phase}
-            showCompletedHeader={false}
-          />
-        </div>
+        {/* Top Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 20%, Hidden when showing final results */}
+        {!(gameState.phase === 2 && gameState.bonusAnswered) && (
+          <div className={`border-b-2 border-gray-300 dark:border-gray-700 bg-green-50 dark:bg-green-950 transition-all duration-500 ${
+            gameState.phase === 2 ? 'h-[20%] p-1.5' : 'h-[15%] p-3'
+          }`}>
+            <AssemblyArea
+              id="facsimile"
+              title="Hint Phrase"
+              placedWords={gameState.facsimilePhraseWords}
+              expectedLength={puzzle.facsimilePhrase.words.length}
+              bgColor="bg-green-50 dark:bg-green-950"
+              borderColor="border-green-300 dark:border-green-700"
+              isAutoAssembly={true}
+              isComplete={true}
+              completedText={puzzle.facsimilePhrase.text}
+              phase={gameState.phase}
+              showCompletedHeader={false}
+            />
+          </div>
+        )}
 
-        {/* Middle Area - Mystery Quote - Phase 1: 35%, Phase 2: 75% */}
+        {/* Middle Area - Mystery Quote - Phase 1: 35%, Phase 2: 80%, Final Results: 50% */}
         <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
-          gameState.phase === 2 ? 'h-[75%]' : 'h-[35%]'
+          gameState.phase === 2 && gameState.bonusAnswered ? 'h-[50%]' :
+          gameState.phase === 2 ? 'h-[80%]' : 'h-[35%]'
         }`}>
           <AssemblyArea
             id="target"
@@ -346,12 +384,18 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
             onUseCorrectStringHint={useCorrectStringHint}
             onUseNextWordHint={useNextWordHint}
             hintsUsed={gameState.hintsUsed}
+            correctStringHintsUsed={gameState.correctStringHintsUsed}
+            nextWordHintsUsed={gameState.nextWordHintsUsed}
+            unnecessaryWordHintsUsed={gameState.unnecessaryWordHintsUsed}
             reorderMoves={gameState.reorderMoves}
             phase={gameState.phase}
             showCompletionAnimation={gameState.showCompletionAnimation}
             totalWordsSeen={gameState.totalWordsSeen}
             totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
             speed={gameState.speed}
+            showFinalResults={gameState.phase === 2 && gameState.bonusAnswered}
+            bonusAnswer={gameState.bonusAnswered ? puzzle.bonusQuestion.options.find(opt => opt.id === puzzle.bonusQuestion.correctAnswerId) : undefined}
+            draggedWord={gameState.phase === 2 && draggedWordText ? draggedWordText : undefined}
           />
         </div>
 

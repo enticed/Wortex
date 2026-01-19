@@ -71,6 +71,9 @@ export interface GameState {
   bonusCorrect: boolean | null;
   isPaused: boolean;
   hintsUsed: number; // Total hints used for score penalty calculation
+  correctStringHintsUsed: number; // Count of correct string hints used
+  nextWordHintsUsed: number; // Count of next word hints used
+  unnecessaryWordHintsUsed: number; // Count of unnecessary word hints used
   reorderMoves: number; // Number of reordering moves made in Phase 2
   speed: number; // Vortex speed multiplier (0.25 - 2.0)
   activeHint: { type: 'unnecessary' | 'correctString' | 'nextWord', wordIds: string[] } | null; // Currently active hint for highlighting
