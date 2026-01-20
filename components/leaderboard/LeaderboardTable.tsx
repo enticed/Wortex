@@ -20,6 +20,13 @@ export default function LeaderboardTable({
   loading = false,
   showSpeed = false
 }: LeaderboardTableProps) {
+  console.log('LeaderboardTable render:', {
+    entriesCount: entries.length,
+    loading,
+    showSpeed,
+    entries: entries.slice(0, 2) // Show first 2 entries
+  });
+
   if (loading) {
     return (
       <div className="space-y-2">
