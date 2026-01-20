@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Check if this is the user's first play of this puzzle
-    const { data: existingScore } = await supabase
-      .from('scores')
+    const { data: existingScore } = await (supabase
+      .from('scores') as any)
       .select('id, first_play_of_day')
       .eq('user_id', userId)
       .eq('puzzle_id', puzzleId)
