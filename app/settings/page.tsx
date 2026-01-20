@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/lib/contexts/UserContext';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database';
 
 export default function SettingsPage() {
   const { user, userId } = useUser();
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = createClient() as SupabaseClient<Database>;
 
   const [displayName, setDisplayName] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -40,13 +42,11 @@ export default function SettingsPage() {
     setLoading(true);
 
     try {
-      const updateData: { display_name: string | null } = {
-        display_name: displayName.trim() || null
-      };
-
-      const { error: updateError } = await supabase
-        .from('users')
-        .update(updateData)
+      // Type assertion needed due to Supabase type inference issue
+      const { error: updateError } = await (supabase.from('users') as any)
+        .update({
+          display_name: displayName.trim() || null
+        })
         .eq('id', userId);
 
       if (updateError) {
