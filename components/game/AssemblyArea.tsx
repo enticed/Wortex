@@ -3,7 +3,6 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useDroppable as useWordDroppable } from '@dnd-kit/core';
 import { useEffect, useState } from 'react';
-import React from 'react';
 import Word from './Word';
 import type { PlacedWord, BonusOption } from '@/types/game';
 
@@ -225,10 +224,9 @@ export default function AssemblyArea({
   };
 
   const getGapSize = () => {
-    // Return separate horizontal (x) and vertical (y) gaps for better line spacing
-    if (expectedLength <= 15) return 'gap-x-1.5 gap-y-2';
-    if (expectedLength <= 30) return 'gap-x-1 gap-y-1.5';
-    return 'gap-x-0.5 gap-y-1';
+    if (expectedLength <= 15) return 'gap-1.5';
+    if (expectedLength <= 30) return 'gap-1';
+    return 'gap-0.5';
   };
 
   // Calculate ongoing score
@@ -252,12 +250,9 @@ export default function AssemblyArea({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-1">
-        {/* Hide title when dragging in Phase 2 to make room for dragged word display */}
-        {!(draggedWord && phase === 2 && !isAutoAssembly) && (
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            {title}
-          </h2>
-        )}
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          {title}
+        </h2>
         {/* Center Counters Display */}
         <span className="flex-1 flex justify-center text-base font-bold flex items-center gap-1">
           {showFinalResults ? (
@@ -269,9 +264,9 @@ export default function AssemblyArea({
             // Complete but header hidden (e.g., hint phrase shown from start) - show nothing
             null
           ) : !isComplete && phase === 2 && !isAutoAssembly ? (
-            // Phase 2 target area: Show dragged word in prominent gold box
+            // Phase 2 target area: Show dragged word if dragging, otherwise show nothing
             draggedWord ? (
-              <span className="px-2.5 py-0.5 rounded-md bg-gradient-to-br from-amber-200 via-yellow-200 to-amber-300 dark:from-amber-600 dark:via-yellow-500 dark:to-amber-600 text-amber-900 dark:text-amber-50 font-bold text-base shadow-md border border-amber-400 dark:border-amber-400">
+              <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 font-semibold text-base">
                 {draggedWord}
               </span>
             ) : null
@@ -404,7 +399,7 @@ export default function AssemblyArea({
           </div>
         ) : isSortable ? (
           // Phase 2: Manual drag-and-drop with reordering (allow wrapping)
-          <div className={`flex flex-wrap gap-x-0.5 gap-y-1 items-start content-start w-full ${getWordScale()}`}>
+          <div className={`flex flex-wrap gap-0.5 items-start content-start w-full ${getWordScale()}`}>
             {sortedWords.map((word, index) => {
               // Check if this word should be highlighted
               const isHintHighlighted = activeHint?.wordIds.includes(word.id) || false;
@@ -413,32 +408,43 @@ export default function AssemblyArea({
               const hintType = isHintHighlighted ? activeHint?.type : (isCompletionAnimating ? 'correctString' : undefined);
 
               return (
-                <div key={word.id} className="relative">
-                  {/* Show indicator before this word if dropIndicatorIndex matches */}
-                  {dropIndicatorIndex === index && (
-                    <div className="absolute -left-2 top-0 z-30 pointer-events-none">
-                      {/* Simple arrow pointing down to exact drop point */}
-                      <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-12 border-t-amber-500 dark:border-t-amber-400 drop-shadow-lg" />
-                    </div>
-                  )}
-
+                <div key={word.id} className="flex items-center gap-0">
+                  {/* Invisible hover zone before word - larger area for detection */}
+                  <div className="relative w-1 h-12 flex items-center justify-center">
+                    {dropIndicatorIndex === index && (
+                      <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
+                        {/* Triangle arrow pointing down */}
+                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
+                      </div>
+                    )}
+                  </div>
                   <DroppableWord
                     word={word}
                     colorVariant={getWordColorVariant(word)}
                     isHighlighted={isHighlighted}
                     hintType={hintType}
                   />
-
-                  {/* Show indicator after this word if dropIndicatorIndex matches */}
-                  {dropIndicatorIndex === index + 1 && (
-                    <div className="absolute -right-2 top-0 z-30 pointer-events-none">
-                      {/* Simple arrow pointing down to exact drop point */}
-                      <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-12 border-t-amber-500 dark:border-t-amber-400 drop-shadow-lg" />
+                  {/* Invisible hover zone after word - allows dropping at end of any line */}
+                  <DroppableZone id={`after-${word.id}`}>
+                    <div className="relative w-1 h-12 flex items-center justify-center">
+                      {dropIndicatorIndex === index + 1 && (
+                        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
+                          <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </DroppableZone>
                 </div>
               );
             })}
+            {/* End-of-phrase drop indicator */}
+            <div className="relative w-1 h-12 flex items-center justify-center">
+              {dropIndicatorIndex === sortedWords.length && (
+                <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
+                  <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           // Phase 1 or auto-assembly: Words just display in position

@@ -11,7 +11,6 @@ import {
   useSensor,
   useSensors,
   useDroppable,
-  Modifier,
 } from '@dnd-kit/core';
 import { useState, useEffect, useRef } from 'react';
 import Vortex from './Vortex';
@@ -72,19 +71,6 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
   const sensors = useSensors(mouseSensor, touchSensor);
 
-  // Custom modifier to offset drag position upward in Phase 2
-  // This keeps the cursor/finger below the drop indicator so it doesn't obscure the target
-  const offsetModifier: Modifier = ({ transform }) => {
-    // Apply offset during Phase 2 for both touch and mouse input
-    if (gameState.phase === 2) {
-      return {
-        ...transform,
-        y: transform.y - 25, // Offset 25px upward
-      };
-    }
-    return transform;
-  };
-
   const handleDragStart = (event: DragStartEvent) => {
     const wordId = event.active.id as string;
     setDraggedWordId(wordId);
@@ -124,26 +110,41 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
         // If dropping on target area itself (not a word), place at end
         if (overId === 'target') {
           targetIndex = gameState.targetPhraseWords.length;
+        } else if (overId.startsWith('after-')) {
+          // Hovering over "after word" zone - extract word ID and place after it
+          const wordId = overId.substring(6); // Remove 'after-' prefix
+          const wordIndex = gameState.targetPhraseWords.findIndex((w) => w.id === wordId);
+          if (wordIndex !== -1) {
+            // Show indicator after the word (at index + 1)
+            targetIndex = wordIndex + 1;
+          }
         } else {
           // Find the index of the word being hovered over
           const overIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
-          if (overIndex !== -1 && active.rect.current?.translated) {
-            // Determine which side of the word we're hovering on based on horizontal position
-            const wordElement = document.querySelector(`[data-word-id="${overId}"]`);
+          if (overIndex !== -1) {
+            // Show indicator before the hovered word
+            targetIndex = overIndex;
+          }
+        }
+
+        // Vertical collision detection: If dragged element is within 30px above the indicator position,
+        // move the indicator to the next line up
+        if (targetIndex !== null && active.rect.current?.translated) {
+          const draggedY = active.rect.current.translated.top;
+
+          // Get the target word element at the indicator position to check its Y position
+          const wordAtIndicator = gameState.targetPhraseWords[targetIndex - 1];
+          if (wordAtIndicator) {
+            const wordElement = document.querySelector(`[data-word-id="${wordAtIndicator.id}"]`);
             if (wordElement) {
               const wordRect = wordElement.getBoundingClientRect();
-              const draggedX = active.rect.current.translated.left + (active.rect.current.translated.width / 2);
-              const wordCenterX = wordRect.left + (wordRect.width / 2);
+              const verticalDistance = wordRect.top - draggedY;
 
-              // If dragged position is left of word center, insert before; otherwise insert after
-              if (draggedX < wordCenterX) {
-                targetIndex = overIndex; // Insert before this word
-              } else {
-                targetIndex = overIndex + 1; // Insert after this word
+              // If dragged word is within 30px above the indicator, move indicator to previous position
+              if (verticalDistance > 0 && verticalDistance < 30) {
+                // Move indicator up by one position (closer to start)
+                targetIndex = Math.max(0, targetIndex - 1);
               }
-            } else {
-              // Fallback: insert before
-              targetIndex = overIndex;
             }
           }
         }
@@ -337,7 +338,6 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
-      modifiers={[offsetModifier]}
     >
       <div className="h-[calc(100dvh-2.5rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
         {/* Top Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 20%, Hidden during bonus round and final results */}
@@ -488,11 +488,10 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
       </div>
 
-      {/* Drag Overlay - Shows word being dragged with same offset as collision detection */}
+      {/* Drag Overlay - Keep word visible for mouse users */}
       <DragOverlay
         dropAnimation={null}
         style={{ cursor: 'grabbing' }}
-        modifiers={gameState.phase === 2 ? [offsetModifier] : undefined}
       >
         {draggedWordText ? (
           <div className="px-2 py-1 rounded-lg font-semibold text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-md">

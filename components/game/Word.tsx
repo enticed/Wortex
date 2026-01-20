@@ -22,7 +22,7 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
 
   const style = {
     transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0 : 1, // Hide original completely during drag (DragOverlay shows it)
+    opacity: isDragging ? 0.5 : 1,
     cursor: isPlaced ? 'default' : 'grab',
   };
 
