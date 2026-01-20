@@ -26,10 +26,17 @@ export function dbPuzzleToPuzzle(dbPuzzle: PuzzleRow): Puzzle {
 }
 
 /**
- * Fetch today's puzzle from Supabase
+ * Fetch today's puzzle from Supabase (timezone-aware)
  */
-export async function getTodaysPuzzle(supabase: any): Promise<Puzzle | null> {
-  const today = new Date().toISOString().split('T')[0];
+export async function getTodaysPuzzle(supabase: any, timezone?: string): Promise<Puzzle | null> {
+  // Get today's date in the user's timezone (or default to browser timezone)
+  const userTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const today = new Date().toLocaleDateString('en-CA', {
+    timeZone: userTimezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
 
   const { data, error } = await supabase
     .from('puzzles')

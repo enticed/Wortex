@@ -28,7 +28,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
-  // Initialize anonymous user
+  // Initialize user and listen for auth changes
   useEffect(() => {
     async function initializeUser() {
       try {
@@ -74,6 +74,40 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
 
     initializeUser();
+
+    // Listen for auth state changes (sign in, sign out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            await loadUserData(session.user.id);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          // Clear user data on sign out
+          setUserId(null);
+          setUser(null);
+          setStats(null);
+
+          // Create new anonymous session
+          const { data, error } = await supabase.auth.signInAnonymously();
+          if (data?.user) {
+            await loadUserData(data.user.id);
+          }
+        } else if (event === 'USER_UPDATED') {
+          // Refresh user data when user info changes (e.g., upgrade to authenticated)
+          if (session?.user) {
+            await loadUserData(session.user.id);
+          }
+        }
+      }
+    );
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Load user data and stats
