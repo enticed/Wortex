@@ -22,12 +22,16 @@ export async function POST(request: NextRequest) {
     // Check if this is the user's first play of this puzzle
     const { data: existingScore } = await supabase
       .from('scores')
-      .select('id')
+      .select('id, first_play_of_day')
       .eq('user_id', userId)
       .eq('puzzle_id', puzzleId)
       .single();
 
     const isFirstPlay = !existingScore;
+
+    // Preserve the first_play_of_day flag if this is a replay
+    // Only set it to true on the very first play, never change it back to false
+    const firstPlayOfDay = isFirstPlay ? true : (existingScore?.first_play_of_day ?? false);
 
     // Prepare score data with proper typing
     const scoreData: ScoreInsert = {
@@ -37,7 +41,7 @@ export async function POST(request: NextRequest) {
       bonus_correct: bonusCorrect || false,
       time_taken_seconds: Number(timeTakenSeconds),
       speed: speed ? Number(speed) : 1.0,
-      first_play_of_day: isFirstPlay,
+      first_play_of_day: firstPlayOfDay,
     };
 
     // Submit score (upsert to handle replays)
