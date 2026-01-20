@@ -5,6 +5,7 @@ import PuzzleActions from '@/components/admin/PuzzleActions';
 import GeneratePuzzlesButton from '@/components/admin/GeneratePuzzlesButton';
 
 interface Puzzle {
+  id: string;
   date: string;
   target_phrase: string;
   facsimile_phrase: string;
@@ -39,7 +40,7 @@ async function getPuzzles() {
 
   const { data: puzzles, error } = await supabase
     .from('puzzles')
-    .select('date, target_phrase, facsimile_phrase, difficulty, approved, created_at')
+    .select('id, date, target_phrase, facsimile_phrase, difficulty, approved, created_at')
     .order('date', { ascending: false })
     .limit(100);
 
@@ -182,7 +183,7 @@ function PuzzleList({ puzzles }: { puzzles: Puzzle[] }) {
                 <StatusBadge status={puzzle.status || 'published'} />
               </td>
               <td className="px-4 py-3">
-                <PuzzleActions date={puzzle.date} />
+                <PuzzleActions id={puzzle.id} date={puzzle.date} />
               </td>
             </tr>
           ))}

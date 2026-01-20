@@ -79,6 +79,25 @@ export async function generatePuzzle(
     : 'A memorable line from classic literature or poetry';
   const difficultyDesc = difficultyDescriptions[calculatedDifficulty as keyof typeof difficultyDescriptions];
 
+  // Different bonus question format based on quote type
+  const bonusOptionsFormat = calculatedQuoteType === 'historical'
+    ? '  "bonusOptions": [\n' +
+      '    {"person": "Correct Person Name", "year": 1950},\n' +
+      '    {"person": "Plausible Wrong Person 1", "year": 1945},\n' +
+      '    {"person": "Plausible Wrong Person 2", "year": 1960},\n' +
+      '    {"person": "Plausible Wrong Person 3", "year": 1955}\n' +
+      '  ],'
+    : '  "bonusOptions": [\n' +
+      '    {"author": "Correct Author Name", "book": "Book Title"},\n' +
+      '    {"author": "Plausible Wrong Author 1", "book": "Their Book Title"},\n' +
+      '    {"author": "Plausible Wrong Author 2", "book": "Their Book Title"},\n' +
+      '    {"author": "Plausible Wrong Author 3", "book": "Their Book Title"}\n' +
+      '  ],';
+
+  const bonusFieldDescription = calculatedQuoteType === 'historical'
+    ? '   - Each option: {"person": "Name", "year": number}'
+    : '   - Each option: {"author": "Author Name", "book": "Book Title"}';
+
   const prompt = 'Generate a word puzzle based on a ' + quoteSource + '.\n\n' +
     'STRICT REQUIREMENTS:\n' +
     '1. Target phrase: ' + targetPhraseDesc + '\n' +
@@ -97,7 +116,8 @@ export async function generatePuzzle(
     '4. Bonus question: "Who is the source of this quote?"\n' +
     '   - MUST include exactly 4 multiple choice options\n' +
     '   - One correct answer + 3 plausible distractors\n' +
-    '   - All options should be from the same era and context\n\n' +
+    '   - All options should be from the same era and context\n' +
+    bonusFieldDescription + '\n\n' +
     'Return ONLY valid JSON (no markdown, no code blocks) in this exact format:\n' +
     '{\n' +
     '  "targetPhrase": "exact quote text here",\n' +
@@ -106,12 +126,7 @@ export async function generatePuzzle(
     '  "sourceYear": year as number or null,\n' +
     '  "theme": "brief theme description",\n' +
     '  "tags": ["tag1", "tag2"],\n' +
-    '  "bonusOptions": [\n' +
-    '    {"person": "Correct Author Name", "year": 1950},\n' +
-    '    {"person": "Plausible Wrong Author 1", "year": 1945},\n' +
-    '    {"person": "Plausible Wrong Author 2", "year": 1960},\n' +
-    '    {"person": "Plausible Wrong Author 3", "year": 1955}\n' +
-    '  ],\n' +
+    bonusOptionsFormat + '\n' +
     '  "correctAnswerIndex": 0\n' +
     '}\n\n' +
     'CRITICAL VALIDATION (your response will be rejected if these fail):\n' +
@@ -163,12 +178,34 @@ export async function generatePuzzle(
     throw new Error('Invalid JSON from AI: ' + errorMsg);
   }
 
+  // Validate bonus question presence and structure
+  if (!aiResponse.bonusOptions || !Array.isArray(aiResponse.bonusOptions)) {
+    throw new Error('Missing bonusOptions array in AI response');
+  }
+  if (aiResponse.bonusOptions.length !== 4) {
+    throw new Error('bonusOptions must have exactly 4 elements, got ' + aiResponse.bonusOptions.length);
+  }
+  if (aiResponse.correctAnswerIndex === undefined || aiResponse.correctAnswerIndex < 0 || aiResponse.correctAnswerIndex > 3) {
+    throw new Error('correctAnswerIndex must be 0-3, got ' + aiResponse.correctAnswerIndex);
+  }
+
   // Validate and structure the puzzle
-  const bonusOptions = aiResponse.bonusOptions.map((opt: any, idx: number) => ({
-    id: String(idx + 1),
-    person: opt.person,
-    year: opt.year || undefined,
-  }));
+  // Handle both historical (person/year) and literature (author/book) formats
+  const bonusOptions = aiResponse.bonusOptions.map((opt: any, idx: number) => {
+    if (calculatedQuoteType === 'historical') {
+      return {
+        id: String(idx + 1),
+        person: opt.person,
+        year: opt.year || undefined,
+      };
+    } else {
+      return {
+        id: String(idx + 1),
+        author: opt.author,
+        book: opt.book,
+      };
+    }
+  });
 
   // Store the correct answer ID before shuffling
   const correctAnswerId = bonusOptions[aiResponse.correctAnswerIndex].id;

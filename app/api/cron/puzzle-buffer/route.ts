@@ -83,6 +83,19 @@ export async function GET(request: NextRequest) {
 
     console.log(`[Puzzle Buffer] Generating ${neededPuzzles} puzzles starting from ${startDate.toISOString().split('T')[0]}`);
 
+    // Get existing target phrases for duplicate detection
+    const { data: existingPuzzles, error: existingError } = await supabase
+      .from('puzzles')
+      .select('target_phrase');
+
+    if (existingError) {
+      console.warn('Failed to fetch existing puzzles for duplicate detection:', existingError);
+    }
+
+    const existingTargetPhrases = new Set(
+      existingPuzzles?.map(p => p.target_phrase.toLowerCase().trim()) || []
+    );
+
     // Generate puzzles
     const puzzles = await generatePuzzleBatch(startDate, neededPuzzles);
 
@@ -92,6 +105,17 @@ export async function GET(request: NextRequest) {
 
     for (const puzzle of puzzles) {
       try {
+        // Check for duplicate quotes
+        const normalizedTarget = puzzle.targetPhrase.toLowerCase().trim();
+        if (existingTargetPhrases.has(normalizedTarget)) {
+          console.warn(`Skipping duplicate puzzle for ${puzzle.date}: "${puzzle.targetPhrase}"`);
+          errors.push({
+            date: puzzle.date,
+            error: 'Duplicate quote detected - skipped',
+          });
+          continue;
+        }
+
         const { data, error } = await supabase
           .from('puzzles')
           .insert({
@@ -114,6 +138,8 @@ export async function GET(request: NextRequest) {
             error: error.message,
           });
         } else {
+          // Add to set to prevent duplicates within this batch
+          existingTargetPhrases.add(normalizedTarget);
           savedPuzzles.push(data);
         }
       } catch (error) {

@@ -340,8 +340,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
       onDragEnd={handleDragEnd}
     >
       <div className="h-[calc(100dvh-2.5rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
-        {/* Top Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 20%, Hidden when showing final results */}
-        {!(gameState.phase === 2 && gameState.bonusAnswered) && (
+        {/* Top Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 20%, Hidden during bonus round and final results */}
+        {!gameState.isComplete && !(gameState.phase === 2 && gameState.bonusAnswered) && (
           <div className={`border-b-2 border-gray-300 dark:border-gray-700 bg-purple-50 dark:bg-purple-950 transition-all duration-500 ${
             gameState.phase === 2 ? 'h-[20%] p-1' : 'h-[15%] p-1.5'
           }`}>
@@ -361,9 +361,10 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           </div>
         )}
 
-        {/* Middle Area - Mystery Quote - Phase 1: 35%, Phase 2: 80%, Final Results: 40% */}
+        {/* Middle Area - Mystery Quote - Phase 1: 35% (50% during bonus), Phase 2: 80%, Final Results: 40% */}
         <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
           gameState.bonusAnswered ? 'h-[40%]' :
+          gameState.isComplete ? 'h-[50%]' :
           gameState.phase === 2 ? 'h-[80%]' : 'h-[35%]'
         }`}>
           <AssemblyArea

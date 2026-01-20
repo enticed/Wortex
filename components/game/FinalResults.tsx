@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 interface FinalResultsProps {
   phase1Score: number;
   phase2Score: number;
@@ -34,52 +36,52 @@ export default function FinalResults({
         </h2>
       </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-2xl mx-auto space-y-3">
-          {/* Phase 1 Score */}
-          <div className="bg-blue-100 dark:bg-blue-900 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Phase 1 Score
+      {/* Scrollable Content - Compact for mobile */}
+      <div className="flex-1 overflow-y-auto p-2">
+        <div className="max-w-2xl mx-auto space-y-2">
+          {/* Phase 1 Score - Compact */}
+          <div className="bg-blue-100 dark:bg-blue-900 rounded-lg p-2">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Phase 1
               </div>
-              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {phase1Score.toFixed(2)}
               </div>
             </div>
             {totalWordsSeen !== undefined && totalUniqueWords !== undefined && (
-              <div className="text-xs text-gray-600 dark:text-gray-400 pt-2 border-t border-blue-200 dark:border-blue-800 text-center italic">
-                Score: Words seen ({totalWordsSeen}) ÷ Total words ({totalUniqueWords})
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-center">
+                {totalWordsSeen} / {totalUniqueWords} words
               </div>
             )}
           </div>
 
-          {/* Phase 2 Score */}
-          <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Phase 2 Score
+          {/* Phase 2 Score - Compact */}
+          <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Phase 2
               </div>
-              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 {phase2Score.toFixed(2)}
               </div>
             </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 pt-2 border-t border-purple-200 dark:border-purple-800 text-center italic">
-              Score: Moves ({reorderMoves} × 0.25) + Hints ({hintsUsed} × 0.5)
+            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-center">
+              {reorderMoves} moves, {hintsUsed} hints
             </div>
           </div>
 
-          {/* Final Score */}
-          <div className={`rounded-lg p-4 ${
+          {/* Final Score - Compact */}
+          <div className={`rounded-lg p-2 ${
             bonusCorrect
               ? 'bg-green-100 dark:bg-green-900'
               : 'bg-gray-200 dark:bg-gray-800'
           }`}>
             <div className="flex items-center justify-between">
-              <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                 Final Score
               </div>
-              <div className={`text-4xl font-bold ${
+              <div className={`text-3xl font-bold ${
                 bonusCorrect
                   ? 'text-green-600 dark:text-green-400'
                   : 'text-gray-700 dark:text-gray-300'
@@ -88,19 +90,27 @@ export default function FinalResults({
               </div>
             </div>
             {bonusCorrect && (
-              <div className="text-xs text-green-700 dark:text-green-300 mt-2 text-center font-semibold">
-                ✓ 10% bonus reduction applied!
+              <div className="text-xs text-green-700 dark:text-green-300 mt-1 text-center font-semibold">
+                ✓ 10% bonus applied
               </div>
             )}
           </div>
 
-          {/* Play Again Button */}
-          <button
-            onClick={onPlayAgain}
-            className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base mt-4"
-          >
-            Play Again
-          </button>
+          {/* Buttons - Half-width side by side */}
+          <div className="flex gap-2 mt-2">
+            <Link
+              href="/leaderboard"
+              className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm text-center"
+            >
+              Leaderboard
+            </Link>
+            <button
+              onClick={onPlayAgain}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+            >
+              Play Again
+            </button>
+          </div>
         </div>
       </div>
     </div>

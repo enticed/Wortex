@@ -66,3 +66,57 @@ export async function PUT(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+    const cookieStore = await cookies();
+
+    // Create admin client
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              );
+            } catch {
+              // Called from Server Component, ignore
+            }
+          },
+        },
+      }
+    );
+
+    // Delete the puzzle
+    const { error } = await supabase
+      .from('puzzles')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting puzzle:', error);
+      return NextResponse.json(
+        { error: 'Failed to delete puzzle' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error in DELETE /api/admin/puzzles/[id]:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
