@@ -6,11 +6,22 @@ import AppLayout from '@/components/layout/AppLayout';
 import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
 import GlobalLeaderboardTable from '@/components/leaderboard/GlobalLeaderboardTable';
 import { createClient } from '@/lib/supabase/client';
-import { getPuzzleLeaderboard, getGlobalLeaderboard } from '@/lib/supabase/scores';
+import {
+  getPuzzleLeaderboard,
+  getGlobalLeaderboard,
+  getPuzzleLeaderboardPure,
+  getPuzzleLeaderboardBoosted,
+  getGlobalLeaderboardPure,
+  getGlobalLeaderboardBoosted
+} from '@/lib/supabase/scores';
 import { getTodaysPuzzle } from '@/lib/supabase/puzzles';
 import type { Database } from '@/types/database';
 
 type LeaderboardRow = Database['public']['Views']['leaderboards']['Row'];
+type LeaderboardPureRow = Database['public']['Views']['leaderboards_pure']['Row'];
+type LeaderboardBoostedRow = Database['public']['Views']['leaderboards_boosted']['Row'];
+type GlobalLeaderboardPureRow = Database['public']['Views']['global_leaderboards_pure']['Row'];
+type GlobalLeaderboardBoostedRow = Database['public']['Views']['global_leaderboards_boosted']['Row'];
 
 type TabType = 'daily' | 'global';
 
@@ -23,8 +34,10 @@ interface GlobalLeaderboardEntry {
 
 export default function LeaderboardPage() {
   const [activeTab, setActiveTab] = useState<TabType>('daily');
-  const [dailyEntries, setDailyEntries] = useState<LeaderboardRow[]>([]);
-  const [globalEntries, setGlobalEntries] = useState<GlobalLeaderboardEntry[]>([]);
+  const [dailyEntriesPure, setDailyEntriesPure] = useState<LeaderboardPureRow[]>([]);
+  const [dailyEntriesBoosted, setDailyEntriesBoosted] = useState<LeaderboardBoostedRow[]>([]);
+  const [globalEntriesPure, setGlobalEntriesPure] = useState<GlobalLeaderboardPureRow[]>([]);
+  const [globalEntriesBoosted, setGlobalEntriesBoosted] = useState<GlobalLeaderboardBoostedRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [puzzleDate, setPuzzleDate] = useState<string | null>(null);
@@ -50,14 +63,18 @@ export default function LeaderboardPage() {
       if (puzzle) {
         setPuzzleDate(puzzle.date);
 
-        // Load daily leaderboard
-        const daily = await getPuzzleLeaderboard(supabase, puzzle.id, 100);
-        setDailyEntries(daily);
+        // Load daily leaderboards (Pure and Boosted)
+        const dailyPure = await getPuzzleLeaderboardPure(supabase, puzzle.id, 100);
+        const dailyBoosted = await getPuzzleLeaderboardBoosted(supabase, puzzle.id, 100);
+        setDailyEntriesPure(dailyPure);
+        setDailyEntriesBoosted(dailyBoosted);
       }
 
-      // Load global leaderboard
-      const global = await getGlobalLeaderboard(supabase, 100);
-      setGlobalEntries(global);
+      // Load global leaderboards (Pure and Boosted)
+      const globalPure = await getGlobalLeaderboardPure(supabase, 100);
+      const globalBoosted = await getGlobalLeaderboardBoosted(supabase, 100);
+      setGlobalEntriesPure(globalPure);
+      setGlobalEntriesBoosted(globalBoosted);
 
     } catch (error) {
       console.error('Error loading leaderboards:', error);
@@ -68,7 +85,7 @@ export default function LeaderboardPage() {
 
   // Set up realtime subscription for daily leaderboard updates
   useEffect(() => {
-    if (!dailyEntries.length) return;
+    if (!dailyEntriesPure.length && !dailyEntriesBoosted.length) return;
 
     const channel = supabase
       .channel('leaderboard-changes')
@@ -80,11 +97,13 @@ export default function LeaderboardPage() {
           table: 'scores',
         },
         async () => {
-          // Reload daily leaderboard when scores change
+          // Reload daily leaderboards when scores change
           const puzzle = await getTodaysPuzzle(supabase);
           if (puzzle) {
-            const daily = await getPuzzleLeaderboard(supabase, puzzle.id, 100);
-            setDailyEntries(daily);
+            const dailyPure = await getPuzzleLeaderboardPure(supabase, puzzle.id, 100);
+            const dailyBoosted = await getPuzzleLeaderboardBoosted(supabase, puzzle.id, 100);
+            setDailyEntriesPure(dailyPure);
+            setDailyEntriesBoosted(dailyBoosted);
           }
         }
       )
@@ -93,7 +112,7 @@ export default function LeaderboardPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [dailyEntries.length]);
+  }, [dailyEntriesPure.length, dailyEntriesBoosted.length]);
 
   return (
     <AppLayout>
@@ -169,22 +188,68 @@ export default function LeaderboardPage() {
             {/* Tab Content */}
             <div className="p-6">
               {activeTab === 'daily' && (
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      Daily Rankings
-                    </h2>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {dailyEntries.length} {dailyEntries.length === 1 ? 'player' : 'players'}
-                    </span>
+                <div className="space-y-8">
+                  {/* Pure Leaderboard */}
+                  <div>
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
+                          Pure Rankings
+                        </h2>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {dailyEntriesPure.length} {dailyEntriesPure.length === 1 ? 'player' : 'players'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        First play of the puzzle with no speed adjustments (1.0x speed only)
+                      </p>
+                    </div>
+                    <LeaderboardTable
+                      entries={dailyEntriesPure}
+                      currentUserId={currentUserId || undefined}
+                      loading={loading}
+                    />
+                    {!loading && dailyEntriesPure.length === 0 && (
+                      <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <p className="text-gray-600 dark:text-gray-400">
+                          No Pure scores yet for today's puzzle
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <LeaderboardTable
-                    entries={dailyEntries}
-                    currentUserId={currentUserId || undefined}
-                    loading={loading}
-                  />
-                  {!loading && dailyEntries.length === 0 && (
-                    <div className="mt-4 text-center">
+
+                  {/* Boosted Leaderboard */}
+                  <div>
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-lg font-semibold text-purple-700 dark:text-purple-400">
+                          Boosted Rankings
+                        </h2>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {dailyEntriesBoosted.length} {dailyEntriesBoosted.length === 1 ? 'player' : 'players'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Repeat plays and/or games with speed adjustments
+                      </p>
+                    </div>
+                    <LeaderboardTable
+                      entries={dailyEntriesBoosted}
+                      currentUserId={currentUserId || undefined}
+                      loading={loading}
+                      showSpeed={true}
+                    />
+                    {!loading && dailyEntriesBoosted.length === 0 && (
+                      <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <p className="text-gray-600 dark:text-gray-400">
+                          No Boosted scores yet for today's puzzle
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {!loading && dailyEntriesPure.length === 0 && dailyEntriesBoosted.length === 0 && (
+                    <div className="text-center py-12">
                       <p className="text-gray-600 dark:text-gray-400 mb-3">
                         No one has played today's puzzle yet!
                       </p>
@@ -200,39 +265,105 @@ export default function LeaderboardPage() {
               )}
 
               {activeTab === 'global' && (
-                <div>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      Best Average Scores
-                    </h2>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Top 100 players
-                    </span>
+                <div className="space-y-8">
+                  {/* Pure Global Leaderboard */}
+                  <div>
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
+                          Pure Rankings - Best Averages
+                        </h2>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          Top 100 players
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                        Average scores from Pure games only (first plays with no speed adjustments)
+                      </p>
+                    </div>
+                    <GlobalLeaderboardTable
+                      entries={globalEntriesPure}
+                      currentUserId={currentUserId || undefined}
+                      loading={loading}
+                    />
+                    {!loading && globalEntriesPure.length === 0 && (
+                      <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <p className="text-gray-600 dark:text-gray-400">
+                          No Pure scores recorded yet
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Players ranked by their average score across all puzzles (lower is better)
-                  </p>
-                  <GlobalLeaderboardTable
-                    entries={globalEntries}
-                    currentUserId={currentUserId || undefined}
-                    loading={loading}
-                  />
+
+                  {/* Boosted Global Leaderboard */}
+                  <div>
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-lg font-semibold text-purple-700 dark:text-purple-400">
+                          Boosted Rankings - Best Averages
+                        </h2>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          Top 100 players
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                        Average scores from Boosted games (repeat plays and/or speed adjustments)
+                      </p>
+                    </div>
+                    <GlobalLeaderboardTable
+                      entries={globalEntriesBoosted}
+                      currentUserId={currentUserId || undefined}
+                      loading={loading}
+                    />
+                    {!loading && globalEntriesBoosted.length === 0 && (
+                      <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <p className="text-gray-600 dark:text-gray-400">
+                          No Boosted scores recorded yet
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
           {/* Info Section */}
-          <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
-              How Scoring Works
-            </h3>
-            <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
-              <li>• Lower scores are better</li>
-              <li>• Score = (Words Seen / Unique Words) / Speed + Reorder Moves + Hints Used</li>
-              <li>• Playing at faster speeds improves your score</li>
-              <li>• Correct bonus answers reduce your final score by 10%</li>
-            </ul>
+          <div className="mt-6 space-y-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
+                How Scoring Works
+              </h3>
+              <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
+                <li>• Lower scores are better</li>
+                <li>• Score = (Words Seen / Unique Words) + Reorder Moves + Hints Used</li>
+                <li>• Correct bonus answers reduce your final score by 10%</li>
+              </ul>
+            </div>
+
+            <div className="bg-gradient-to-r from-emerald-50 to-purple-50 dark:from-emerald-900/20 dark:to-purple-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                Ranking Categories
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">Pure Rankings</span>
+                  </div>
+                  <p className="text-xs text-gray-700 dark:text-gray-300">
+                    Your first play of each puzzle at standard speed (1.0x). Compete on equal footing!
+                  </p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-purple-600 dark:text-purple-400 font-semibold text-sm">Boosted Rankings</span>
+                  </div>
+                  <p className="text-xs text-gray-700 dark:text-gray-300">
+                    Repeat plays and/or games using the speed slider. Perfect your score and experiment!
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

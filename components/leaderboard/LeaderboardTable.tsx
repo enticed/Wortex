@@ -4,17 +4,21 @@ import { useEffect, useState } from 'react';
 import type { Database } from '@/types/database';
 
 type LeaderboardRow = Database['public']['Views']['leaderboards']['Row'];
+type LeaderboardPureRow = Database['public']['Views']['leaderboards_pure']['Row'];
+type LeaderboardBoostedRow = Database['public']['Views']['leaderboards_boosted']['Row'];
 
 interface LeaderboardTableProps {
-  entries: LeaderboardRow[];
+  entries: LeaderboardRow[] | LeaderboardPureRow[] | LeaderboardBoostedRow[];
   currentUserId?: string;
   loading?: boolean;
+  showSpeed?: boolean;
 }
 
 export default function LeaderboardTable({
   entries,
   currentUserId,
-  loading = false
+  loading = false,
+  showSpeed = false
 }: LeaderboardTableProps) {
   if (loading) {
     return (
@@ -50,6 +54,11 @@ export default function LeaderboardTable({
             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Player
             </th>
+            {showSpeed && (
+              <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                Speed
+              </th>
+            )}
             <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Score
             </th>
@@ -102,6 +111,15 @@ export default function LeaderboardTable({
                     )}
                   </div>
                 </td>
+                {showSpeed && 'speed' in entry && (
+                  <td className="py-4 px-4">
+                    <div className="text-center">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {entry.speed.toFixed(2)}x
+                      </span>
+                    </div>
+                  </td>
+                )}
                 <td className="py-4 px-4">
                   <div className="text-right">
                     <span className="font-bold text-gray-900 dark:text-gray-100">

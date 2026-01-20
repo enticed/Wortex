@@ -19,6 +19,16 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
+    // Check if this is the user's first play of this puzzle
+    const { data: existingScore } = await supabase
+      .from('scores')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('puzzle_id', puzzleId)
+      .single();
+
+    const isFirstPlay = !existingScore;
+
     // Prepare score data with proper typing
     const scoreData: ScoreInsert = {
       user_id: userId,
@@ -27,6 +37,7 @@ export async function POST(request: NextRequest) {
       bonus_correct: bonusCorrect || false,
       time_taken_seconds: Number(timeTakenSeconds),
       speed: speed ? Number(speed) : 1.0,
+      first_play_of_day: isFirstPlay,
     };
 
     // Submit score (upsert to handle replays)

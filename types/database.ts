@@ -10,8 +10,11 @@ export interface Database {
           id: string;
           created_at: string;
           display_name: string | null;
+          email: string | null;
           timezone: string;
           is_anonymous: boolean;
+          password_changed_at: string | null;
+          last_login: string | null;
           subscription_status: 'none' | 'active' | 'expired';
           subscription_expires_at: string | null;
         };
@@ -19,8 +22,11 @@ export interface Database {
           id?: string;
           created_at?: string;
           display_name?: string | null;
+          email?: string | null;
           timezone?: string;
           is_anonymous?: boolean;
+          password_changed_at?: string | null;
+          last_login?: string | null;
           subscription_status?: 'none' | 'active' | 'expired';
           subscription_expires_at?: string | null;
         };
@@ -28,8 +34,11 @@ export interface Database {
           id?: string;
           created_at?: string;
           display_name?: string | null;
+          email?: string | null;
           timezone?: string;
           is_anonymous?: boolean;
+          password_changed_at?: string | null;
+          last_login?: string | null;
           subscription_status?: 'none' | 'active' | 'expired';
           subscription_expires_at?: string | null;
         };
@@ -78,6 +87,7 @@ export interface Database {
           bonus_correct: boolean;
           time_taken_seconds: number;
           speed: number;
+          first_play_of_day: boolean;
           created_at: string;
         };
         Insert: {
@@ -88,6 +98,7 @@ export interface Database {
           bonus_correct?: boolean;
           time_taken_seconds: number;
           speed?: number;
+          first_play_of_day?: boolean;
           created_at?: string;
         };
         Update: {
@@ -98,6 +109,7 @@ export interface Database {
           bonus_correct?: boolean;
           time_taken_seconds?: number;
           speed?: number;
+          first_play_of_day?: boolean;
           created_at?: string;
         };
       };
@@ -138,8 +150,52 @@ export interface Database {
           user_id: string;
           display_name: string | null;
           score: number;
+          bonus_correct: boolean;
+          speed: number;
+          first_play_of_day: boolean;
           rank: number;
           puzzle_date: string;
+        };
+      };
+      leaderboards_pure: {
+        Row: {
+          puzzle_id: string;
+          user_id: string;
+          display_name: string | null;
+          score: number;
+          bonus_correct: boolean;
+          rank: number;
+          puzzle_date: string;
+        };
+      };
+      leaderboards_boosted: {
+        Row: {
+          puzzle_id: string;
+          user_id: string;
+          display_name: string | null;
+          score: number;
+          bonus_correct: boolean;
+          speed: number;
+          rank: number;
+          puzzle_date: string;
+        };
+      };
+      global_leaderboards_pure: {
+        Row: {
+          user_id: string;
+          display_name: string | null;
+          average_score: number;
+          total_games: number;
+          rank: number;
+        };
+      };
+      global_leaderboards_boosted: {
+        Row: {
+          user_id: string;
+          display_name: string | null;
+          average_score: number;
+          total_games: number;
+          rank: number;
         };
       };
     };

@@ -8,6 +8,10 @@ type ScoreInsert = Database['public']['Tables']['scores']['Insert'];
 type ScoreRow = Database['public']['Tables']['scores']['Row'];
 type StatsRow = Database['public']['Tables']['stats']['Row'];
 type LeaderboardRow = Database['public']['Views']['leaderboards']['Row'];
+type LeaderboardPureRow = Database['public']['Views']['leaderboards_pure']['Row'];
+type LeaderboardBoostedRow = Database['public']['Views']['leaderboards_boosted']['Row'];
+type GlobalLeaderboardPureRow = Database['public']['Views']['global_leaderboards_pure']['Row'];
+type GlobalLeaderboardBoostedRow = Database['public']['Views']['global_leaderboards_boosted']['Row'];
 
 /**
  * Submit a score for a completed puzzle
@@ -150,4 +154,88 @@ export async function getUserPuzzleScore(
   }
 
   return data || null;
+}
+
+/**
+ * Get Pure leaderboard for a specific puzzle (first play, no speed adjustments)
+ */
+export async function getPuzzleLeaderboardPure(
+  supabase: any,
+  puzzleId: string,
+  limit: number = 100
+): Promise<LeaderboardPureRow[]> {
+  const { data, error } = await supabase
+    .from('leaderboards_pure')
+    .select('*')
+    .eq('puzzle_id', puzzleId)
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching Pure leaderboard:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Get Boosted leaderboard for a specific puzzle (repeat plays or speed adjustments)
+ */
+export async function getPuzzleLeaderboardBoosted(
+  supabase: any,
+  puzzleId: string,
+  limit: number = 100
+): Promise<LeaderboardBoostedRow[]> {
+  const { data, error } = await supabase
+    .from('leaderboards_boosted')
+    .select('*')
+    .eq('puzzle_id', puzzleId)
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching Boosted leaderboard:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Get Pure global leaderboard (best average scores from Pure games)
+ */
+export async function getGlobalLeaderboardPure(
+  supabase: any,
+  limit: number = 100
+): Promise<GlobalLeaderboardPureRow[]> {
+  const { data, error } = await supabase
+    .from('global_leaderboards_pure')
+    .select('*')
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching Pure global leaderboard:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Get Boosted global leaderboard (best average scores from Boosted games)
+ */
+export async function getGlobalLeaderboardBoosted(
+  supabase: any,
+  limit: number = 100
+): Promise<GlobalLeaderboardBoostedRow[]> {
+  const { data, error } = await supabase
+    .from('global_leaderboards_boosted')
+    .select('*')
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching Boosted global leaderboard:', error);
+    return [];
+  }
+
+  return data || [];
 }
