@@ -66,6 +66,16 @@ export default function LeaderboardPage() {
         // Load daily leaderboards (Pure and Boosted)
         const dailyPure = await getPuzzleLeaderboardPure(supabase, puzzle.id, 100);
         const dailyBoosted = await getPuzzleLeaderboardBoosted(supabase, puzzle.id, 100);
+
+        console.log('Daily leaderboard data:', {
+          puzzleId: puzzle.id,
+          puzzleDate: puzzle.date,
+          dailyPure: dailyPure.length,
+          dailyBoosted: dailyBoosted.length,
+          dailyPureData: dailyPure,
+          dailyBoostedData: dailyBoosted
+        });
+
         setDailyEntriesPure(dailyPure);
         setDailyEntriesBoosted(dailyBoosted);
       }
@@ -73,6 +83,14 @@ export default function LeaderboardPage() {
       // Load global leaderboards (Pure and Boosted)
       const globalPure = await getGlobalLeaderboardPure(supabase, 100);
       const globalBoosted = await getGlobalLeaderboardBoosted(supabase, 100);
+
+      console.log('Global leaderboard data:', {
+        globalPure: globalPure.length,
+        globalBoosted: globalBoosted.length,
+        globalPureData: globalPure,
+        globalBoostedData: globalBoosted
+      });
+
       setGlobalEntriesPure(globalPure);
       setGlobalEntriesBoosted(globalBoosted);
 
