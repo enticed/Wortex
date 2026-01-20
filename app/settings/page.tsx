@@ -40,9 +40,13 @@ export default function SettingsPage() {
     setLoading(true);
 
     try {
+      const updateData: { display_name: string | null } = {
+        display_name: displayName.trim() || null
+      };
+
       const { error: updateError } = await supabase
         .from('users')
-        .update({ display_name: displayName.trim() || null })
+        .update(updateData)
         .eq('id', userId);
 
       if (updateError) {
