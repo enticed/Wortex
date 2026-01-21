@@ -59,54 +59,29 @@ export default function LeaderboardPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Wait for auth to be ready before loading data
+  // Load leaderboards immediately on mount
   useEffect(() => {
     let mounted = true;
 
-    async function checkAuth() {
-      console.log('[Leaderboard] Checking auth...');
+    async function init() {
+      console.log('[Leaderboard] Initializing...');
       setDebugInfo(prev => ({ ...prev, authCheckStarted: true }));
 
-      try {
-        // Wait for session with a timeout fallback
-        const timeoutId = setTimeout(() => {
-          console.warn('[Leaderboard] Auth check timeout - proceeding anyway');
-          if (mounted) {
-            setDebugInfo(prev => ({ ...prev, authCheckCompleted: true }));
-            setAuthReady(true);
-          }
-        }, 5000);
-
-        await supabase.auth.getSession();
-        clearTimeout(timeoutId);
-        console.log('[Leaderboard] Auth check complete');
-
-        if (mounted) {
-          setDebugInfo(prev => ({ ...prev, authCheckCompleted: true }));
-          setAuthReady(true);
-        }
-      } catch (error) {
-        console.error('[Leaderboard] Auth check error:', error);
-        if (mounted) {
-          setDebugInfo(prev => ({ ...prev, authCheckCompleted: true }));
-          setAuthReady(true);
-        }
+      // Start loading data immediately - don't wait for auth
+      // The client should already have an anonymous session from UserContext
+      if (mounted) {
+        setDebugInfo(prev => ({ ...prev, authCheckCompleted: true }));
+        setAuthReady(true);
+        loadLeaderboards();
       }
     }
 
-    checkAuth();
+    init();
 
     return () => {
       mounted = false;
     };
   }, []);
-
-  // Load leaderboards once auth is ready
-  useEffect(() => {
-    if (authReady) {
-      loadLeaderboards();
-    }
-  }, [authReady]);
 
   async function loadLeaderboards() {
     try {
