@@ -74,14 +74,17 @@ export default function LeaderboardPage() {
 
   async function loadLeaderboards() {
     try {
+      console.log('[Leaderboard] Starting to load data...');
       setLoading(true);
 
       // Get current user (auth is already ready from useEffect)
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('[Leaderboard] User ID:', user?.id?.substring(0, 12) || 'none');
       setCurrentUserId(user?.id || null);
 
       // Get today's puzzle
       const puzzle = await getTodaysPuzzle(supabase);
+      console.log('[Leaderboard] Today\'s puzzle:', puzzle?.date || 'NOT FOUND');
 
       if (puzzle) {
         setPuzzleDate(puzzle.date);
@@ -89,18 +92,25 @@ export default function LeaderboardPage() {
         // Load daily leaderboards (Pure and Boosted)
         const dailyPure = await getPuzzleLeaderboardPure(supabase, puzzle.id, 100);
         const dailyBoosted = await getPuzzleLeaderboardBoosted(supabase, puzzle.id, 100);
+        console.log('[Leaderboard] Daily Pure entries:', dailyPure.length);
+        console.log('[Leaderboard] Daily Boosted entries:', dailyBoosted.length);
         setDailyEntriesPure(dailyPure);
         setDailyEntriesBoosted(dailyBoosted);
+      } else {
+        console.warn('[Leaderboard] No puzzle found for today!');
       }
 
       // Load global leaderboards (Pure and Boosted)
       const globalPure = await getGlobalLeaderboardPure(supabase, 100);
       const globalBoosted = await getGlobalLeaderboardBoosted(supabase, 100);
+      console.log('[Leaderboard] Global Pure entries:', globalPure.length);
+      console.log('[Leaderboard] Global Boosted entries:', globalBoosted.length);
       setGlobalEntriesPure(globalPure);
       setGlobalEntriesBoosted(globalBoosted);
 
+      console.log('[Leaderboard] Loading complete');
     } catch (error) {
-      console.error('Error loading leaderboards:', error);
+      console.error('[Leaderboard] Error loading leaderboards:', error);
     } finally {
       setLoading(false);
     }
@@ -141,6 +151,13 @@ export default function LeaderboardPage() {
     <AppLayout>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-20">
         <div className="max-w-4xl mx-auto">
+          {/* Debug Info - Remove after fixing */}
+          <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
+            <strong>Debug:</strong> Auth: {authReady ? '✓' : '⏳'} | Loading: {loading ? '⏳' : '✓'} |
+            Pure: {dailyEntriesPure.length} | Boosted: {dailyEntriesBoosted.length} |
+            Puzzle: {puzzleDate || 'none'}
+          </div>
+
           {/* Header */}
           <div className="mb-6 flex items-start justify-between">
             <div>
