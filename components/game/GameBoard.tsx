@@ -65,8 +65,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      delay: 50, // Reduced to 50ms for more responsive flicking
-      tolerance: 10, // Increased tolerance to prevent accidental indicator movement
+      delay: 100, // Slightly longer delay to ensure precise touch registration
+      tolerance: 5, // Lower tolerance for more accurate word selection
     },
   });
 
@@ -76,11 +76,15 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
   // This keeps the cursor/finger below the drop indicator so it doesn't obscure the target
   const offsetModifier: Modifier = ({ transform }) => {
     // Apply offset during Phase 2 for both touch and mouse input
+    // Only apply if there's been significant movement (>10px total) to avoid misplacement on immediate release
     if (gameState.phase === 2) {
-      return {
-        ...transform,
-        y: transform.y - 25, // Offset 25px upward
-      };
+      const totalMovement = Math.sqrt(transform.x * transform.x + transform.y * transform.y);
+      if (totalMovement > 10) {
+        return {
+          ...transform,
+          y: transform.y - 25, // Offset 25px upward
+        };
+      }
     }
     return transform;
   };
@@ -133,10 +137,12 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
             if (wordElement) {
               const wordRect = wordElement.getBoundingClientRect();
               const draggedX = active.rect.current.translated.left + (active.rect.current.translated.width / 2);
-              const wordCenterX = wordRect.left + (wordRect.width / 2);
 
-              // If dragged position is left of word center, insert before; otherwise insert after
-              if (draggedX < wordCenterX) {
+              // Use 40/60 split instead of 50/50 for easier edge targeting
+              // Left 40% of word = insert before, Right 60% = insert after
+              const splitPoint = wordRect.left + (wordRect.width * 0.4);
+
+              if (draggedX < splitPoint) {
                 targetIndex = overIndex; // Insert before this word
               } else {
                 targetIndex = overIndex + 1; // Insert after this word

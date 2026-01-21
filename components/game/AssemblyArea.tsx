@@ -226,9 +226,10 @@ export default function AssemblyArea({
 
   const getGapSize = () => {
     // Return separate horizontal (x) and vertical (y) gaps for better line spacing
-    if (expectedLength <= 15) return 'gap-x-1.5 gap-y-2';
-    if (expectedLength <= 30) return 'gap-x-1 gap-y-1.5';
-    return 'gap-x-0.5 gap-y-1';
+    // Increased by 50% for better touch target separation
+    if (expectedLength <= 15) return 'gap-x-1.5 gap-y-3';
+    if (expectedLength <= 30) return 'gap-x-1 gap-y-2.5';
+    return 'gap-x-0.5 gap-y-1.5';
   };
 
   // Calculate ongoing score
@@ -404,7 +405,7 @@ export default function AssemblyArea({
           </div>
         ) : isSortable ? (
           // Phase 2: Manual drag-and-drop with reordering (allow wrapping)
-          <div className={`flex flex-wrap gap-x-0.5 gap-y-1 items-start content-start w-full ${getWordScale()}`}>
+          <div className={`flex flex-wrap gap-x-0.5 gap-y-1.5 items-start content-start w-full ${getWordScale()}`}>
             {sortedWords.map((word, index) => {
               // Check if this word should be highlighted
               const isHintHighlighted = activeHint?.wordIds.includes(word.id) || false;
