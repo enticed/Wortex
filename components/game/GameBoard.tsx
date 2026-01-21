@@ -259,12 +259,22 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
   // Submit score when bonus is answered (skip in archive mode)
   useEffect(() => {
     async function submitScore() {
-      if (gameState.bonusAnswered && !scoreSubmitted && userId && gameState.finalScore !== null && !isArchiveMode) {
+      // CRITICAL: Check if user is loaded before submitting
+      if (gameState.bonusAnswered && !scoreSubmitted && gameState.finalScore !== null && !isArchiveMode) {
+        if (!userId) {
+          console.error('[GameBoard] CRITICAL: Cannot submit score - userId is null!');
+          console.error('[GameBoard] This indicates UserContext failed to initialize properly');
+          console.error('[GameBoard] Score will be LOST unless user refreshes and replays');
+          alert('Warning: Your account did not load properly. Your score may not be saved. Please refresh the page before playing again.');
+          return;
+        }
+
         setScoreSubmitted(true);
 
         const timeTakenSeconds = Math.floor((Date.now() - gameStartTime.current) / 1000);
 
         try {
+          console.log('[GameBoard] Submitting score for user:', userId.substring(0, 12));
           const response = await fetch('/api/score/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
