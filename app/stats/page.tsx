@@ -26,13 +26,35 @@ export default function StatsPage() {
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
 
+  // Wait for auth to be ready
   useEffect(() => {
-    loadStats();
+    let mounted = true;
+
+    async function checkAuth() {
+      await supabase.auth.getSession();
+      if (mounted) {
+        setAuthReady(true);
+      }
+    }
+
+    checkAuth();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  // Load stats once auth is ready
+  useEffect(() => {
+    if (authReady) {
+      loadStats();
+    }
+  }, [authReady]);
 
   async function loadStats() {
     try {

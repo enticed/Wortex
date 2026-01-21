@@ -41,19 +41,42 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [puzzleDate, setPuzzleDate] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
 
+  // Wait for auth to be ready before loading data
   useEffect(() => {
-    loadLeaderboards();
+    let mounted = true;
+
+    async function checkAuth() {
+      // Wait for session to be established
+      await supabase.auth.getSession();
+      if (mounted) {
+        setAuthReady(true);
+      }
+    }
+
+    checkAuth();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  // Load leaderboards once auth is ready
+  useEffect(() => {
+    if (authReady) {
+      loadLeaderboards();
+    }
+  }, [authReady]);
 
   async function loadLeaderboards() {
     try {
       setLoading(true);
 
-      // Get current user
+      // Get current user (auth is already ready from useEffect)
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUserId(user?.id || null);
 

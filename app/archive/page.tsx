@@ -19,13 +19,35 @@ export default function ArchivePage() {
   const [puzzles, setPuzzles] = useState<PuzzleWithScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'played' | 'unplayed'>('all');
+  const [authReady, setAuthReady] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
 
+  // Wait for auth to be ready
   useEffect(() => {
-    loadPuzzles();
+    let mounted = true;
+
+    async function checkAuth() {
+      await supabase.auth.getSession();
+      if (mounted) {
+        setAuthReady(true);
+      }
+    }
+
+    checkAuth();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  // Load puzzles once auth is ready
+  useEffect(() => {
+    if (authReady) {
+      loadPuzzles();
+    }
+  }, [authReady]);
 
   async function loadPuzzles() {
     try {
