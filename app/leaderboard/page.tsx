@@ -88,11 +88,23 @@ export default function LeaderboardPage() {
       console.log('[Leaderboard] Starting to load data...');
       setLoading(true);
 
-      // Get current user (auth is already ready from useEffect)
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log('[Leaderboard] User ID:', user?.id?.substring(0, 12) || 'none');
+      console.log('[Leaderboard] Step 1: Getting user...');
+      // Get current user with timeout - if it hangs, proceed without user
+      let user = null;
+      try {
+        const getUserPromise = supabase.auth.getUser();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('getUser timeout')), 3000)
+        );
+        const { data } = await Promise.race([getUserPromise, timeoutPromise]) as any;
+        user = data?.user || null;
+      } catch (error) {
+        console.warn('[Leaderboard] getUser failed or timed out:', error);
+      }
+      console.log('[Leaderboard] Step 1 complete - User ID:', user?.id?.substring(0, 12) || 'none');
       setCurrentUserId(user?.id || null);
 
+      console.log('[Leaderboard] Step 2: Calculating timezone...');
       // Get today's puzzle
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const calculatedDate = new Date().toLocaleDateString('en-CA', {
@@ -101,6 +113,7 @@ export default function LeaderboardPage() {
         month: '2-digit',
         day: '2-digit'
       });
+      console.log('[Leaderboard] Step 2 complete - TZ:', userTimezone, 'Date:', calculatedDate);
 
       setDebugInfo(prev => ({
         ...prev,
@@ -109,8 +122,9 @@ export default function LeaderboardPage() {
         puzzleError: null
       }));
 
+      console.log('[Leaderboard] Step 3: Fetching today\'s puzzle...');
       const puzzle = await getTodaysPuzzle(supabase);
-      console.log('[Leaderboard] Today\'s puzzle:', puzzle?.date || 'NOT FOUND');
+      console.log('[Leaderboard] Step 3 complete - Today\'s puzzle:', puzzle?.date || 'NOT FOUND');
 
       if (!puzzle) {
         setDebugInfo(prev => ({
