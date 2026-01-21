@@ -127,11 +127,12 @@ export default function LeaderboardPage() {
         day: '2-digit'
       });
 
-      setDebugInfo({
+      setDebugInfo(prev => ({
+        ...prev,
         timezone: userTimezone,
         calculatedDate,
         puzzleError: null
-      });
+      }));
 
       const puzzle = await getTodaysPuzzle(supabase);
       console.log('[Leaderboard] Today\'s puzzle:', puzzle?.date || 'NOT FOUND');
