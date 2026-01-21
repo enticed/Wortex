@@ -140,14 +140,39 @@ export function UserProvider({ children }: { children: ReactNode }) {
   async function loadUserData(uid: string) {
     setUserId(uid);
 
+    console.log('[UserContext] Loading user data for:', uid.substring(0, 12));
+
     // Load user profile
-    const { data: userData } = await supabase
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('id', uid)
       .single();
 
-    if (userData) {
+    if (userError) {
+      console.warn('[UserContext] User record not found, creating...', userError.code);
+
+      // User record doesn't exist - create it
+      const { data: { session } } = await supabase.auth.getSession();
+      const isAnonymous = session?.user?.is_anonymous ?? true;
+
+      const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: uid,
+          is_anonymous: isAnonymous,
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('[UserContext] Failed to create user record:', insertError);
+      } else if (newUser) {
+        console.log('[UserContext] Created user record successfully');
+        setUser(newUser);
+      }
+    } else if (userData) {
+      console.log('[UserContext] User record loaded successfully');
       setUser(userData);
     }
 
