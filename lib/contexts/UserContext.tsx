@@ -30,68 +30,36 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   // Initialize user and listen for auth changes
   useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 3;
+
     async function initializeUser() {
-      console.log('[UserContext] Initializing user...');
+      console.log('[UserContext] Initializing user... (attempt', retryCount + 1, '/', maxRetries + 1, ')');
       try {
-        // Check for existing session with timeout fallback
+        // Check for existing session - wait as long as needed
         console.log('[UserContext] Checking for existing session...');
-        let session = null;
-        let sessionTimedOut = false;
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-        const timeoutId = setTimeout(() => {
-          console.warn('[UserContext] getSession timed out after 5s, proceeding with new session');
-          sessionTimedOut = true;
-        }, 5000);
-
-        try {
-          const { data: { session: sessionData } } = await supabase.auth.getSession();
-          clearTimeout(timeoutId);
-          if (!sessionTimedOut) {
-            session = sessionData;
-            console.log('[UserContext] Session check complete:', session ? 'Found' : 'None');
-          }
-        } catch (error) {
-          clearTimeout(timeoutId);
-          console.error('[UserContext] getSession error:', error);
+        if (sessionError) {
+          console.error('[UserContext] getSession error:', sessionError);
+          throw sessionError;
         }
+
+        console.log('[UserContext] Session check complete:', session ? 'Found' : 'None');
 
         if (session?.user) {
           await loadUserData(session.user.id);
         } else {
-          // Create anonymous user with timeout fallback
+          // Create anonymous user - wait as long as needed
           console.log('[UserContext] Creating anonymous user...');
-          let signInTimedOut = false;
-          let data, error;
-
-          const signInTimeoutId = setTimeout(() => {
-            console.warn('[UserContext] signInAnonymously timed out after 5s');
-            signInTimedOut = true;
-            setLoading(false);
-          }, 5000);
-
-          try {
-            const result = await supabase.auth.signInAnonymously();
-            clearTimeout(signInTimeoutId);
-
-            if (!signInTimedOut) {
-              data = result.data;
-              error = result.error;
-              console.log('[UserContext] Anonymous sign-in complete:', data?.user ? 'Success' : 'Failed');
-            } else {
-              console.log('[UserContext] Sign-in completed but already timed out');
-              return;
-            }
-          } catch (signInError) {
-            clearTimeout(signInTimeoutId);
-            error = signInError;
-            console.error('[UserContext] signInAnonymously error:', error);
-          }
+          const { data, error } = await supabase.auth.signInAnonymously();
 
           if (error) {
             console.error('Error creating anonymous user:', error);
-            setLoading(false);
-            return;
+            throw error;
           }
+
+          console.log('[UserContext] Anonymous sign-in complete:', data?.user ? 'Success' : 'Failed');
 
           if (data?.user) {
             // Create user record
@@ -112,11 +80,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
             await loadUserData(data.user.id);
           }
         }
-      } catch (error) {
-        console.error('Error initializing user:', error);
-      } finally {
+
         console.log('[UserContext] Initialization complete');
         setLoading(false);
+      } catch (error) {
+        console.error('Error initializing user:', error);
+
+        // Retry with exponential backoff if we haven't exceeded max retries
+        if (retryCount < maxRetries) {
+          retryCount++;
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
+          console.log('[UserContext] Retrying in', delay, 'ms...');
+          setTimeout(() => initializeUser(), delay);
+        } else {
+          console.error('[UserContext] Max retries exceeded, giving up');
+          setLoading(false);
+        }
       }
     }
 
