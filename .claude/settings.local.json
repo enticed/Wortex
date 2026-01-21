@@ -27,7 +27,16 @@
       "Bash(rm:*)",
       "Bash(node scripts/refresh-schema-cache.mjs:*)",
       "Bash(npx tsc:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(curl:*)",
+      "Bash(timeout 10 bash:*)",
+      "Bash(timeout 15 bash:*)",
+      "Bash(nul)",
+      "Bash(git revert:*)",
+      "Bash(git checkout:*)",
+      "Bash(node scripts/diagnose-leaderboard.mjs:*)",
+      "Bash(node scripts/test-user-queries.mjs:*)",
+      "Bash(node scripts/test-client-side-queries.mjs:*)"
     ],
     "deny": [],
     "ask": []
