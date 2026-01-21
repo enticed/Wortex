@@ -42,6 +42,15 @@ export default function LeaderboardPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [puzzleDate, setPuzzleDate] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<{
+    timezone: string;
+    calculatedDate: string;
+    puzzleError: string | null;
+  }>({
+    timezone: '',
+    calculatedDate: '',
+    puzzleError: null
+  });
 
   const router = useRouter();
   const supabase = createClient();
@@ -83,8 +92,29 @@ export default function LeaderboardPage() {
       setCurrentUserId(user?.id || null);
 
       // Get today's puzzle
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const calculatedDate = new Date().toLocaleDateString('en-CA', {
+        timeZone: userTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+
+      setDebugInfo({
+        timezone: userTimezone,
+        calculatedDate,
+        puzzleError: null
+      });
+
       const puzzle = await getTodaysPuzzle(supabase);
       console.log('[Leaderboard] Today\'s puzzle:', puzzle?.date || 'NOT FOUND');
+
+      if (!puzzle) {
+        setDebugInfo(prev => ({
+          ...prev,
+          puzzleError: 'No puzzle found in database'
+        }));
+      }
 
       if (puzzle) {
         setPuzzleDate(puzzle.date);
@@ -152,10 +182,17 @@ export default function LeaderboardPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-20">
         <div className="max-w-4xl mx-auto">
           {/* Debug Info - Remove after fixing */}
-          <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
-            <strong>Debug:</strong> Auth: {authReady ? '✓' : '⏳'} | Loading: {loading ? '⏳' : '✓'} |
-            Pure: {dailyEntriesPure.length} | Boosted: {dailyEntriesBoosted.length} |
-            Puzzle: {puzzleDate || 'none'}
+          <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs space-y-1">
+            <div>
+              <strong>Debug:</strong> Auth: {authReady ? '✓' : '⏳'} | Loading: {loading ? '⏳' : '✓'} |
+              Pure: {dailyEntriesPure.length} | Boosted: {dailyEntriesBoosted.length} |
+              Puzzle: {puzzleDate || 'none'}
+            </div>
+            <div>
+              TZ: {debugInfo.timezone || '?'} |
+              Date: {debugInfo.calculatedDate || '?'} |
+              {debugInfo.puzzleError && <span className="text-red-600">Error: {debugInfo.puzzleError}</span>}
+            </div>
           </div>
 
           {/* Header */}

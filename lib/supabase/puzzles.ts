@@ -41,6 +41,9 @@ export async function getTodaysPuzzle(supabase: any, timezone?: string): Promise
     day: '2-digit'
   });
 
+  console.log('[getTodaysPuzzle] Timezone:', userTimezone);
+  console.log('[getTodaysPuzzle] Calculated date:', today);
+
   const { data, error } = await supabase
     .from('puzzles')
     .select('*')
@@ -49,14 +52,16 @@ export async function getTodaysPuzzle(supabase: any, timezone?: string): Promise
     .single();
 
   if (error) {
-    console.error('Error fetching today\'s puzzle:', error);
+    console.error('[getTodaysPuzzle] Error fetching puzzle:', error);
     return null;
   }
 
   if (!data) {
+    console.log('[getTodaysPuzzle] No puzzle found for date:', today);
     return null;
   }
 
+  console.log('[getTodaysPuzzle] Found puzzle:', data.id?.substring(0, 12), 'for date:', data.date);
   return dbPuzzleToPuzzle(data);
 }
 
