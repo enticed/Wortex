@@ -46,10 +46,14 @@ export default function LeaderboardPage() {
     timezone: string;
     calculatedDate: string;
     puzzleError: string | null;
+    authCheckStarted: boolean;
+    authCheckCompleted: boolean;
   }>({
     timezone: '',
     calculatedDate: '',
-    puzzleError: null
+    puzzleError: null,
+    authCheckStarted: false,
+    authCheckCompleted: false
   });
 
   const router = useRouter();
@@ -60,10 +64,24 @@ export default function LeaderboardPage() {
     let mounted = true;
 
     async function checkAuth() {
-      // Wait for session to be established
-      await supabase.auth.getSession();
-      if (mounted) {
-        setAuthReady(true);
+      console.log('[Leaderboard] Checking auth...');
+      setDebugInfo(prev => ({ ...prev, authCheckStarted: true }));
+
+      try {
+        // Wait for session with a timeout
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 5000));
+
+        await Promise.race([sessionPromise, timeoutPromise]);
+        console.log('[Leaderboard] Auth check complete');
+      } catch (error) {
+        console.error('[Leaderboard] Auth check error:', error);
+      } finally {
+        if (mounted) {
+          console.log('[Leaderboard] Setting authReady to true');
+          setDebugInfo(prev => ({ ...prev, authCheckCompleted: true }));
+          setAuthReady(true);
+        }
       }
     }
 
@@ -191,6 +209,7 @@ export default function LeaderboardPage() {
             <div>
               TZ: {debugInfo.timezone || '?'} |
               Date: {debugInfo.calculatedDate || '?'} |
+              AuthCheck: {debugInfo.authCheckStarted ? 'Started' : 'Not started'} / {debugInfo.authCheckCompleted ? 'Done' : 'Pending'} |
               {debugInfo.puzzleError && <span className="text-red-600">Error: {debugInfo.puzzleError}</span>}
             </div>
           </div>
