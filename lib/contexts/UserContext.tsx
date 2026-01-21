@@ -31,15 +31,45 @@ export function UserProvider({ children }: { children: ReactNode }) {
   // Initialize user and listen for auth changes
   useEffect(() => {
     async function initializeUser() {
+      console.log('[UserContext] Initializing user...');
       try {
-        // Check for existing session
-        const { data: { session } } = await supabase.auth.getSession();
+        // Check for existing session with timeout
+        console.log('[UserContext] Checking for existing session...');
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('getSession timeout')), 5000)
+        );
+
+        let session;
+        try {
+          const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
+          session = result?.data?.session;
+          console.log('[UserContext] Session check complete:', session ? 'Found' : 'None');
+        } catch (timeoutError) {
+          console.warn('[UserContext] getSession timed out, creating new session');
+          session = null;
+        }
 
         if (session?.user) {
           await loadUserData(session.user.id);
         } else {
-          // Create anonymous user
-          const { data, error } = await supabase.auth.signInAnonymously();
+          // Create anonymous user with timeout
+          console.log('[UserContext] Creating anonymous user...');
+          const signInPromise = supabase.auth.signInAnonymously();
+          const signInTimeout = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('signInAnonymously timeout')), 5000)
+          );
+
+          let data, error;
+          try {
+            const result = await Promise.race([signInPromise, signInTimeout]) as any;
+            data = result?.data;
+            error = result?.error;
+            console.log('[UserContext] Anonymous sign-in complete:', data?.user ? 'Success' : 'Failed');
+          } catch (timeoutError) {
+            console.error('[UserContext] signInAnonymously timed out:', timeoutError);
+            error = timeoutError;
+          }
 
           if (error) {
             console.error('Error creating anonymous user:', error);
@@ -47,7 +77,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             return;
           }
 
-          if (data.user) {
+          if (data?.user) {
             // Create user record
             const { error: insertError } = await supabase
               .from('users')
@@ -69,6 +99,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('Error initializing user:', error);
       } finally {
+        console.log('[UserContext] Initialization complete');
         setLoading(false);
       }
     }
