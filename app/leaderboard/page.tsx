@@ -68,17 +68,26 @@ export default function LeaderboardPage() {
       setDebugInfo(prev => ({ ...prev, authCheckStarted: true }));
 
       try {
-        // Wait for session with a timeout
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 5000));
+        // Wait for session with a timeout fallback
+        const timeoutId = setTimeout(() => {
+          console.warn('[Leaderboard] Auth check timeout - proceeding anyway');
+          if (mounted) {
+            setDebugInfo(prev => ({ ...prev, authCheckCompleted: true }));
+            setAuthReady(true);
+          }
+        }, 5000);
 
-        await Promise.race([sessionPromise, timeoutPromise]);
+        await supabase.auth.getSession();
+        clearTimeout(timeoutId);
         console.log('[Leaderboard] Auth check complete');
+
+        if (mounted) {
+          setDebugInfo(prev => ({ ...prev, authCheckCompleted: true }));
+          setAuthReady(true);
+        }
       } catch (error) {
         console.error('[Leaderboard] Auth check error:', error);
-      } finally {
         if (mounted) {
-          console.log('[Leaderboard] Setting authReady to true');
           setDebugInfo(prev => ({ ...prev, authCheckCompleted: true }));
           setAuthReady(true);
         }
