@@ -29,8 +29,11 @@ export function dbPuzzleToPuzzle(dbPuzzle: PuzzleRow): Puzzle {
  * Fetch today's puzzle from Supabase (timezone-aware)
  */
 export async function getTodaysPuzzle(supabase: any, timezone?: string): Promise<Puzzle | null> {
-  // Get today's date in the user's timezone (or default to browser timezone)
-  const userTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Get today's date in the user's timezone
+  // Default to America/Los_Angeles to avoid UTC issues on server-side rendering
+  const userTimezone = timezone || (typeof window !== 'undefined'
+    ? Intl.DateTimeFormat().resolvedOptions().timeZone
+    : 'America/Los_Angeles');
   const today = new Date().toLocaleDateString('en-CA', {
     timeZone: userTimezone,
     year: 'numeric',
