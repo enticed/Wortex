@@ -33,42 +33,58 @@ export function UserProvider({ children }: { children: ReactNode }) {
     async function initializeUser() {
       console.log('[UserContext] Initializing user...');
       try {
-        // Check for existing session with timeout
+        // Check for existing session with timeout fallback
         console.log('[UserContext] Checking for existing session...');
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('getSession timeout')), 5000)
-        );
+        let session = null;
+        let sessionTimedOut = false;
 
-        let session;
+        const timeoutId = setTimeout(() => {
+          console.warn('[UserContext] getSession timed out after 5s, proceeding with new session');
+          sessionTimedOut = true;
+        }, 5000);
+
         try {
-          const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
-          session = result?.data?.session;
-          console.log('[UserContext] Session check complete:', session ? 'Found' : 'None');
-        } catch (timeoutError) {
-          console.warn('[UserContext] getSession timed out, creating new session');
-          session = null;
+          const { data: { session: sessionData } } = await supabase.auth.getSession();
+          clearTimeout(timeoutId);
+          if (!sessionTimedOut) {
+            session = sessionData;
+            console.log('[UserContext] Session check complete:', session ? 'Found' : 'None');
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          console.error('[UserContext] getSession error:', error);
         }
 
         if (session?.user) {
           await loadUserData(session.user.id);
         } else {
-          // Create anonymous user with timeout
+          // Create anonymous user with timeout fallback
           console.log('[UserContext] Creating anonymous user...');
-          const signInPromise = supabase.auth.signInAnonymously();
-          const signInTimeout = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('signInAnonymously timeout')), 5000)
-          );
-
+          let signInTimedOut = false;
           let data, error;
+
+          const signInTimeoutId = setTimeout(() => {
+            console.warn('[UserContext] signInAnonymously timed out after 5s');
+            signInTimedOut = true;
+            setLoading(false);
+          }, 5000);
+
           try {
-            const result = await Promise.race([signInPromise, signInTimeout]) as any;
-            data = result?.data;
-            error = result?.error;
-            console.log('[UserContext] Anonymous sign-in complete:', data?.user ? 'Success' : 'Failed');
-          } catch (timeoutError) {
-            console.error('[UserContext] signInAnonymously timed out:', timeoutError);
-            error = timeoutError;
+            const result = await supabase.auth.signInAnonymously();
+            clearTimeout(signInTimeoutId);
+
+            if (!signInTimedOut) {
+              data = result.data;
+              error = result.error;
+              console.log('[UserContext] Anonymous sign-in complete:', data?.user ? 'Success' : 'Failed');
+            } else {
+              console.log('[UserContext] Sign-in completed but already timed out');
+              return;
+            }
+          } catch (signInError) {
+            clearTimeout(signInTimeoutId);
+            error = signInError;
+            console.error('[UserContext] signInAnonymously error:', error);
           }
 
           if (error) {
