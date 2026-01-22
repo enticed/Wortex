@@ -21,6 +21,10 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+// Guard to prevent concurrent initializations
+let isInitializing = false;
+let initializationPromise: Promise<void> | null = null;
+
 export function UserProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState<UserRow | null>(null);
@@ -34,142 +38,168 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const maxRetries = 3;
     let isMounted = true;
     let initTimeout: NodeJS.Timeout;
+    const abortController = new AbortController();
 
     async function initializeUser() {
       console.log('[UserContext] Initializing user... (attempt', retryCount + 1, '/', maxRetries + 1, ')');
 
-      // Log current localStorage state
-      if (typeof window !== 'undefined') {
-        const storageKeys = Object.keys(localStorage);
-        const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
-        console.log('[UserContext] localStorage auth keys:', authKeys.length ? authKeys : 'NONE');
-      }
-      try {
-        // Small delay to ensure localStorage is fully initialized (particularly on mobile)
-        if (typeof window !== 'undefined' && retryCount === 0) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-
-        // Check if component was unmounted during delay
-        if (!isMounted) {
-          console.log('[UserContext] Component unmounted, aborting initialization');
-          return;
-        }
-
-        // Check for existing session - wait as long as needed
-        console.log('[UserContext] Checking for existing session...');
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          // Handle AbortError gracefully - this is expected during React Strict Mode remounts
-          if (sessionError.message?.includes('aborted')) {
-            console.warn('[UserContext] getSession aborted (likely React remount) - ignoring');
-            if (isMounted) {
-              setLoading(false);
-            }
-            return;
-          }
-          console.error('[UserContext] getSession error:', sessionError);
-          throw sessionError;
-        }
-
-        console.log('[UserContext] Session check complete:', session ? 'Found' : 'None');
-
-        if (!session) {
-          console.log('[UserContext] getSession returned null - checking if localStorage has stale token');
-          if (typeof window !== 'undefined') {
-            const storageKeys = Object.keys(localStorage);
-            const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
-            if (authKeys.length > 0) {
-              console.warn('[UserContext] WARNING: localStorage has auth keys but getSession returned null!');
-              console.warn('[UserContext] This indicates a stale/invalid session - clearing localStorage');
-              authKeys.forEach(key => {
-                console.log('[UserContext] Removing stale key:', key);
-                localStorage.removeItem(key);
-              });
-            }
-          }
-        }
-
-        if (session?.user) {
-          await loadUserData(session.user.id);
-        } else {
-          // Create anonymous user - wait as long as needed
-          console.log('[UserContext] Creating anonymous user...');
-          const { data, error } = await supabase.auth.signInAnonymously();
-
-          if (error) {
-            console.error('Error creating anonymous user:', error);
-            throw error;
-          }
-
-          console.log('[UserContext] Anonymous sign-in complete:', data?.user ? 'Success' : 'Failed');
-
-          if (data?.user) {
-            // Log localStorage immediately after sign-in
-            if (typeof window !== 'undefined') {
-              const storageKeys = Object.keys(localStorage);
-              const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
-              console.log('[UserContext] localStorage after sign-in:', authKeys.length ? authKeys : 'STILL EMPTY - PERSISTENCE FAILED!');
-            }
-
-            // Create user record
-            const { error: insertError } = await supabase
-              .from('users')
-              // @ts-ignore - Supabase browser client types not properly inferred
-              .insert({
-                id: data.user.id,
-                is_anonymous: true,
-              })
-              .select()
-              .single();
-
-            if (insertError && insertError.code !== '23505') {
-              console.error('Error creating user record:', insertError);
-            }
-
-            await loadUserData(data.user.id);
-          }
-        }
-
-        console.log('[UserContext] Initialization complete');
-
-        // Final localStorage check
-        if (typeof window !== 'undefined') {
-          const storageKeys = Object.keys(localStorage);
-          const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
-          console.log('[UserContext] Final localStorage state:', authKeys.length ? authKeys : 'EMPTY');
-        }
-
-        if (isMounted) {
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error initializing user:', error);
-
-        // Check if component was unmounted during error
-        if (!isMounted) {
-          console.log('[UserContext] Component unmounted, not retrying');
-          return;
-        }
-
-        // Retry with exponential backoff if we haven't exceeded max retries
-        if (retryCount < maxRetries) {
-          retryCount++;
-          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
-          console.log('[UserContext] Retrying in', delay, 'ms...');
-          initTimeout = setTimeout(() => {
-            if (isMounted) {
-              initializeUser();
-            }
-          }, delay);
-        } else {
-          console.error('[UserContext] Max retries exceeded, giving up');
+      // If already initializing, wait for it to complete
+      if (isInitializing && initializationPromise) {
+        console.log('[UserContext] Initialization already in progress, waiting...');
+        try {
+          await initializationPromise;
+          console.log('[UserContext] Previous initialization completed');
           if (isMounted) {
             setLoading(false);
           }
+          return;
+        } catch (error) {
+          console.log('[UserContext] Previous initialization failed, proceeding with new attempt');
         }
       }
+
+      // Set guard to prevent concurrent initializations
+      isInitializing = true;
+      initializationPromise = (async () => {
+        try {
+          // Log current localStorage state
+          if (typeof window !== 'undefined') {
+            const storageKeys = Object.keys(localStorage);
+            const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+            console.log('[UserContext] localStorage auth keys:', authKeys.length ? authKeys : 'NONE');
+          }
+
+          // Small delay to ensure localStorage is fully initialized (particularly on mobile)
+          if (typeof window !== 'undefined' && retryCount === 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+
+          // Check if component was unmounted or aborted during delay
+          if (!isMounted || abortController.signal.aborted) {
+            console.log('[UserContext] Component unmounted or aborted, cancelling initialization');
+            return;
+          }
+
+          // Check for existing session - wait as long as needed
+          console.log('[UserContext] Checking for existing session...');
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+          if (sessionError) {
+            // Handle AbortError gracefully - this is expected during React Strict Mode remounts
+            if (sessionError.message?.includes('aborted') || sessionError.name === 'AbortError') {
+              console.warn('[UserContext] getSession aborted (likely React remount) - ignoring');
+              if (isMounted) {
+                setLoading(false);
+              }
+              return;
+            }
+            console.error('[UserContext] getSession error:', sessionError);
+            throw sessionError;
+          }
+
+          console.log('[UserContext] Session check complete:', session ? 'Found' : 'None');
+
+          if (!session) {
+            console.log('[UserContext] getSession returned null - checking if localStorage has stale token');
+            if (typeof window !== 'undefined') {
+              const storageKeys = Object.keys(localStorage);
+              const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+              if (authKeys.length > 0) {
+                console.warn('[UserContext] WARNING: localStorage has auth keys but getSession returned null!');
+                console.warn('[UserContext] This indicates a stale/invalid session - clearing localStorage');
+                authKeys.forEach(key => {
+                  console.log('[UserContext] Removing stale key:', key);
+                  localStorage.removeItem(key);
+                });
+              }
+            }
+          }
+
+          if (session?.user) {
+            await loadUserData(session.user.id);
+          } else {
+            // Create anonymous user - wait as long as needed
+            console.log('[UserContext] Creating anonymous user...');
+            const { data, error } = await supabase.auth.signInAnonymously();
+
+            if (error) {
+              console.error('Error creating anonymous user:', error);
+              throw error;
+            }
+
+            console.log('[UserContext] Anonymous sign-in complete:', data?.user ? 'Success' : 'Failed');
+
+            if (data?.user) {
+              // Log localStorage immediately after sign-in
+              if (typeof window !== 'undefined') {
+                const storageKeys = Object.keys(localStorage);
+                const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+                console.log('[UserContext] localStorage after sign-in:', authKeys.length ? authKeys : 'STILL EMPTY - PERSISTENCE FAILED!');
+              }
+
+              // Create user record
+              const { error: insertError } = await supabase
+                .from('users')
+                // @ts-ignore - Supabase browser client types not properly inferred
+                .insert({
+                  id: data.user.id,
+                  is_anonymous: true,
+                })
+                .select()
+                .single();
+
+              if (insertError && insertError.code !== '23505') {
+                console.error('Error creating user record:', insertError);
+              }
+
+              await loadUserData(data.user.id);
+            }
+          }
+
+          console.log('[UserContext] Initialization complete');
+
+          // Final localStorage check
+          if (typeof window !== 'undefined') {
+            const storageKeys = Object.keys(localStorage);
+            const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+            console.log('[UserContext] Final localStorage state:', authKeys.length ? authKeys : 'EMPTY');
+          }
+
+          if (isMounted) {
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error('Error initializing user:', error);
+
+          // Check if component was unmounted during error
+          if (!isMounted || abortController.signal.aborted) {
+            console.log('[UserContext] Component unmounted or aborted, not retrying');
+            return;
+          }
+
+          // Retry with exponential backoff if we haven't exceeded max retries
+          if (retryCount < maxRetries) {
+            retryCount++;
+            const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
+            console.log('[UserContext] Retrying in', delay, 'ms...');
+            initTimeout = setTimeout(() => {
+              if (isMounted && !abortController.signal.aborted) {
+                initializeUser();
+              }
+            }, delay);
+          } else {
+            console.error('[UserContext] Max retries exceeded, giving up');
+            if (isMounted) {
+              setLoading(false);
+            }
+          }
+        } finally {
+          isInitializing = false;
+          initializationPromise = null;
+        }
+      })();
+
+      await initializationPromise;
     }
 
     initializeUser();
@@ -220,6 +250,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return () => {
       console.log('[UserContext] Cleaning up - component unmounting');
       isMounted = false;
+      abortController.abort();
       if (initTimeout) {
         clearTimeout(initTimeout);
       }

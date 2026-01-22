@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 interface SignInDialogProps {
   isOpen: boolean;
@@ -23,31 +24,48 @@ export default function SignInDialog({ isOpen, onClose, onSuccess, onSwitchToSig
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/signin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+      console.log('[SignIn] Starting client-side sign in for:', email);
+
+      const supabase = createClient();
+
+      // Sign in using client-side Supabase (this will handle localStorage properly)
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Failed to sign in');
+      if (authError) {
+        console.error('[SignIn] Auth error:', authError);
+        setError(authError.message);
         setLoading(false);
         return;
       }
 
-      // Success - close dialog and notify parent
+      if (!data.user) {
+        setError('Failed to sign in');
+        setLoading(false);
+        return;
+      }
+
+      console.log('[SignIn] Sign in successful, user ID:', data.user.id);
+
+      // Update last login in database
+      await supabase
+        .from('users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', data.user.id);
+
+      // Success - reload page to refresh auth state
       setLoading(false);
       onSuccess();
       handleClose();
 
+      console.log('[SignIn] Reloading page to refresh UserContext');
+      // Reload the page to ensure UserContext picks up the new session
+      window.location.reload();
+
     } catch (err: any) {
+      console.error('[SignIn] Unexpected error:', err);
       setError(err.message || 'An unexpected error occurred');
       setLoading(false);
     }
