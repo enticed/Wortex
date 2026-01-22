@@ -287,6 +287,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
             .maybeSingle();
 
           const isFirstPlay = !existingScore;
+          // @ts-ignore - TypeScript doesn't infer maybeSingle return type correctly
           const firstPlayOfDay = isFirstPlay ? true : (existingScore?.first_play_of_day ?? false);
 
           console.log('[GameBoard] Is first play:', isFirstPlay, 'First play of day:', firstPlayOfDay);
