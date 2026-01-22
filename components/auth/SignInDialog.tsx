@@ -29,10 +29,17 @@ export default function SignInDialog({ isOpen, onClose, onSuccess, onSwitchToSig
       const supabase = createClient();
 
       // Sign in using client-side Supabase (this will handle localStorage properly)
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      // Add timeout to prevent infinite hang
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign-in timeout after 10 seconds')), 10000)
+      );
+
+      const signInPromise = supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      const { data, error: authError } = await Promise.race([signInPromise, timeoutPromise]) as any;
 
       if (authError) {
         console.error('[SignIn] Auth error:', authError);
