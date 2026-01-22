@@ -5,6 +5,7 @@ import { useUser } from '@/lib/contexts/UserContext';
 import UpgradeAccountDialog from '@/components/auth/UpgradeAccountDialog';
 import SignInDialog from '@/components/auth/SignInDialog';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -35,11 +36,22 @@ export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderPr
 
   const handleSignOut = async () => {
     try {
-      await fetch('/api/auth/signout', { method: 'POST' });
-      // Reload page to reset auth state
+      console.log('[Header] Signing out...');
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error('[Header] Sign out error:', error);
+        alert('Failed to sign out: ' + error.message);
+        return;
+      }
+
+      console.log('[Header] Sign out successful, reloading page...');
+      // Reload page to reset auth state and create new anonymous session
       window.location.reload();
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('[Header] Unexpected error signing out:', error);
+      alert('An unexpected error occurred while signing out');
     }
   };
 
