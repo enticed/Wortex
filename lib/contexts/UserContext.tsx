@@ -32,6 +32,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let retryCount = 0;
     const maxRetries = 3;
+    let isMounted = true;
+    let initTimeout: NodeJS.Timeout;
 
     async function initializeUser() {
       console.log('[UserContext] Initializing user... (attempt', retryCount + 1, '/', maxRetries + 1, ')');
@@ -48,11 +50,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
 
+        // Check if component was unmounted during delay
+        if (!isMounted) {
+          console.log('[UserContext] Component unmounted, aborting initialization');
+          return;
+        }
+
         // Check for existing session - wait as long as needed
         console.log('[UserContext] Checking for existing session...');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
+          // Handle AbortError gracefully - this is expected during React Strict Mode remounts
+          if (sessionError.message?.includes('aborted')) {
+            console.warn('[UserContext] getSession aborted (likely React remount) - ignoring');
+            if (isMounted) {
+              setLoading(false);
+            }
+            return;
+          }
           console.error('[UserContext] getSession error:', sessionError);
           throw sessionError;
         }
@@ -125,19 +141,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
           console.log('[UserContext] Final localStorage state:', authKeys.length ? authKeys : 'EMPTY');
         }
 
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       } catch (error) {
         console.error('Error initializing user:', error);
+
+        // Check if component was unmounted during error
+        if (!isMounted) {
+          console.log('[UserContext] Component unmounted, not retrying');
+          return;
+        }
 
         // Retry with exponential backoff if we haven't exceeded max retries
         if (retryCount < maxRetries) {
           retryCount++;
           const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
           console.log('[UserContext] Retrying in', delay, 'ms...');
-          setTimeout(() => initializeUser(), delay);
+          initTimeout = setTimeout(() => {
+            if (isMounted) {
+              initializeUser();
+            }
+          }, delay);
         } else {
           console.error('[UserContext] Max retries exceeded, giving up');
-          setLoading(false);
+          if (isMounted) {
+            setLoading(false);
+          }
         }
       }
     }
@@ -186,8 +216,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Cleanup subscription on unmount
+    // Cleanup subscription and pending operations on unmount
     return () => {
+      console.log('[UserContext] Cleaning up - component unmounting');
+      isMounted = false;
+      if (initTimeout) {
+        clearTimeout(initTimeout);
+      }
       subscription.unsubscribe();
     };
   }, []);
