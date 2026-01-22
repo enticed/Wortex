@@ -63,87 +63,92 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto animate-fade-in">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-2xl max-h-full overflow-y-auto">
-        {/* Header */}
-        <div className="mb-2">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+    <div className="w-full h-full max-w-2xl mx-auto animate-fade-in flex flex-col px-2">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col h-full max-h-full overflow-hidden">
+        {/* Header - Fixed at top */}
+        <div className="flex-shrink-0 px-3 pt-3 pb-2">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
             Bonus Round
           </h2>
         </div>
 
-        {/* Question */}
-        <div className="mb-3">
-          <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2 mb-3">
-            <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-              {bonusQuestion.question}
-            </p>
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto px-3 min-h-0">
+          {/* Question */}
+          <div className="mb-3">
+            <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2 mb-3">
+              <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                {bonusQuestion.question}
+              </p>
+            </div>
+
+            {/* Options */}
+            <div className="space-y-2">
+              {bonusQuestion.options.map((option, index) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleSelectAnswer(option.id)}
+                  disabled={hasAnswered}
+                  className={getButtonStyle(option.id)}
+                >
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-gray-300 mr-2">
+                      {String.fromCharCode(65 + index)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {getOptionLabel(option)}
+                      </div>
+                    </div>
+                    {hasAnswered && option.id === bonusQuestion.correctAnswerId && (
+                      <div className="ml-2 text-green-600 dark:text-green-400 font-bold">✓</div>
+                    )}
+                    {hasAnswered && option.id === selectedAnswer && option.id !== bonusQuestion.correctAnswerId && (
+                      <div className="ml-2 text-red-600 dark:text-red-400 font-bold">✗</div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Options */}
-          <div className="space-y-2">
-            {bonusQuestion.options.map((option, index) => (
-              <button
-                key={option.id}
-                onClick={() => handleSelectAnswer(option.id)}
-                disabled={hasAnswered}
-                className={getButtonStyle(option.id)}
-              >
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-gray-300 mr-2">
-                    {String.fromCharCode(65 + index)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {getOptionLabel(option)}
-                    </div>
-                  </div>
-                  {hasAnswered && option.id === bonusQuestion.correctAnswerId && (
-                    <div className="ml-2 text-green-600 dark:text-green-400 font-bold">✓</div>
-                  )}
-                  {hasAnswered && option.id === selectedAnswer && option.id !== bonusQuestion.correctAnswerId && (
-                    <div className="ml-2 text-red-600 dark:text-red-400 font-bold">✗</div>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
+          {/* Result Message */}
+          {hasAnswered && (
+            <div className={`mb-3 p-2 rounded-lg ${
+              selectedAnswer === bonusQuestion.correctAnswerId
+                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+            }`}>
+              <p className="text-sm font-semibold">
+                {selectedAnswer === bonusQuestion.correctAnswerId
+                  ? '🎉 Correct! Well done!'
+                  : '❌ Incorrect. Better luck next time!'}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Result Message */}
-        {hasAnswered && (
-          <div className={`mb-2 p-2 rounded-lg ${
-            selectedAnswer === bonusQuestion.correctAnswerId
-              ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-              : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-          }`}>
-            <p className="text-sm font-semibold">
-              {selectedAnswer === bonusQuestion.correctAnswerId
-                ? '🎉 Correct! Well done!'
-                : '❌ Incorrect. Better luck next time!'}
-            </p>
+        {/* Actions - Fixed at bottom */}
+        <div className="flex-shrink-0 px-3 pb-3 pt-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <div className="flex gap-2">
+            {!hasAnswered && (
+              <>
+                <button
+                  onClick={handleSubmit}
+                  disabled={!selectedAnswer}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+                >
+                  Submit Answer
+                </button>
+                <button
+                  onClick={onSkip}
+                  className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 font-semibold transition-colors text-sm"
+                >
+                  Skip
+                </button>
+              </>
+            )}
           </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex gap-2">
-          {!hasAnswered && (
-            <>
-              <button
-                onClick={handleSubmit}
-                disabled={!selectedAnswer}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
-              >
-                Submit Answer
-              </button>
-              <button
-                onClick={onSkip}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 font-semibold transition-colors text-sm"
-              >
-                Skip
-              </button>
-            </>
-          )}
         </div>
       </div>
     </div>
