@@ -6,6 +6,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
 import GlobalLeaderboardTable from '@/components/leaderboard/GlobalLeaderboardTable';
 import { createClient } from '@/lib/supabase/client';
+import { useUser } from '@/lib/contexts/UserContext';
 import {
   getPuzzleLeaderboard,
   getGlobalLeaderboard,
@@ -33,78 +34,41 @@ interface GlobalLeaderboardEntry {
 }
 
 export default function LeaderboardPage() {
+  const { userId, loading: userLoading } = useUser();
   const [activeTab, setActiveTab] = useState<TabType>('daily');
   const [dailyEntriesPure, setDailyEntriesPure] = useState<LeaderboardPureRow[]>([]);
   const [dailyEntriesBoosted, setDailyEntriesBoosted] = useState<LeaderboardBoostedRow[]>([]);
   const [globalEntriesPure, setGlobalEntriesPure] = useState<GlobalLeaderboardPureRow[]>([]);
   const [globalEntriesBoosted, setGlobalEntriesBoosted] = useState<GlobalLeaderboardBoostedRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [puzzleDate, setPuzzleDate] = useState<string | null>(null);
-  const [authReady, setAuthReady] = useState(false);
   const [debugInfo, setDebugInfo] = useState<{
     timezone: string;
     calculatedDate: string;
     puzzleError: string | null;
-    authCheckStarted: boolean;
-    authCheckCompleted: boolean;
   }>({
     timezone: '',
     calculatedDate: '',
-    puzzleError: null,
-    authCheckStarted: false,
-    authCheckCompleted: false
+    puzzleError: null
   });
 
   const router = useRouter();
   const supabase = createClient();
 
-  // Load leaderboards immediately on mount
+  // Load leaderboards once UserContext is ready
   useEffect(() => {
-    let mounted = true;
-
-    async function init() {
-      console.log('[Leaderboard] Initializing...');
-      setDebugInfo(prev => ({ ...prev, authCheckStarted: true }));
-
-      // Start loading data immediately - don't wait for auth
-      // The client should already have an anonymous session from UserContext
-      if (mounted) {
-        setDebugInfo(prev => ({ ...prev, authCheckCompleted: true }));
-        setAuthReady(true);
-        loadLeaderboards();
-      }
+    if (!userLoading) {
+      console.log('[Leaderboard] UserContext ready, userId:', userId?.substring(0, 12) || 'none');
+      loadLeaderboards();
     }
-
-    init();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  }, [userLoading, userId]);
 
   async function loadLeaderboards() {
     try {
       console.log('[Leaderboard] Starting to load data...');
+      console.log('[Leaderboard] Using userId from UserContext:', userId?.substring(0, 12) || 'none');
       setLoading(true);
 
-      console.log('[Leaderboard] Step 1: Getting user...');
-      // Get current user with timeout - if it hangs, proceed without user
-      let user = null;
-      try {
-        const getUserPromise = supabase.auth.getUser();
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('getUser timeout')), 3000)
-        );
-        const { data } = await Promise.race([getUserPromise, timeoutPromise]) as any;
-        user = data?.user || null;
-      } catch (error) {
-        console.warn('[Leaderboard] getUser failed or timed out:', error);
-      }
-      console.log('[Leaderboard] Step 1 complete - User ID:', user?.id?.substring(0, 12) || 'none');
-      setCurrentUserId(user?.id || null);
-
-      console.log('[Leaderboard] Step 2: Calculating timezone...');
       // Get today's puzzle
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const calculatedDate = new Date().toLocaleDateString('en-CA', {
@@ -113,24 +77,24 @@ export default function LeaderboardPage() {
         month: '2-digit',
         day: '2-digit'
       });
-      console.log('[Leaderboard] Step 2 complete - TZ:', userTimezone, 'Date:', calculatedDate);
+      console.log('[Leaderboard] Step 1 complete - TZ:', userTimezone, 'Date:', calculatedDate);
 
-      setDebugInfo(prev => ({
-        ...prev,
+      setDebugInfo({
         timezone: userTimezone,
         calculatedDate,
         puzzleError: null
-      }));
+      });
 
-      console.log('[Leaderboard] Step 3: Fetching today\'s puzzle...');
+      console.log('[Leaderboard] Step 2: Fetching today\'s puzzle...');
       const puzzle = await getTodaysPuzzle(supabase);
-      console.log('[Leaderboard] Step 3 complete - Today\'s puzzle:', puzzle?.date || 'NOT FOUND');
+      console.log('[Leaderboard] Step 2 complete - Today\'s puzzle:', puzzle?.date || 'NOT FOUND');
 
       if (!puzzle) {
-        setDebugInfo(prev => ({
-          ...prev,
+        setDebugInfo({
+          timezone: userTimezone,
+          calculatedDate,
           puzzleError: 'No puzzle found in database'
-        }));
+        });
       }
 
       if (puzzle) {
@@ -201,14 +165,13 @@ export default function LeaderboardPage() {
           {/* Debug Info - Remove after fixing */}
           <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs space-y-1">
             <div>
-              <strong>Debug:</strong> Auth: {authReady ? '✓' : '⏳'} | Loading: {loading ? '⏳' : '✓'} |
+              <strong>Debug:</strong> UserContext: {userLoading ? '⏳' : '✓'} | Loading: {loading ? '⏳' : '✓'} |
               Pure: {dailyEntriesPure.length} | Boosted: {dailyEntriesBoosted.length} |
-              Puzzle: {puzzleDate || 'none'}
+              Puzzle: {puzzleDate || 'none'} | UserID: {userId ? userId.substring(0, 8) + '...' : 'none'}
             </div>
             <div>
               TZ: {debugInfo.timezone || '?'} |
               Date: {debugInfo.calculatedDate || '?'} |
-              AuthCheck: {debugInfo.authCheckStarted ? 'Started' : 'Not started'} / {debugInfo.authCheckCompleted ? 'Done' : 'Pending'} |
               {debugInfo.puzzleError && <span className="text-red-600">Error: {debugInfo.puzzleError}</span>}
             </div>
           </div>
@@ -301,7 +264,7 @@ export default function LeaderboardPage() {
                     </div>
                     <LeaderboardTable
                       entries={dailyEntriesPure}
-                      currentUserId={currentUserId || undefined}
+                      currentUserId={userId || undefined}
                       loading={loading}
                     />
                     {!loading && dailyEntriesPure.length === 0 && (
@@ -330,7 +293,7 @@ export default function LeaderboardPage() {
                     </div>
                     <LeaderboardTable
                       entries={dailyEntriesBoosted}
-                      currentUserId={currentUserId || undefined}
+                      currentUserId={userId || undefined}
                       loading={loading}
                       showSpeed={true}
                     />
@@ -378,7 +341,7 @@ export default function LeaderboardPage() {
                     </div>
                     <GlobalLeaderboardTable
                       entries={globalEntriesPure}
-                      currentUserId={currentUserId || undefined}
+                      currentUserId={userId || undefined}
                       loading={loading}
                     />
                     {!loading && globalEntriesPure.length === 0 && (
@@ -407,7 +370,7 @@ export default function LeaderboardPage() {
                     </div>
                     <GlobalLeaderboardTable
                       entries={globalEntriesBoosted}
-                      currentUserId={currentUserId || undefined}
+                      currentUserId={userId || undefined}
                       loading={loading}
                     />
                     {!loading && globalEntriesBoosted.length === 0 && (

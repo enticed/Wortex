@@ -6,6 +6,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import StatsCard from '@/components/stats/StatsCard';
 import RecentGamesTable from '@/components/stats/RecentGamesTable';
 import { createClient } from '@/lib/supabase/client';
+import { useUser } from '@/lib/contexts/UserContext';
 import { getUserStats } from '@/lib/supabase/scores';
 import type { Database } from '@/types/database';
 
@@ -22,64 +23,39 @@ interface RecentGame {
 }
 
 export default function StatsPage() {
+  const { userId, user, loading: userLoading } = useUser();
   const [stats, setStats] = useState<StatsRow | null>(null);
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
   const [loading, setLoading] = useState(true);
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [authReady, setAuthReady] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
 
-  // Wait for auth to be ready
+  // Load stats once UserContext is ready
   useEffect(() => {
-    let mounted = true;
-
-    async function checkAuth() {
-      await supabase.auth.getSession();
-      if (mounted) {
-        setAuthReady(true);
-      }
-    }
-
-    checkAuth();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Load stats once auth is ready
-  useEffect(() => {
-    if (authReady) {
+    if (!userLoading && userId) {
+      console.log('[Stats] UserContext ready, loading stats for:', userId.substring(0, 12));
       loadStats();
+    } else if (!userLoading && !userId) {
+      console.warn('[Stats] UserContext ready but no userId');
+      setLoading(false);
     }
-  }, [authReady]);
+  }, [userLoading, userId]);
 
   async function loadStats() {
+    if (!userId) {
+      console.warn('[Stats] Cannot load stats - no userId');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
 
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      // Get user profile for display name
-      const { data: profile } = await supabase
-        .from('users')
-        .select('display_name')
-        .eq('id', user.id)
-        .single() as { data: { display_name: string | null } | null };
-
-      if (profile) {
-        setDisplayName(profile.display_name);
-      }
+      console.log('[Stats] Loading stats for user:', userId.substring(0, 12));
 
       // Get user stats
-      const userStats = await getUserStats(supabase, user.id);
+      const userStats = await getUserStats(supabase, userId);
       setStats(userStats);
 
       // Get recent games (last 10)
@@ -96,7 +72,7 @@ export default function StatsPage() {
             date
           )
         `)
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -138,9 +114,9 @@ export default function StatsPage() {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 My Stats
               </h1>
-              {displayName && (
+              {user?.display_name && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {displayName}
+                  {user.display_name}
                 </p>
               )}
             </div>
