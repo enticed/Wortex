@@ -35,6 +35,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     async function initializeUser() {
       console.log('[UserContext] Initializing user... (attempt', retryCount + 1, '/', maxRetries + 1, ')');
+
+      // Log current localStorage state
+      if (typeof window !== 'undefined') {
+        const storageKeys = Object.keys(localStorage);
+        const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+        console.log('[UserContext] localStorage auth keys:', authKeys.length ? authKeys : 'NONE');
+      }
       try {
         // Check for existing session - wait as long as needed
         console.log('[UserContext] Checking for existing session...');
@@ -62,6 +69,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
           console.log('[UserContext] Anonymous sign-in complete:', data?.user ? 'Success' : 'Failed');
 
           if (data?.user) {
+            // Log localStorage immediately after sign-in
+            if (typeof window !== 'undefined') {
+              const storageKeys = Object.keys(localStorage);
+              const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+              console.log('[UserContext] localStorage after sign-in:', authKeys.length ? authKeys : 'STILL EMPTY - PERSISTENCE FAILED!');
+            }
+
             // Create user record
             const { error: insertError } = await supabase
               .from('users')
@@ -82,6 +96,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
 
         console.log('[UserContext] Initialization complete');
+
+        // Final localStorage check
+        if (typeof window !== 'undefined') {
+          const storageKeys = Object.keys(localStorage);
+          const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+          console.log('[UserContext] Final localStorage state:', authKeys.length ? authKeys : 'EMPTY');
+        }
+
         setLoading(false);
       } catch (error) {
         console.error('Error initializing user:', error);
@@ -116,10 +138,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setStats(null);
 
+          console.log('[UserContext] SIGNED_OUT event - creating new anonymous session');
+
           // Create new anonymous session
           const { data, error } = await supabase.auth.signInAnonymously();
           if (data?.user) {
+            console.log('[UserContext] New anonymous session created after sign-out');
+
+            // Log localStorage after creating new session
+            if (typeof window !== 'undefined') {
+              const storageKeys = Object.keys(localStorage);
+              const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+              console.log('[UserContext] localStorage after new session:', authKeys.length ? authKeys : 'EMPTY - PERSISTENCE ISSUE');
+            }
+
             await loadUserData(data.user.id);
+          } else if (error) {
+            console.error('[UserContext] Failed to create new session after sign-out:', error);
           }
         } else if (event === 'USER_UPDATED') {
           // Refresh user data when user info changes (e.g., upgrade to authenticated)
