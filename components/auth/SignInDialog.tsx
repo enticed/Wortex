@@ -49,10 +49,13 @@ export default function SignInDialog({ isOpen, onClose, onSuccess, onSwitchToSig
 
       console.log('[SignIn] Sign in successful, user ID:', data.user.id);
 
-      // Success - reload page to refresh auth state
-      setLoading(false);
+      // Success - close dialog but keep loading state
       onSuccess();
       handleClose();
+
+      console.log('[SignIn] Waiting for session to persist before reload...');
+      // Wait a moment for localStorage to be updated
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       console.log('[SignIn] Reloading page to refresh UserContext');
       // Reload the page to ensure UserContext picks up the new session
