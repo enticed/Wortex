@@ -43,6 +43,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
         console.log('[UserContext] localStorage auth keys:', authKeys.length ? authKeys : 'NONE');
       }
       try {
+        // Small delay to ensure localStorage is fully initialized (particularly on mobile)
+        if (typeof window !== 'undefined' && retryCount === 0) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
         // Check for existing session - wait as long as needed
         console.log('[UserContext] Checking for existing session...');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -53,6 +58,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
 
         console.log('[UserContext] Session check complete:', session ? 'Found' : 'None');
+
+        if (!session) {
+          console.log('[UserContext] getSession returned null - checking if localStorage has stale token');
+          if (typeof window !== 'undefined') {
+            const storageKeys = Object.keys(localStorage);
+            const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+            if (authKeys.length > 0) {
+              console.warn('[UserContext] WARNING: localStorage has auth keys but getSession returned null!');
+              console.warn('[UserContext] This indicates a stale/invalid session - clearing localStorage');
+              authKeys.forEach(key => {
+                console.log('[UserContext] Removing stale key:', key);
+                localStorage.removeItem(key);
+              });
+            }
+          }
+        }
 
         if (session?.user) {
           await loadUserData(session.user.id);

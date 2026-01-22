@@ -25,6 +25,7 @@ export function createClient() {
         autoRefreshToken: true,
         detectSessionInUrl: true,
         storageKey: 'sb-wortex-auth',
+        flowType: 'pkce', // Use PKCE flow for better client-side security and persistence
       },
     }
   );
