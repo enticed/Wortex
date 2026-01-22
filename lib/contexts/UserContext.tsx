@@ -128,6 +128,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
           if (session?.user) {
             await loadUserData(session.user.id);
           } else {
+            // CRITICAL FIX: Do NOT create anonymous session if there are auth keys in localStorage
+            // This prevents overwriting authenticated sessions that are still loading
+            if (typeof window !== 'undefined') {
+              const storageKeys = Object.keys(localStorage);
+              const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+              if (authKeys.length > 0) {
+                console.warn('[UserContext] Auth keys exist but session not found - NOT creating anonymous user to avoid overwriting session');
+                console.warn('[UserContext] User will need to refresh or sign in again');
+                if (isMounted) {
+                  setLoading(false);
+                }
+                return;
+              }
+            }
+
             // No session found after retries - create anonymous user
             console.log('[UserContext] No session found after retries, creating anonymous user...');
             const { data, error } = await supabase.auth.signInAnonymously();
