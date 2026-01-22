@@ -293,9 +293,9 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           console.log('[GameBoard] Is first play:', isFirstPlay, 'First play of day:', firstPlayOfDay);
 
           // Submit score (upsert to handle replays)
-          // @ts-ignore - Supabase client types not properly inferred in client context
           const { error: scoreError } = await supabase
             .from('scores')
+            // @ts-expect-error - Supabase client types not properly inferred in client context
             .upsert({
               user_id: userId,
               puzzle_id: puzzle.id,
@@ -314,6 +314,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
             console.log('[GameBoard] Score submitted successfully');
 
             // Update streak
+            // @ts-expect-error - RPC function types not properly inferred in client context
             await supabase.rpc('update_user_streak', {
               p_user_id: userId,
               p_puzzle_date: puzzle.date,
