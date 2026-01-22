@@ -99,27 +99,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
           console.log('[UserContext] Session check complete:', session ? 'Found' : 'None');
 
-          if (!session) {
-            console.log('[UserContext] getSession returned null - checking if localStorage has stale token');
-            if (typeof window !== 'undefined') {
-              const storageKeys = Object.keys(localStorage);
-              const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
-              if (authKeys.length > 0) {
-                console.warn('[UserContext] WARNING: localStorage has auth keys but getSession returned null!');
-                console.warn('[UserContext] This indicates a stale/invalid session - clearing localStorage');
-                authKeys.forEach(key => {
-                  console.log('[UserContext] Removing stale key:', key);
-                  localStorage.removeItem(key);
-                });
-              }
-            }
-          }
-
           if (session?.user) {
             await loadUserData(session.user.id);
           } else {
-            // Create anonymous user - wait as long as needed
-            console.log('[UserContext] Creating anonymous user...');
+            // No session found - create anonymous user
+            console.log('[UserContext] No session found, creating anonymous user...');
             const { data, error } = await supabase.auth.signInAnonymously();
 
             if (error) {
