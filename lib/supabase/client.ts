@@ -2,11 +2,11 @@
  * Supabase client for browser/client-side usage
  */
 
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
 // Singleton client instance to ensure consistent session across the app
-let clientInstance: ReturnType<typeof createBrowserClient<Database>> | null = null;
+let clientInstance: ReturnType<typeof createSupabaseClient<Database>> | null = null;
 
 export function createClient() {
   // Return existing instance if available (browser only)
@@ -14,8 +14,9 @@ export function createClient() {
     return clientInstance;
   }
 
-  // Create new instance with explicit persistence settings
-  const client = createBrowserClient<Database>(
+  // Create new instance using standard Supabase client (not SSR)
+  // This uses localStorage directly without Next.js SSR complications
+  const client = createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -23,8 +24,7 @@ export function createClient() {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        // Remove custom storageKey - let Supabase use its default
-        // Default key is 'sb-<project-ref>-auth-token'
+        storageKey: 'sb-wortex-auth',
       },
     }
   );
@@ -32,7 +32,7 @@ export function createClient() {
   // Store instance for reuse (browser only)
   if (typeof window !== 'undefined') {
     clientInstance = client;
-    console.log('[Supabase Client] Created singleton instance');
+    console.log('[Supabase Client] Created singleton instance with standard client');
   }
 
   return client;
