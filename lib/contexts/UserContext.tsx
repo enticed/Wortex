@@ -80,21 +80,47 @@ export function UserProvider({ children }: { children: ReactNode }) {
             return;
           }
 
-          // Check for existing session - wait as long as needed
+          // Check for existing session - retry a few times to handle race conditions
           console.log('[UserContext] Checking for existing session...');
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          let session = null;
+          let sessionError = null;
 
-          if (sessionError) {
-            // Handle AbortError gracefully - this is expected during React Strict Mode remounts
-            if (sessionError.message?.includes('aborted') || sessionError.name === 'AbortError') {
-              console.warn('[UserContext] getSession aborted (likely React remount) - ignoring');
-              if (isMounted) {
-                setLoading(false);
+          // Try up to 3 times with delays to handle session loading race conditions
+          for (let attempt = 0; attempt < 3; attempt++) {
+            const result = await supabase.auth.getSession();
+            session = result.data.session;
+            sessionError = result.error;
+
+            if (sessionError) {
+              // Handle AbortError gracefully - this is expected during React Strict Mode remounts
+              if (sessionError.message?.includes('aborted') || sessionError.name === 'AbortError') {
+                console.warn('[UserContext] getSession aborted (likely React remount) - ignoring');
+                if (isMounted) {
+                  setLoading(false);
+                }
+                return;
               }
-              return;
+              console.error('[UserContext] getSession error:', sessionError);
+              throw sessionError;
             }
-            console.error('[UserContext] getSession error:', sessionError);
-            throw sessionError;
+
+            if (session) {
+              console.log(`[UserContext] Session found on attempt ${attempt + 1}`);
+              break; // Found session
+            }
+
+            // No session yet - check if there are auth keys in localStorage
+            if (typeof window !== 'undefined') {
+              const storageKeys = Object.keys(localStorage);
+              const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+              if (authKeys.length > 0 && attempt < 2) {
+                console.log(`[UserContext] Auth keys found in localStorage but no session yet (attempt ${attempt + 1}/3), retrying in ${200 * (attempt + 1)}ms...`);
+                await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
+                continue;
+              }
+            }
+
+            break; // No auth keys or final attempt, stop retrying
           }
 
           console.log('[UserContext] Session check complete:', session ? 'Found' : 'None');
@@ -102,8 +128,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
           if (session?.user) {
             await loadUserData(session.user.id);
           } else {
-            // No session found - create anonymous user
-            console.log('[UserContext] No session found, creating anonymous user...');
+            // No session found after retries - create anonymous user
+            console.log('[UserContext] No session found after retries, creating anonymous user...');
             const { data, error } = await supabase.auth.signInAnonymously();
 
             if (error) {
