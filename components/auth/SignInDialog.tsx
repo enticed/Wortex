@@ -50,6 +50,7 @@ export default function SignInDialog({ isOpen, onClose, onSuccess, onSwitchToSig
       console.log('[SignIn] Sign in successful, user ID:', data.user.id);
 
       // Update last login in database
+      // @ts-ignore - Supabase browser client types not properly inferred
       await supabase
         .from('users')
         .update({ last_login: new Date().toISOString() })
