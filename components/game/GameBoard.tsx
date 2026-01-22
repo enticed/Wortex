@@ -21,6 +21,7 @@ import FinalResults from './FinalResults';
 import { useGameState } from '@/lib/hooks/useGameState';
 import { isPhraseComplete } from '@/lib/utils/game';
 import { useUser } from '@/lib/contexts/UserContext';
+import { createClient } from '@/lib/supabase/client';
 import type { Puzzle } from '@/types/game';
 
 interface GameBoardProps {
@@ -272,30 +273,55 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
         setScoreSubmitted(true);
 
         const timeTakenSeconds = Math.floor((Date.now() - gameStartTime.current) / 1000);
+        const supabase = createClient();
 
         try {
           console.log('[GameBoard] Submitting score for user:', userId.substring(0, 12));
-          const response = await fetch('/api/score/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId,
-              puzzleId: puzzle.id,
-              score: gameState.finalScore,
-              bonusCorrect: gameState.bonusCorrect || false,
-              timeTakenSeconds,
-              speed: gameState.speed,
-            }),
-          });
 
-          if (response.ok) {
+          // Check if this is the user's first play of this puzzle
+          const { data: existingScore } = await supabase
+            .from('scores')
+            .select('id, first_play_of_day')
+            .eq('user_id', userId)
+            .eq('puzzle_id', puzzle.id)
+            .maybeSingle();
+
+          const isFirstPlay = !existingScore;
+          const firstPlayOfDay = isFirstPlay ? true : (existingScore?.first_play_of_day ?? false);
+
+          console.log('[GameBoard] Is first play:', isFirstPlay, 'First play of day:', firstPlayOfDay);
+
+          // Submit score (upsert to handle replays)
+          const { error: scoreError } = await supabase
+            .from('scores')
+            .upsert({
+              user_id: userId,
+              puzzle_id: puzzle.id,
+              score: gameState.finalScore,
+              bonus_correct: gameState.bonusCorrect || false,
+              time_taken_seconds: timeTakenSeconds,
+              speed: gameState.speed,
+              first_play_of_day: firstPlayOfDay,
+            }, {
+              onConflict: 'user_id,puzzle_id'
+            });
+
+          if (scoreError) {
+            console.error('[GameBoard] Error submitting score:', scoreError);
+          } else {
+            console.log('[GameBoard] Score submitted successfully');
+
+            // Update streak
+            await supabase.rpc('update_user_streak', {
+              p_user_id: userId,
+              p_puzzle_date: puzzle.date,
+            });
+
             // Refresh user stats
             await refreshStats();
-          } else {
-            console.error('Failed to submit score');
           }
         } catch (error) {
-          console.error('Error submitting score:', error);
+          console.error('[GameBoard] Error submitting score:', error);
         }
       }
     }

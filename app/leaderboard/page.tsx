@@ -61,7 +61,7 @@ export default function LeaderboardPage() {
       console.log('[Leaderboard] UserContext ready, userId:', userId?.substring(0, 12) || 'none');
       loadLeaderboards();
     }
-  }, [userLoading, userId]);
+  }, [userLoading]); // Only depend on userLoading, not userId
 
   async function loadLeaderboards() {
     try {
