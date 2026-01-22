@@ -293,6 +293,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           console.log('[GameBoard] Is first play:', isFirstPlay, 'First play of day:', firstPlayOfDay);
 
           // Submit score (upsert to handle replays)
+          // @ts-ignore - Supabase client types not properly inferred in client context
           const { error: scoreError } = await supabase
             .from('scores')
             .upsert({
