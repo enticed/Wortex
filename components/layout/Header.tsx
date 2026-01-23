@@ -14,7 +14,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderProps) {
-  const { user } = useUser();
+  const { user, loading } = useUser();
   const router = useRouter();
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -66,7 +66,10 @@ export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderPr
     window.location.reload();
   };
 
-  const displayName = user?.display_name || (user?.is_anonymous ? 'Anonymous' : user?.email?.split('@')[0] || 'Player');
+  // Show loading state while initializing, then determine display name
+  const displayName = loading
+    ? '...'
+    : user?.display_name || (user?.is_anonymous ? 'Anonymous' : user?.email?.split('@')[0] || 'Anonymous');
   const isAnonymous = user?.is_anonymous ?? true;
 
   return (

@@ -128,56 +128,102 @@ export function UserProvider({ children }: { children: ReactNode }) {
           if (session?.user) {
             await loadUserData(session.user.id);
           } else {
-            // CRITICAL FIX: Do NOT create anonymous session if there are auth keys in localStorage
-            // This prevents overwriting authenticated sessions that are still loading
+            // Try to recover session if auth keys exist
+            let recoveredSession = null;
             if (typeof window !== 'undefined') {
               const storageKeys = Object.keys(localStorage);
-              const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+              const sessionKeys = Object.keys(sessionStorage);
+              const authKeys = [...storageKeys, ...sessionKeys].filter(k => k.includes('auth') || k.includes('sb-'));
+
               if (authKeys.length > 0) {
-                console.warn('[UserContext] Auth keys exist but session not found - NOT creating anonymous user to avoid overwriting session');
-                console.warn('[UserContext] User will need to refresh or sign in again');
+                console.log('[UserContext] Auth keys exist but no session - attempting to refresh session');
+
+                // Try to refresh the session using stored tokens
+                try {
+                  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+                  if (!refreshError && refreshData?.session?.user) {
+                    console.log('[UserContext] Successfully recovered session from stored tokens');
+                    recoveredSession = refreshData.session;
+                  } else {
+                    console.warn('[UserContext] Failed to recover session:', refreshError?.message || 'No session returned');
+                    console.log('[UserContext] Clearing stale auth keys');
+                    // Clear stale auth keys
+                    authKeys.forEach(key => {
+                      try {
+                        localStorage.removeItem(key);
+                        sessionStorage.removeItem(key);
+                      } catch (e) {
+                        console.warn('[UserContext] Failed to remove key:', key, e);
+                      }
+                    });
+                  }
+                } catch (e) {
+                  console.warn('[UserContext] Exception during session refresh:', e);
+                  // Clear stale auth keys on exception
+                  authKeys.forEach(key => {
+                    try {
+                      localStorage.removeItem(key);
+                      sessionStorage.removeItem(key);
+                    } catch (err) {
+                      console.warn('[UserContext] Failed to remove key:', key, err);
+                    }
+                  });
+                }
+              }
+            }
+
+            if (recoveredSession?.user) {
+              // Successfully recovered session
+              await loadUserData(recoveredSession.user.id);
+            } else {
+              // No session found after retries - create anonymous user
+              console.log('[UserContext] No session found or recovered, creating anonymous user...');
+              const { data, error } = await supabase.auth.signInAnonymously();
+
+              if (error) {
+                console.error('[UserContext] Error creating anonymous user:', error);
+                // Don't throw - try to continue gracefully
+                // User will see 'Player' but we want to at least show the UI
                 if (isMounted) {
                   setLoading(false);
                 }
                 return;
               }
-            }
 
-            // No session found after retries - create anonymous user
-            console.log('[UserContext] No session found after retries, creating anonymous user...');
-            const { data, error } = await supabase.auth.signInAnonymously();
+              console.log('[UserContext] Anonymous sign-in complete:', data?.user ? 'Success' : 'Failed');
 
-            if (error) {
-              console.error('Error creating anonymous user:', error);
-              throw error;
-            }
+              if (data?.user) {
+                // Log localStorage immediately after sign-in
+                if (typeof window !== 'undefined') {
+                  const storageKeys = Object.keys(localStorage);
+                  const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+                  console.log('[UserContext] localStorage after sign-in:', authKeys.length ? authKeys : 'STILL EMPTY - PERSISTENCE FAILED!');
+                }
 
-            console.log('[UserContext] Anonymous sign-in complete:', data?.user ? 'Success' : 'Failed');
+                // Create user record
+                const { error: insertError } = await supabase
+                  .from('users')
+                  // @ts-ignore - Supabase browser client types not properly inferred
+                  .insert({
+                    id: data.user.id,
+                    is_anonymous: true,
+                  })
+                  .select()
+                  .single();
 
-            if (data?.user) {
-              // Log localStorage immediately after sign-in
-              if (typeof window !== 'undefined') {
-                const storageKeys = Object.keys(localStorage);
-                const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
-                console.log('[UserContext] localStorage after sign-in:', authKeys.length ? authKeys : 'STILL EMPTY - PERSISTENCE FAILED!');
+                if (insertError && insertError.code !== '23505') {
+                  console.error('[UserContext] Error creating user record:', insertError);
+                  // Continue anyway - the user row might exist from a previous session
+                }
+
+                await loadUserData(data.user.id);
+              } else {
+                console.error('[UserContext] Anonymous sign-in succeeded but no user returned');
+                if (isMounted) {
+                  setLoading(false);
+                }
               }
-
-              // Create user record
-              const { error: insertError } = await supabase
-                .from('users')
-                // @ts-ignore - Supabase browser client types not properly inferred
-                .insert({
-                  id: data.user.id,
-                  is_anonymous: true,
-                })
-                .select()
-                .single();
-
-              if (insertError && insertError.code !== '23505') {
-                console.error('Error creating user record:', insertError);
-              }
-
-              await loadUserData(data.user.id);
             }
           }
 
