@@ -80,19 +80,69 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate puzzles for available dates
+    // Fetch existing target phrases for duplicate detection
+    const { data: existingPuzzles, error: existingError } = await supabase
+      .from('puzzles')
+      .select('target_phrase');
+
+    if (existingError) {
+      console.warn('Failed to fetch existing puzzles for duplicate detection:', existingError);
+    }
+
+    const existingQuotes = new Set(
+      existingPuzzles?.map(p => p.target_phrase.toLowerCase().trim()) || []
+    );
+
+    // Generate puzzles for available dates with duplicate prevention
     const puzzles = [];
+    const errors = [];
+    const maxRetries = 5;
+
     for (const date of availableDates) {
-      const puzzle = await generatePuzzle(date);
-      puzzles.push({
-        ...puzzle,
-        date: date.toISOString().split('T')[0],
-      });
+      let lastError: Error | null = null;
+
+      // Retry if duplicate is generated
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          const puzzle = await generatePuzzle(date, undefined, undefined, existingQuotes);
+
+          // Double-check for duplicates
+          const normalizedQuote = puzzle.targetPhrase.toLowerCase().trim();
+          if (existingQuotes.has(normalizedQuote)) {
+            throw new Error(`Duplicate quote detected: "${puzzle.targetPhrase}"`);
+          }
+
+          // Add to set to prevent duplicates within this batch
+          existingQuotes.add(normalizedQuote);
+
+          puzzles.push({
+            ...puzzle,
+            date: date.toISOString().split('T')[0],
+          });
+
+          lastError = null;
+          break;
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          console.warn(`Attempt ${attempt + 1}/${maxRetries} failed for ${date.toISOString().split('T')[0]}: ${lastError.message}`);
+
+          if (attempt < maxRetries - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+          }
+        }
+      }
+
+      if (lastError) {
+        console.error(`Failed to generate unique puzzle for ${date.toISOString()} after ${maxRetries} attempts`);
+        errors.push({
+          date: date.toISOString().split('T')[0],
+          error: lastError.message,
+        });
+      }
     }
 
     // Save to database
     const savedPuzzles = [];
-    const errors = [];
 
     for (const puzzle of puzzles) {
       try {

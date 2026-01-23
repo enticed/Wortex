@@ -99,8 +99,8 @@ export async function GET(request: NextRequest) {
       existingPuzzles?.map(p => p.target_phrase.toLowerCase().trim()) || []
     );
 
-    // Generate puzzles
-    const puzzles = await generatePuzzleBatch(startDate, neededPuzzles);
+    // Generate puzzles with duplicate prevention
+    const puzzles = await generatePuzzleBatch(startDate, neededPuzzles, existingTargetPhrases);
 
     // Save to database
     const savedPuzzles = [];

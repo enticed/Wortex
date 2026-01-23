@@ -57,7 +57,8 @@ export function getQuoteTypeForDate(date: Date): QuoteType {
 export async function generatePuzzle(
   targetDate: Date,
   quoteType?: QuoteType,
-  difficulty?: number
+  difficulty?: number,
+  existingQuotes?: Set<string>
 ): Promise<GeneratedPuzzle> {
   const dayOfWeek = targetDate.getDay() as DayOfWeek;
   const calculatedDifficulty = difficulty ?? getDifficultyForDay(dayOfWeek);
@@ -98,8 +99,21 @@ export async function generatePuzzle(
     ? '   - Each option: {"person": "Name", "year": number}'
     : '   - Each option: {"author": "Author Name", "book": "Book Title"}';
 
+  // Build uniqueness constraint for prompt
+  let uniquenessConstraint = '';
+  if (existingQuotes && existingQuotes.size > 0) {
+    const recentQuotes = Array.from(existingQuotes).slice(-10); // Show last 10 for context
+    uniquenessConstraint = '\n\n0. UNIQUENESS REQUIREMENT (CRITICAL):\n' +
+      '   - Your quote MUST be completely different from these recently used quotes:\n' +
+      recentQuotes.map(q => '     * "' + q + '"').join('\n') +
+      '\n   - Do NOT generate ANY of the above quotes\n' +
+      '   - Choose a quote from a different source, era, or context\n' +
+      '   - Ensure your quote is unique and has not been used before\n';
+  }
+
   const prompt = 'Generate a word puzzle based on a ' + quoteSource + '.\n\n' +
     'STRICT REQUIREMENTS:\n' +
+    uniquenessConstraint +
     '1. Target phrase: ' + targetPhraseDesc + '\n' +
     '   - CRITICAL: MUST be between 8-25 words total (count every single word)\n' +
     '   - Must be the exact, complete quote (no truncation)\n' +
@@ -138,7 +152,7 @@ export async function generatePuzzle(
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
-    temperature: 0.7, // Balanced creativity and compliance
+    temperature: 1.0, // Higher temperature for more variety and uniqueness
     messages: [
       {
         role: 'user',
@@ -247,24 +261,36 @@ export async function generatePuzzle(
 }
 
 /**
- * Generate multiple puzzles in batch with retry logic
+ * Generate multiple puzzles in batch with retry logic and duplicate prevention
  */
 export async function generatePuzzleBatch(
   startDate: Date,
-  count: number
+  count: number,
+  existingQuotes?: Set<string>
 ): Promise<Array<GeneratedPuzzle & { date: string }>> {
   const puzzles: Array<GeneratedPuzzle & { date: string }> = [];
-  const maxRetries = 3;
+  const maxRetries = 5; // Increased retries for duplicate detection
+  const usedQuotes = new Set<string>(existingQuotes || []);
 
   for (let i = 0; i < count; i++) {
     const targetDate = new Date(startDate);
     targetDate.setDate(startDate.getDate() + i);
     let lastError: Error | null = null;
 
-    // Retry up to maxRetries times if validation fails
+    // Retry up to maxRetries times if validation fails or duplicate detected
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        const puzzle = await generatePuzzle(targetDate);
+        const puzzle = await generatePuzzle(targetDate, undefined, undefined, usedQuotes);
+
+        // Check for duplicates (case-insensitive, trimmed comparison)
+        const normalizedQuote = puzzle.targetPhrase.toLowerCase().trim();
+        if (usedQuotes.has(normalizedQuote)) {
+          throw new Error(`Duplicate quote detected: "${puzzle.targetPhrase}"`);
+        }
+
+        // Add to used quotes set to prevent duplicates within this batch
+        usedQuotes.add(normalizedQuote);
+
         puzzles.push({
           ...puzzle,
           date: targetDate.toISOString().split('T')[0], // YYYY-MM-DD
