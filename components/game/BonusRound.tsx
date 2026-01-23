@@ -63,8 +63,8 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
   };
 
   return (
-    <div className="w-full h-full max-w-2xl mx-auto animate-fade-in flex flex-col">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col h-full overflow-hidden mx-2 my-2">
+    <div className="w-full h-full max-w-2xl mx-auto animate-fade-in flex flex-col pb-safe">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col h-full overflow-hidden mx-2 mt-2 mb-safe">
         {/* Header - Fixed at top */}
         <div className="flex-shrink-0 px-3 pt-3 pb-2">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -72,8 +72,8 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
           </h2>
         </div>
 
-        {/* Scrollable Content Area - Grows to fill available space */}
-        <div className="flex-1 overflow-y-auto px-3 pb-3">
+        {/* Scrollable Content Area - Grows to fill available space with extra padding for button */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-24">
           {/* Question */}
           <div className="mb-3">
             <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2 mb-3">
@@ -128,21 +128,21 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
           )}
         </div>
 
-        {/* Actions - Fixed at bottom */}
-        <div className="flex-shrink-0 px-3 pb-3 pt-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        {/* Actions - Fixed at bottom with safe area */}
+        <div className="flex-shrink-0 px-3 pb-safe-offset-3 pt-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 min-h-[60px]">
           <div className="flex gap-2">
             {!hasAnswered && (
               <>
                 <button
                   onClick={handleSubmit}
                   disabled={!selectedAnswer}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors text-sm"
                 >
                   Submit Answer
                 </button>
                 <button
                   onClick={onSkip}
-                  className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 font-semibold transition-colors text-sm"
+                  className="px-4 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 font-semibold transition-colors text-sm whitespace-nowrap"
                 >
                   Skip
                 </button>
