@@ -441,7 +441,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
         {/* Bottom Area - Vortex (Phase 1), Bonus Round, or Final Results */}
         {gameState.phase === 1 && !gameState.bonusAnswered && (
-          <div className={`relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 ${gameState.isComplete ? 'h-[60%]' : 'h-[50%]'}`}>
+          <div className={`relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 ${gameState.isComplete ? 'flex-1' : 'h-[50%]'}`}>
             {gameState.isComplete ? (
               // Show bonus round in vortex area
               <div className="h-full flex flex-col">
@@ -494,7 +494,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
         {/* Phase 2 Complete - Show bonus/results in bottom area */}
         {gameState.phase === 2 && gameState.isComplete && allowBonusRound && !gameState.bonusAnswered && (
-          <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
+          <div className="flex-1 relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
             <div className="h-full flex flex-col">
               <BonusRound
                 bonusQuestion={puzzle.bonusQuestion}

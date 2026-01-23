@@ -63,8 +63,8 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
   };
 
   return (
-    <div className="w-full h-full max-w-2xl mx-auto animate-fade-in flex flex-col pb-safe">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col h-full overflow-hidden mx-2 mt-2 mb-safe">
+    <div className="w-full h-full max-w-2xl mx-auto animate-fade-in flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col h-full overflow-hidden mx-2">
         {/* Header - Fixed at top */}
         <div className="flex-shrink-0 px-3 pt-3 pb-2">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -129,7 +129,7 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
         </div>
 
         {/* Actions - Fixed at bottom with safe area */}
-        <div className="flex-shrink-0 px-3 pb-safe-offset-3 pt-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 min-h-[60px]">
+        <div className="flex-shrink-0 px-3 pb-4 pt-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div className="flex gap-2">
             {!hasAnswered && (
               <>
