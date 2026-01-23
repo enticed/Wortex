@@ -63,8 +63,8 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
   };
 
   return (
-    <div className="w-full h-full max-w-2xl mx-auto animate-fade-in flex flex-col px-2">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col h-full max-h-full overflow-hidden">
+    <div className="w-full h-full max-w-2xl mx-auto animate-fade-in flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col h-full overflow-hidden mx-2 my-2">
         {/* Header - Fixed at top */}
         <div className="flex-shrink-0 px-3 pt-3 pb-2">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -72,8 +72,8 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
           </h2>
         </div>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-3 min-h-0">
+        {/* Scrollable Content Area - Grows to fill available space */}
+        <div className="flex-1 overflow-y-auto px-3 pb-3">
           {/* Question */}
           <div className="mb-3">
             <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2 mb-3">

@@ -6,6 +6,7 @@ import UpgradeAccountDialog from '@/components/auth/UpgradeAccountDialog';
 import SignInDialog from '@/components/auth/SignInDialog';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -72,9 +73,9 @@ export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderPr
     <>
       <header className="fixed top-0 left-0 right-0 h-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-50 flex items-center justify-between px-4">
         {/* Logo/Title */}
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+        <Link href="/" className="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
           Wortex{isArchiveMode && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">Archive</span>}
-        </h1>
+        </Link>
 
         <div className="flex items-center gap-2">
           {/* Account Menu Button */}

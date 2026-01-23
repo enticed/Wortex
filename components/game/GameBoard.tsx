@@ -444,7 +444,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           <div className={`relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 ${gameState.isComplete ? 'h-[60%]' : 'h-[50%]'}`}>
             {gameState.isComplete ? (
               // Show bonus round in vortex area
-              <div className="h-full flex items-center justify-center px-2">
+              <div className="h-full flex flex-col">
                 <BonusRound
                   bonusQuestion={puzzle.bonusQuestion}
                   onAnswer={(selectedAnswerId, isCorrect) => {
@@ -494,8 +494,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
         {/* Phase 2 Complete - Show bonus/results in bottom area */}
         {gameState.phase === 2 && gameState.isComplete && allowBonusRound && !gameState.bonusAnswered && (
-          <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 py-2">
-            <div className="h-full flex items-center justify-center px-2">
+          <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
+            <div className="h-full flex flex-col">
               <BonusRound
                 bonusQuestion={puzzle.bonusQuestion}
                 onAnswer={(selectedAnswerId, isCorrect) => {
