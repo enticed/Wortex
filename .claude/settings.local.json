@@ -37,7 +37,20 @@
       "Bash(node scripts/diagnose-leaderboard.mjs:*)",
       "Bash(node scripts/test-user-queries.mjs:*)",
       "Bash(node scripts/test-client-side-queries.mjs:*)",
-      "Bash(node scripts/test-get-todays-puzzle.mjs:*)"
+      "Bash(node scripts/test-get-todays-puzzle.mjs:*)",
+      "Bash(node scripts/check-user-account.mjs:*)",
+      "Bash(node scripts/fix-user-id-mismatch-v3.mjs:*)",
+      "Bash(node scripts/check-admin-user.mjs:*)",
+      "Bash(node scripts/test-stats-query.mjs:*)",
+      "Bash(node scripts/check-scores-and-stats.mjs:*)",
+      "Bash(node scripts/regenerate-stats.mjs:*)",
+      "Bash(node scripts/check-gjavier-account.mjs:*)",
+      "Bash(node scripts/fix-gjavier-account.mjs:*)",
+      "Bash(node update-gjavier-password.mjs)",
+      "Bash(node scripts/regenerate-gjavier-stats.mjs:*)",
+      "Bash(node scripts/diagnose-user-sessions.mjs:*)",
+      "Bash(node scripts/fix-all-orphaned-accounts.mjs:*)",
+      "Bash(node scripts/fix-harpynox-account.mjs:*)"
     ],
     "deny": [],
     "ask": []

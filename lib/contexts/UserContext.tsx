@@ -70,14 +70,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
           }
 
           // Small delay to ensure localStorage is fully initialized (particularly on mobile)
-          if (typeof window !== 'undefined' && retryCount === 0) {
+          // Skip the delay if we're on a retry or if component is already unmounting
+          if (typeof window !== 'undefined' && retryCount === 0 && isMounted && !abortController.signal.aborted) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
 
-          // Check if component was unmounted or aborted during delay
-          if (!isMounted || abortController.signal.aborted) {
-            console.log('[UserContext] Component unmounted or aborted, cancelling initialization');
+          // Check if component was unmounted during the delay
+          if (!isMounted) {
+            console.log('[UserContext] Component unmounted during initialization');
             return;
+          }
+
+          // If aborted but still mounted, continue anyway (React Strict Mode case)
+          if (abortController.signal.aborted && isMounted) {
+            console.log('[UserContext] Abort signal detected but component still mounted - continuing initialization');
           }
 
           // Check for existing session - retry a few times to handle race conditions
@@ -93,12 +99,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
             if (sessionError) {
               // Handle AbortError gracefully - this is expected during React Strict Mode remounts
+              // Don't throw, just log and continue to the next attempt
               if (sessionError.message?.includes('aborted') || sessionError.name === 'AbortError') {
-                console.warn('[UserContext] getSession aborted (likely React remount) - ignoring');
-                if (isMounted) {
-                  setLoading(false);
+                console.warn(`[UserContext] getSession aborted on attempt ${attempt + 1} (likely React remount) - will retry`);
+                // Wait a bit before retry
+                if (attempt < 2) {
+                  await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
                 }
-                return;
+                continue; // Try again
               }
               console.error('[UserContext] getSession error:', sessionError);
               throw sessionError;
@@ -240,16 +248,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setLoading(false);
           }
         } catch (error) {
-          // Handle AbortError gracefully - don't retry, just exit cleanly
+          // Handle AbortError gracefully
           if (error instanceof Error && (error.message?.includes('aborted') || error.name === 'AbortError')) {
-            console.warn('[UserContext] Initialization aborted (likely React remount or unmount) - exiting gracefully');
+            // If component is still mounted, this is likely React Strict Mode - continue with retry
             if (isMounted) {
-              setLoading(false);
+              console.warn('[UserContext] Initialization aborted but component still mounted - will retry');
+              // Fall through to retry logic below
+            } else {
+              console.warn('[UserContext] Initialization aborted due to unmount - exiting');
+              return;
             }
-            return;
+          } else {
+            console.error('Error initializing user:', error);
           }
-
-          console.error('Error initializing user:', error);
 
           // Check if component was unmounted during error
           if (!isMounted || abortController.signal.aborted) {
