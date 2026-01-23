@@ -89,10 +89,16 @@ export default function SettingsPage() {
     setLoading(true);
 
     try {
-      // Use client-side Supabase to update password
-      const { error: updateError } = await supabase.auth.updateUser({
+      // Use client-side Supabase to update password with timeout
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Password update timeout after 30 seconds')), 30000)
+      );
+
+      const updatePromise = supabase.auth.updateUser({
         password: newPassword,
       });
+
+      const { error: updateError } = await Promise.race([updatePromise, timeoutPromise]) as any;
 
       if (updateError) {
         setError(updateError.message || 'Failed to update password');
