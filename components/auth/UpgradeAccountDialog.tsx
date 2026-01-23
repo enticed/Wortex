@@ -93,8 +93,8 @@ export default function UpgradeAccountDialog({ isOpen, onClose, onSuccess }: Upg
         updateData.display_name = displayName.trim();
       }
 
-      const { error: dbError } = await supabase
-        .from('users')
+      // Type assertion needed due to Supabase type inference issue
+      const { error: dbError } = await (supabase.from('users') as any)
         .update(updateData)
         .eq('id', session.user.id);
 
