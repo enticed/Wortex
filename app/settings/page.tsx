@@ -89,6 +89,8 @@ export default function SettingsPage() {
     setLoading(true);
 
     try {
+      console.log('[Settings] Updating password...');
+
       // Use client-side Supabase to update password with timeout
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Password update timeout after 30 seconds')), 30000)
@@ -98,14 +100,18 @@ export default function SettingsPage() {
         password: newPassword,
       });
 
-      const { error: updateError } = await Promise.race([updatePromise, timeoutPromise]) as any;
+      const result = await Promise.race([updatePromise, timeoutPromise]) as any;
 
-      if (updateError) {
-        setError(updateError.message || 'Failed to update password');
+      console.log('[Settings] Password update result:', result);
+
+      if (result?.error) {
+        console.error('[Settings] Password update error:', result.error);
+        setError(result.error.message || 'Failed to update password');
         setLoading(false);
         return;
       }
 
+      console.log('[Settings] Password updated successfully');
       setSaveMessage('Password updated successfully');
       setNewPassword('');
       setConfirmPassword('');
@@ -114,6 +120,7 @@ export default function SettingsPage() {
       setLoading(false);
 
     } catch (err: any) {
+      console.error('[Settings] Unexpected error updating password:', err);
       setError(err.message || 'An unexpected error occurred');
       setLoading(false);
     }
