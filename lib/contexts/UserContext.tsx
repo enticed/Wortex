@@ -292,6 +292,139 @@ export function UserProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Handle page visibility changes - refresh session when user returns to app
+  // This is critical for mobile browsers that may suspend the app
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let visibilityTimeout: NodeJS.Timeout;
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[UserContext] Page became visible - checking session');
+
+        // Small delay to let the browser restore state
+        visibilityTimeout = setTimeout(async () => {
+          try {
+            // Try to refresh the session
+            const { data: { session }, error } = await supabase.auth.getSession();
+
+            if (error) {
+              console.warn('[UserContext] Session check failed on visibility change:', error);
+              return;
+            }
+
+            if (session?.user) {
+              console.log('[UserContext] Session valid after visibility change');
+
+              // Check if the userId has changed (session was replaced)
+              if (session.user.id !== userId) {
+                console.log('[UserContext] UserId changed - reloading user data');
+                await loadUserData(session.user.id);
+              }
+            } else if (userId) {
+              // We had a user but now the session is gone
+              console.warn('[UserContext] Session lost after visibility change - user may need to refresh');
+
+              // Check if there are auth keys in storage
+              const storageKeys = Object.keys(localStorage);
+              const authKeys = storageKeys.filter(k => k.includes('auth') || k.includes('sb-'));
+
+              if (authKeys.length === 0) {
+                console.warn('[UserContext] No auth keys found - creating new anonymous session');
+                const { data, error: anonError } = await supabase.auth.signInAnonymously();
+
+                if (data?.user && !anonError) {
+                  console.log('[UserContext] Created new anonymous session after session loss');
+                  await loadUserData(data.user.id);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('[UserContext] Error handling visibility change:', error);
+          }
+        }, 300); // 300ms delay for browser state restoration
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (visibilityTimeout) {
+        clearTimeout(visibilityTimeout);
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [userId]);
+
+  // Periodic session health check - particularly important for mobile browsers
+  // Check every 60 seconds when page is visible to catch session expiration early
+  useEffect(() => {
+    if (typeof window === 'undefined' || loading) return;
+
+    let intervalId: NodeJS.Timeout;
+    let isChecking = false;
+
+    const checkSessionHealth = async () => {
+      // Don't run if page is not visible or already checking
+      if (document.visibilityState !== 'visible' || isChecking) return;
+
+      isChecking = true;
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.warn('[UserContext] Session health check failed:', error);
+          return;
+        }
+
+        if (session?.user) {
+          // Session exists - check if user ID matches
+          if (session.user.id !== userId) {
+            console.warn('[UserContext] Session userId mismatch detected during health check');
+            console.log('[UserContext] Current:', userId?.substring(0, 12), 'Session:', session.user.id.substring(0, 12));
+            await loadUserData(session.user.id);
+          }
+        } else if (userId) {
+          // Had a userId but session is now gone
+          console.warn('[UserContext] Session lost during health check - attempting recovery');
+
+          // Check storage for auth keys
+          const storageKeys = Object.keys(localStorage);
+          const sessionKeys = Object.keys(sessionStorage);
+          const authKeys = [...storageKeys, ...sessionKeys].filter(k => k.includes('auth') || k.includes('sb-'));
+
+          if (authKeys.length > 0) {
+            console.log('[UserContext] Auth keys found in storage, attempting to restore session');
+            // Force a session refresh
+            const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
+            if (refreshedSession?.user) {
+              console.log('[UserContext] Session restored successfully');
+              await loadUserData(refreshedSession.user.id);
+            }
+          } else {
+            console.warn('[UserContext] No auth keys found - session appears to be lost');
+          }
+        }
+      } catch (error) {
+        console.error('[UserContext] Session health check error:', error);
+      } finally {
+        isChecking = false;
+      }
+    };
+
+    // Initial check after 5 seconds
+    const initialTimeout = setTimeout(checkSessionHealth, 5000);
+
+    // Then check every 60 seconds
+    intervalId = setInterval(checkSessionHealth, 60000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(intervalId);
+    };
+  }, [userId, loading]);
+
   // Load user data and stats
   async function loadUserData(uid: string) {
     setUserId(uid);

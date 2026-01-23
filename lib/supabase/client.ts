@@ -26,6 +26,54 @@ export function createClient() {
         detectSessionInUrl: true,
         storageKey: 'sb-wortex-auth',
         flowType: 'pkce', // Use PKCE flow for better client-side security and persistence
+        // Improved storage for mobile browsers
+        storage: typeof window !== 'undefined' ? {
+          getItem: (key: string) => {
+            // Try localStorage first (primary storage)
+            try {
+              const item = window.localStorage.getItem(key);
+              if (item) return item;
+            } catch (e) {
+              console.warn('[Storage] localStorage.getItem failed:', e);
+            }
+
+            // Fallback to sessionStorage if localStorage fails
+            try {
+              return window.sessionStorage.getItem(key);
+            } catch (e) {
+              console.warn('[Storage] sessionStorage.getItem failed:', e);
+              return null;
+            }
+          },
+          setItem: (key: string, value: string) => {
+            // Write to both localStorage and sessionStorage for redundancy
+            try {
+              window.localStorage.setItem(key, value);
+            } catch (e) {
+              console.warn('[Storage] localStorage.setItem failed:', e);
+            }
+
+            try {
+              window.sessionStorage.setItem(key, value);
+            } catch (e) {
+              console.warn('[Storage] sessionStorage.setItem failed:', e);
+            }
+          },
+          removeItem: (key: string) => {
+            // Remove from both storages
+            try {
+              window.localStorage.removeItem(key);
+            } catch (e) {
+              console.warn('[Storage] localStorage.removeItem failed:', e);
+            }
+
+            try {
+              window.sessionStorage.removeItem(key);
+            } catch (e) {
+              console.warn('[Storage] sessionStorage.removeItem failed:', e);
+            }
+          },
+        } : undefined,
       },
     }
   );
