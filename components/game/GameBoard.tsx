@@ -400,10 +400,10 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           </div>
         )}
 
-        {/* Middle Area - Mystery Quote - Phase 1: 35% (50% during bonus), Phase 2: 80%, Final Results: 40% */}
+        {/* Middle Area - Mystery Quote - Phase 1: 35% (40% during bonus), Phase 2: 80%, Final Results: 40% */}
         <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
           gameState.bonusAnswered ? 'h-[40%]' :
-          gameState.isComplete ? 'h-[50%]' :
+          gameState.isComplete ? 'h-[40%]' :
           gameState.phase === 2 ? 'h-[80%]' : 'h-[35%]'
         }`}>
           <AssemblyArea
@@ -441,7 +441,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
         {/* Bottom Area - Vortex (Phase 1), Bonus Round, or Final Results */}
         {gameState.phase === 1 && !gameState.bonusAnswered && (
-          <div className="h-[50%] relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
+          <div className={`relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 ${gameState.isComplete ? 'h-[60%]' : 'h-[50%]'}`}>
             {gameState.isComplete ? (
               // Show bonus round in vortex area
               <div className="h-full flex items-center justify-center px-2">
