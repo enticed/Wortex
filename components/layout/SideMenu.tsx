@@ -74,7 +74,7 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
           <ul className="space-y-2">
             <li>
               <Link
-                href="/"
+                href="/play"
                 onClick={onClose}
                 className="block px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors font-medium"
               >

@@ -170,13 +170,26 @@ BEGIN
   FROM stats
   WHERE user_id = p_user_id;
 
+  -- Handle NULL values (first time playing or no stats record)
+  IF v_current_streak IS NULL THEN
+    v_current_streak := 0;
+  END IF;
+
+  IF v_best_streak IS NULL THEN
+    v_best_streak := 0;
+  END IF;
+
+  -- If this is the first game (no last played date), start streak at 1
+  IF v_last_played IS NULL THEN
+    v_current_streak := 1;
   -- If last played was yesterday, increment streak
-  IF v_last_played = p_puzzle_date - INTERVAL '1 day' THEN
+  ELSIF v_last_played = p_puzzle_date - INTERVAL '1 day' THEN
     v_current_streak := v_current_streak + 1;
   -- If last played was today, keep streak
   ELSIF v_last_played = p_puzzle_date THEN
-    -- No change
-  -- Otherwise, reset streak
+    -- No change to streak
+    NULL;
+  -- Otherwise (gap of more than 1 day), reset streak to 1
   ELSE
     v_current_streak := 1;
   END IF;
