@@ -60,10 +60,7 @@ export default function SettingsPage() {
       setSaveMessage('Profile updated successfully');
       setLoading(false);
 
-      // Reload to refresh user data
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // No need to reload - UserContext will pick up the change on next fetch
 
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');
@@ -100,13 +97,13 @@ export default function SettingsPage() {
         password: newPassword,
       });
 
-      const result = await Promise.race([updatePromise, timeoutPromise]) as any;
+      const { data, error: updateError } = await Promise.race([updatePromise, timeoutPromise]) as any;
 
-      console.log('[Settings] Password update result:', result);
+      console.log('[Settings] Password update result:', { data, error: updateError });
 
-      if (result?.error) {
-        console.error('[Settings] Password update error:', result.error);
-        setError(result.error.message || 'Failed to update password');
+      if (updateError) {
+        console.error('[Settings] Password update error:', updateError);
+        setError(updateError.message || 'Failed to update password');
         setLoading(false);
         return;
       }
