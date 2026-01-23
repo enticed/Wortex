@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
@@ -55,15 +55,7 @@ export default function LeaderboardPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Load leaderboards once UserContext is ready
-  useEffect(() => {
-    if (!userLoading) {
-      console.log('[Leaderboard] UserContext ready, userId:', userId?.substring(0, 12) || 'none');
-      loadLeaderboards();
-    }
-  }, [userLoading]); // Only depend on userLoading, not userId
-
-  async function loadLeaderboards() {
+  const loadLeaderboards = useCallback(async () => {
     try {
       console.log('[Leaderboard] Starting to load data...');
       console.log('[Leaderboard] Using userId from UserContext:', userId?.substring(0, 12) || 'none');
@@ -125,7 +117,15 @@ export default function LeaderboardPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId, supabase]); // Memoize function, only recreate if userId or supabase changes
+
+  // Load leaderboards once UserContext is ready
+  useEffect(() => {
+    if (!userLoading) {
+      console.log('[Leaderboard] UserContext ready, userId:', userId?.substring(0, 12) || 'none');
+      loadLeaderboards();
+    }
+  }, [userLoading, loadLeaderboards]); // Include loadLeaderboards in dependencies
 
   // Set up realtime subscription for daily leaderboard updates
   useEffect(() => {

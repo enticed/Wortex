@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import PuzzleCard from '@/components/archive/PuzzleCard';
@@ -24,32 +24,7 @@ export default function ArchivePage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Wait for auth to be ready
-  useEffect(() => {
-    let mounted = true;
-
-    async function checkAuth() {
-      await supabase.auth.getSession();
-      if (mounted) {
-        setAuthReady(true);
-      }
-    }
-
-    checkAuth();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Load puzzles once auth is ready
-  useEffect(() => {
-    if (authReady) {
-      loadPuzzles();
-    }
-  }, [authReady]);
-
-  async function loadPuzzles() {
+  const loadPuzzles = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -116,7 +91,32 @@ export default function ArchivePage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [supabase]);
+
+  // Wait for auth to be ready
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkAuth() {
+      await supabase.auth.getSession();
+      if (mounted) {
+        setAuthReady(true);
+      }
+    }
+
+    checkAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, [supabase]);
+
+  // Load puzzles once auth is ready
+  useEffect(() => {
+    if (authReady) {
+      loadPuzzles();
+    }
+  }, [authReady, loadPuzzles]);
 
   const filteredPuzzles = puzzles.filter(puzzle => {
     if (filter === 'played') return puzzle.hasPlayed;

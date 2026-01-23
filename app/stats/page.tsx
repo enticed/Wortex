@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import StatsCard from '@/components/stats/StatsCard';
@@ -31,18 +31,7 @@ export default function StatsPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Load stats once UserContext is ready
-  useEffect(() => {
-    if (!userLoading && userId) {
-      console.log('[Stats] UserContext ready, loading stats for:', userId.substring(0, 12));
-      loadStats();
-    } else if (!userLoading && !userId) {
-      console.warn('[Stats] UserContext ready but no userId');
-      setLoading(false);
-    }
-  }, [userLoading, userId]);
-
-  async function loadStats() {
+  const loadStats = useCallback(async () => {
     if (!userId) {
       console.warn('[Stats] Cannot load stats - no userId');
       setLoading(false);
@@ -94,7 +83,18 @@ export default function StatsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId, supabase]);
+
+  // Load stats once UserContext is ready
+  useEffect(() => {
+    if (!userLoading && userId) {
+      console.log('[Stats] UserContext ready, loading stats for:', userId.substring(0, 12));
+      loadStats();
+    } else if (!userLoading && !userId) {
+      console.warn('[Stats] UserContext ready but no userId');
+      setLoading(false);
+    }
+  }, [userLoading, userId, loadStats]);
 
   function getStreakEmoji(streak: number): string {
     if (streak === 0) return '💤';
