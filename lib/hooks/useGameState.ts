@@ -75,7 +75,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
   // Add new words to vortex periodically - fair distribution with smart filtering
   // Only runs during Phase 1
   useEffect(() => {
-    if (!puzzle || gameState.isComplete || gameState.isPaused || gameState.phase === 2 || gameState.showPhase1CompleteDialog) return;
+    if (!puzzle || gameState.isComplete || gameState.isPaused || gameState.phase === 2 || gameState.showPhase1CompleteDialog || speed === 0) return;
 
     const interval = setInterval(() => {
       const now = Date.now();
