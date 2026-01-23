@@ -194,6 +194,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setLoading(false);
           }
         } catch (error) {
+          // Handle AbortError gracefully - don't retry, just exit cleanly
+          if (error instanceof Error && (error.message?.includes('aborted') || error.name === 'AbortError')) {
+            console.warn('[UserContext] Initialization aborted (likely React remount or unmount) - exiting gracefully');
+            if (isMounted) {
+              setLoading(false);
+            }
+            return;
+          }
+
           console.error('Error initializing user:', error);
 
           // Check if component was unmounted during error

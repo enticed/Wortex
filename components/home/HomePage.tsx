@@ -1,6 +1,7 @@
 'use client';
 
 import { useUser } from '@/lib/contexts/UserContext';
+import AppLayout from '@/components/layout/AppLayout';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -42,7 +43,8 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-2.5rem)] bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-950 dark:to-indigo-950 flex items-center justify-center p-4">
+    <AppLayout>
+      <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-950 dark:to-indigo-950 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full space-y-8">
         {/* Hero Section */}
         <div className="text-center space-y-4">
@@ -155,5 +157,6 @@ export default function HomePage() {
         {/* You can add announcements here later */}
       </div>
     </div>
+    </AppLayout>
   );
 }
