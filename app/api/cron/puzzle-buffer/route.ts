@@ -13,12 +13,15 @@ export const maxDuration = 300; // 5 minutes max for puzzle generation
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret (optional security measure)
+    // Verify cron secret ONLY if an authorization header is provided (manual triggers)
+    // Vercel's automated cron jobs don't send the CRON_SECRET header, so we only
+    // enforce authentication when someone is manually calling the endpoint
     const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (authHeader) {
+      const cronSecret = process.env.CRON_SECRET;
+      if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
     }
 
     // Initialize Supabase client
