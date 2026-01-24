@@ -116,7 +116,7 @@ export default function HomePage() {
         {/* Play Button - Compact */}
         <div className="text-center">
           <Link
-            href="/play"
+            href="/pre-game"
             className="inline-block px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white text-lg font-bold rounded-xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
           >
             Play Today&apos;s Puzzle
