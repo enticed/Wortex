@@ -34,11 +34,10 @@ export async function GET(request: NextRequest) {
 
       // Create session for anonymous user
       const token = await createSession(anonymousId, true);
-      await setSessionCookie(token);
 
       console.log('[SessionAPI] Created anonymous user:', anonymousId.substring(0, 12));
 
-      // Return the newly created anonymous user
+      // Return the newly created anonymous user with cookie
       const response = NextResponse.json({
         user: {
           id: anonymousId,
@@ -50,8 +49,8 @@ export async function GET(request: NextRequest) {
         }
       });
 
-      // Set cookie in response
-      response.cookies.set('session', token, {
+      // Set cookie in response (use correct cookie name)
+      response.cookies.set('wortex-session', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',

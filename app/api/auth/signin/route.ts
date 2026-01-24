@@ -64,13 +64,23 @@ export async function POST(request: Request) {
 
     // Create session
     const sessionToken = await createSession(userData.id, false, userData.email || undefined);
-    await setSessionCookie(sessionToken);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       userId: userData.id,
       message: 'Signed in successfully',
     });
+
+    // Set cookie in response
+    response.cookies.set('wortex-session', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: '/',
+    });
+
+    return response;
 
   } catch (error: any) {
     console.error('Error in signin route:', error);
