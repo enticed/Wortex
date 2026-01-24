@@ -50,36 +50,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
         credentials: 'include', // Include cookies
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        // No session or error - middleware should have created anonymous user
-        console.log('[UserContext] No session found, waiting for middleware...');
-        // Retry once after a delay to let middleware create the session
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const retryResponse = await fetch('/api/auth/session', {
-          credentials: 'include',
-        });
-
-        if (!retryResponse.ok) {
-          console.warn('[UserContext] Still no session after retry');
-          setLoading(false);
-          return;
-        }
-
-        const retryData = await retryResponse.json();
-        if (retryData.user) {
-          setUserData(retryData.user);
-          setUserId(retryData.user.id);
-          await loadUserDataFromDb(retryData.user.id);
-        }
+        console.error('[UserContext] Session API error:', data);
+        setLoading(false);
         return;
       }
 
-      const data = await response.json();
       if (data.user) {
         console.log('[UserContext] User loaded from session:', data.user.id.substring(0, 12));
         setUserData(data.user);
         setUserId(data.user.id);
         await loadUserDataFromDb(data.user.id);
+      } else {
+        console.warn('[UserContext] No user in response:', data);
       }
     } catch (error) {
       console.error('[UserContext] Error loading user from session:', error);
