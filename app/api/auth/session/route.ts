@@ -26,8 +26,13 @@ export async function GET(request: NextRequest) {
 
       if (insertError) {
         console.error('[SessionAPI] Failed to create anonymous user:', insertError);
+        console.error('[SessionAPI] Error details:', JSON.stringify(insertError, null, 2));
         return NextResponse.json(
-          { error: 'Failed to create session' },
+          {
+            error: 'Failed to create session',
+            details: insertError.message,
+            code: insertError.code
+          },
           { status: 500 }
         );
       }
