@@ -100,8 +100,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   // Initialize on mount
   useEffect(() => {
-    // Clear any old Supabase Auth sessions from localStorage
-    if (typeof window !== 'undefined') {
+    // Clear any old Supabase Auth sessions from localStorage (only once per browser session)
+    if (typeof window !== 'undefined' && !sessionStorage.getItem('auth_cleaned')) {
       const keys = Object.keys(localStorage);
       keys.forEach(key => {
         if (key.startsWith('sb-')) {
@@ -109,6 +109,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem(key);
         }
       });
+      sessionStorage.setItem('auth_cleaned', 'true');
     }
 
     loadUserFromSession();
