@@ -33,9 +33,10 @@ export async function GET(request: NextRequest) {
       }
 
       // Create session for anonymous user
+      console.log('[SessionAPI] Creating session token for:', anonymousId.substring(0, 12));
       const token = await createSession(anonymousId, true);
-
-      console.log('[SessionAPI] Created anonymous user:', anonymousId.substring(0, 12));
+      console.log('[SessionAPI] Session token created, length:', token.length);
+      console.log('[SessionAPI] Token preview:', token.substring(0, 50) + '...');
 
       // Return the newly created anonymous user with cookie
       const response = NextResponse.json({
@@ -50,6 +51,10 @@ export async function GET(request: NextRequest) {
       });
 
       // Set cookie in response (use correct cookie name)
+      console.log('[SessionAPI] Setting wortex-session cookie');
+      console.log('[SessionAPI] Environment:', process.env.NODE_ENV);
+      console.log('[SessionAPI] Secure flag:', process.env.NODE_ENV === 'production');
+
       response.cookies.set('wortex-session', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -58,6 +63,7 @@ export async function GET(request: NextRequest) {
         path: '/',
       });
 
+      console.log('[SessionAPI] Cookie set, returning response');
       return response;
     }
 
