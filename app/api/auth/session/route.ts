@@ -1,17 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionFromRequest } from '@/lib/auth/session';
+import { getSessionFromRequest, createSession, setSessionCookie } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/client-server';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: NextRequest) {
   try {
     // Get session from cookie
-    const session = await getSessionFromRequest(request);
+    let session = await getSessionFromRequest(request);
 
+    // If no session, create an anonymous user
     if (!session) {
-      return NextResponse.json(
-        { error: 'No session found' },
-        { status: 401 }
-      );
+      console.log('[SessionAPI] No session found, creating anonymous user...');
+
+      const anonymousId = uuidv4();
+      const supabase = createClient();
+
+      // Create anonymous user in database
+      const { error: insertError } = await (supabase.from('users') as any)
+        .insert([{
+          id: anonymousId,
+          display_name: `Anon-${anonymousId.slice(0, 8)}`,
+          is_admin: false,
+          is_anonymous: true,
+        }]);
+
+      if (insertError) {
+        console.error('[SessionAPI] Failed to create anonymous user:', insertError);
+        return NextResponse.json(
+          { error: 'Failed to create session' },
+          { status: 500 }
+        );
+      }
+
+      // Create session for anonymous user
+      const token = await createSession(anonymousId, true);
+      await setSessionCookie(token);
+
+      console.log('[SessionAPI] Created anonymous user:', anonymousId.substring(0, 12));
+
+      // Return the newly created anonymous user
+      const response = NextResponse.json({
+        user: {
+          id: anonymousId,
+          email: null,
+          username: `Anon-${anonymousId.slice(0, 8)}`,
+          isAdmin: false,
+          createdAt: new Date().toISOString(),
+          isAnonymous: true
+        }
+      });
+
+      // Set cookie in response
+      response.cookies.set('session', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+        path: '/',
+      });
+
+      return response;
     }
 
     // Get user data from database
