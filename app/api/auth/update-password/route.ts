@@ -43,8 +43,7 @@ export async function POST(request: Request) {
 
     // Update password in database
     const supabase = createClient();
-    const { error } = await supabase
-      .from('users')
+    const { error } = await (supabase.from('users') as any)
       .update({
         password_hash: passwordHash,
         password_changed_at: new Date().toISOString(),
