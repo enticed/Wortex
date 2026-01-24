@@ -27,7 +27,7 @@ function getStreakMessage(streak: number): string {
 }
 
 export default function HomePage() {
-  const { user, stats, loading } = useUser();
+  const { user, userData, stats, loading } = useUser();
   const [currentDate, setCurrentDate] = useState('');
 
   useEffect(() => {
@@ -57,12 +57,12 @@ export default function HomePage() {
         </div>
 
         {/* User Stats Card */}
-        {!loading && user && stats && (
+        {!loading && userData && stats && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 space-y-6">
             {/* Welcome Message */}
             <div className="text-center">
               <p className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-                Welcome back{user.display_name ? `, ${user.display_name}` : ''}!
+                Welcome back{userData.username ? `, ${userData.username}` : ''}!
               </p>
             </div>
 
@@ -107,7 +107,7 @@ export default function HomePage() {
         )}
 
         {/* Anonymous User Message */}
-        {!loading && (!user || user.is_anonymous) && (
+        {!loading && (!userData || userData.isAnonymous) && (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 text-center space-y-4">
             <div className="text-5xl">👋</div>
             <p className="text-xl text-gray-700 dark:text-gray-300">

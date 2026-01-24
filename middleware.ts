@@ -1,5 +1,7 @@
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { getSessionFromRequest, createSession, setSessionCookieInResponse } from '@/lib/auth/session';
+import { createClient } from '@/lib/supabase/client-server';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -8,43 +10,35 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value)
-          );
-          response = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  // This will refresh the session if needed and update cookies
-  // Handle errors gracefully to avoid breaking the page
   try {
-    const { error } = await supabase.auth.getUser();
+    // Check if user has a valid session
+    const session = await getSessionFromRequest(request);
 
-    // If there's an auth error, clear the corrupted cookies
-    if (error) {
-      console.warn('[Middleware] Auth error, clearing cookies:', error.message);
-      // Clear all auth-related cookies
-      request.cookies.getAll().forEach(cookie => {
-        if (cookie.name.includes('sb-') || cookie.name.includes('auth')) {
-          response.cookies.delete(cookie.name);
-        }
-      });
+    // If no session or session is invalid, create an anonymous user
+    if (!session) {
+      // Create anonymous user in database
+      const anonymousId = uuidv4();
+      const supabase = createClient();
+
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([{
+          id: anonymousId,
+          display_name: `Anon-${anonymousId.slice(0, 8)}`,
+          is_admin: false,
+          is_anonymous: true,
+        }] as any)
+
+      if (insertError) {
+        console.error('[Middleware] Failed to create anonymous user:', insertError);
+        return response; // Continue without blocking
+      }
+
+      // Create session for anonymous user
+      const token = await createSession(anonymousId, true);
+      setSessionCookieInResponse(response, token);
+
+      console.log('[Middleware] Created anonymous user:', anonymousId);
     }
   } catch (err) {
     console.error('[Middleware] Unexpected error:', err);

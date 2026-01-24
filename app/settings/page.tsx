@@ -8,7 +8,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
 export default function SettingsPage() {
-  const { user, userId } = useUser();
+  const { user, userData, userId } = useUser();
   const router = useRouter();
   const supabase = createClient() as SupabaseClient<Database>;
 
@@ -24,17 +24,17 @@ export default function SettingsPage() {
 
   // Initialize form with user data
   useEffect(() => {
-    if (user) {
-      setDisplayName(user.display_name || '');
+    if (userData) {
+      setDisplayName(userData.username || '');
     }
-  }, [user]);
+  }, [userData]);
 
   // Redirect anonymous users
   useEffect(() => {
-    if (user && user.is_anonymous) {
+    if (userData && userData.isAnonymous) {
       router.push('/');
     }
-  }, [user, router]);
+  }, [userData, router]);
 
   const handleUpdateProfile = async () => {
     if (!userId) return;
@@ -88,22 +88,19 @@ export default function SettingsPage() {
     try {
       console.log('[Settings] Updating password...');
 
-      // Use client-side Supabase to update password with timeout
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Password update timeout after 30 seconds')), 30000)
-      );
-
-      const updatePromise = supabase.auth.updateUser({
-        password: newPassword,
+      const response = await fetch('/api/auth/update-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies
+        body: JSON.stringify({ newPassword }),
       });
 
-      const { data, error: updateError } = await Promise.race([updatePromise, timeoutPromise]) as any;
+      const data = await response.json();
 
-      console.log('[Settings] Password update result:', { data, error: updateError });
-
-      if (updateError) {
-        console.error('[Settings] Password update error:', updateError);
-        setError(updateError.message || 'Failed to update password');
+      if (!response.ok) {
+        setError(data.error || 'Failed to update password');
         setLoading(false);
         return;
       }
@@ -124,7 +121,7 @@ export default function SettingsPage() {
   };
 
   // Show loading while checking auth
-  if (!user) {
+  if (!userData) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-10">
         <div className="max-w-4xl mx-auto p-8">
@@ -135,7 +132,7 @@ export default function SettingsPage() {
   }
 
   // Redirect message for anonymous users
-  if (user.is_anonymous) {
+  if (userData.isAnonymous) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-10">
         <div className="max-w-4xl mx-auto p-8">
@@ -188,7 +185,7 @@ export default function SettingsPage() {
               </label>
               <input
                 type="email"
-                value={user.email || ''}
+                value={userData.email || ''}
                 disabled
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
               />
@@ -320,19 +317,13 @@ export default function SettingsPage() {
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Account Created:</span>
               <span className="text-gray-900 dark:text-gray-100">
-                {new Date(user.created_at).toLocaleDateString()}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Last Login:</span>
-              <span className="text-gray-900 dark:text-gray-100">
-                {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'N/A'}
+                {new Date(userData.createdAt).toLocaleDateString()}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Account Type:</span>
               <span className="text-gray-900 dark:text-gray-100">
-                {user.is_anonymous ? 'Anonymous' : 'Authenticated'}
+                {userData.isAnonymous ? 'Anonymous' : 'Authenticated'}
               </span>
             </div>
           </div>

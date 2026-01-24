@@ -4,8 +4,9 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { updatePassword } from '@/lib/supabase/auth';
+import { getSession } from '@/lib/auth/session';
+import { hashPassword } from '@/lib/auth/password';
+import { createClient } from '@/lib/supabase/client-server';
 
 export async function POST(request: Request) {
   try {
@@ -27,25 +28,34 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createClient();
+    // Get session
+    const session = await getSession();
 
-    // Verify user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session?.user) {
+    if (!session) {
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
       );
     }
 
-    // Update password
-    const result = await updatePassword(supabase, newPassword);
+    // Hash the new password
+    const passwordHash = await hashPassword(newPassword);
 
-    if (!result.success) {
+    // Update password in database
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('users')
+      .update({
+        password_hash: passwordHash,
+        password_changed_at: new Date().toISOString(),
+      })
+      .eq('id', session.userId);
+
+    if (error) {
+      console.error('Error updating password:', error);
       return NextResponse.json(
-        { error: result.error },
-        { status: 400 }
+        { error: 'Failed to update password' },
+        { status: 500 }
       );
     }
 

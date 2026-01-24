@@ -14,7 +14,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderProps) {
-  const { user, loading } = useUser();
+  const { user, userData, loading } = useUser();
   const router = useRouter();
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -38,16 +38,32 @@ export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderPr
   const handleSignOut = async () => {
     try {
       console.log('[Header] Signing out...');
-      const supabase = createClient();
-      const { error } = await supabase.auth.signOut();
 
-      if (error) {
-        console.error('[Header] Sign out error:', error);
-        alert('Failed to sign out: ' + error.message);
+      // Call new session-based signout API
+      const response = await fetch('/api/auth/signout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        console.error('[Header] Sign out error:', data.error);
+        alert('Failed to sign out: ' + data.error);
         return;
       }
 
-      console.log('[Header] Sign out successful, reloading page...');
+      console.log('[Header] Sign out successful');
+
+      // Clear any Supabase Auth sessions from localStorage
+      if (typeof window !== 'undefined') {
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+
       // Reload page to reset auth state and create new anonymous session
       window.location.reload();
     } catch (error) {
@@ -69,8 +85,8 @@ export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderPr
   // Show loading state while initializing, then determine display name
   const displayName = loading
     ? '...'
-    : user?.display_name || (user?.is_anonymous ? 'Anonymous' : user?.email?.split('@')[0] || 'Anonymous');
-  const isAnonymous = user?.is_anonymous ?? true;
+    : userData?.username || 'Anonymous';
+  const isAnonymous = userData?.isAnonymous ?? true;
 
   return (
     <>

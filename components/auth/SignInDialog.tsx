@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 
 interface SignInDialogProps {
   isOpen: boolean;
@@ -25,44 +24,31 @@ export default function SignInDialog({ isOpen, onClose, onSuccess, onSwitchToSig
     setLoading(true);
 
     try {
-      console.log('[SignIn] Starting client-side sign in for:', email);
+      console.log('[SignIn] Signing in:', email);
 
-      const supabase = createClient();
-
-      // Sign in using client-side Supabase (this will handle localStorage properly)
-      // Add timeout to prevent infinite hang
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Sign-in timeout after 10 seconds')), 10000)
-      );
-
-      const signInPromise = supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies
+        body: JSON.stringify({ email, password }),
       });
 
-      const { data, error: authError } = await Promise.race([signInPromise, timeoutPromise]) as any;
+      const data = await response.json();
 
-      if (authError) {
-        console.error('[SignIn] Auth error:', authError);
-        setError(authError.message);
+      if (!response.ok) {
+        setError(data.error || 'Failed to sign in');
         setLoading(false);
         return;
       }
 
-      if (!data.user) {
-        setError('Failed to sign in');
-        setLoading(false);
-        return;
-      }
+      console.log('[SignIn] Sign in successful');
 
-      console.log('[SignIn] Sign in successful, user ID:', data.user.id);
-
-      // Success - UserContext's onAuthStateChange will handle the rest
+      // Success - call onSuccess to refresh user context
       setLoading(false);
       onSuccess();
       handleClose();
-
-      console.log('[SignIn] Sign-in complete, waiting for UserContext to update via onAuthStateChange...');
 
     } catch (err: any) {
       console.error('[SignIn] Unexpected error:', err);

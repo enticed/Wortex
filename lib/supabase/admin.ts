@@ -1,9 +1,10 @@
 /**
  * Admin authentication utilities
+ * Uses session-based auth with HTTP-only cookies
  */
 
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { getSession } from '@/lib/auth/session';
+import { createClient } from '@/lib/supabase/client-server';
 
 export interface AdminUser {
   id: string;
@@ -17,48 +18,38 @@ export interface AdminUser {
  * Returns the user if admin, null otherwise
  */
 export async function requireAdmin(): Promise<AdminUser | null> {
-  const cookieStore = await cookies();
+  // Get session from cookie
+  const session = await getSession();
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Called from Server Component, ignore
-          }
-        },
-      },
-    }
-  );
-
-  // Get current user (more secure than getSession)
-  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  if (!session) {
     return null;
   }
 
-  // Check if user is admin
+  // Get user from database and check if admin
+  const supabase = createClient();
   const { data: user, error } = await supabase
     .from('users')
     .select('id, display_name, is_admin, is_anonymous')
-    .eq('id', authUser.id)
+    .eq('id', session.userId)
     .single();
 
-  if (error || !user || !user.is_admin) {
+  if (error || !user) {
     return null;
   }
 
-  return user as AdminUser;
+  // Type assertion for user data
+  const userData = user as {
+    id: string;
+    display_name: string | null;
+    is_admin: boolean;
+    is_anonymous: boolean | null;
+  };
+
+  if (!userData.is_admin) {
+    return null;
+  }
+
+  return userData;
 }
 
 /**

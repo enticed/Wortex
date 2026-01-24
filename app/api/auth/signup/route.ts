@@ -4,8 +4,10 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { signUpWithEmail } from '@/lib/supabase/auth';
+import { createClient } from '@/lib/supabase/client-server';
+import { hashPassword } from '@/lib/auth/password';
+import { createSession, setSessionCookie } from '@/lib/auth/session';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: Request) {
   try {
@@ -36,24 +38,52 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createClient();
 
-    // Sign out any existing anonymous session first
-    await supabase.auth.signOut();
+    // Check if email already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email.toLowerCase())
+      .single();
 
-    // Create new account
-    const result = await signUpWithEmail(supabase, email, password, displayName);
-
-    if (!result.success) {
+    if (existingUser) {
       return NextResponse.json(
-        { error: result.error },
+        { error: 'Email already registered' },
         { status: 400 }
       );
     }
 
+    // Hash password
+    const passwordHash = await hashPassword(password);
+
+    // Create user
+    const userId = uuidv4();
+    const { error: insertError } = await supabase
+      .from('users')
+      .insert([{
+        id: userId,
+        email: email.toLowerCase(),
+        password_hash: passwordHash,
+        display_name: displayName || email.split('@')[0],
+        is_anonymous: false,
+      }] as any);
+
+    if (insertError) {
+      console.error('Error creating user:', insertError);
+      return NextResponse.json(
+        { error: 'Failed to create account' },
+        { status: 500 }
+      );
+    }
+
+    // Create session
+    const sessionToken = await createSession(userId, false, email.toLowerCase());
+    await setSessionCookie(sessionToken);
+
     return NextResponse.json({
       success: true,
-      userId: result.userId,
+      userId,
       message: 'Account created successfully',
     });
 

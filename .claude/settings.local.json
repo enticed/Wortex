@@ -50,7 +50,10 @@
       "Bash(node scripts/regenerate-gjavier-stats.mjs:*)",
       "Bash(node scripts/diagnose-user-sessions.mjs:*)",
       "Bash(node scripts/fix-all-orphaned-accounts.mjs:*)",
-      "Bash(node scripts/fix-harpynox-account.mjs:*)"
+      "Bash(node scripts/fix-harpynox-account.mjs:*)",
+      "Bash(.env.local)",
+      "Bash(node scripts/migrate-existing-account.mjs:*)",
+      "Bash(node scripts/list-accounts.mjs:*)"
     ],
     "deny": [],
     "ask": []

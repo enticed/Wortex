@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 
 interface UpgradeAccountDialogProps {
   isOpen: boolean;
@@ -38,76 +37,32 @@ export default function UpgradeAccountDialog({ isOpen, onClose, onSuccess }: Upg
     setLoading(true);
 
     try {
-      console.log('[UpgradeAccount] Starting client-side account upgrade for:', email);
+      console.log('[UpgradeAccount] Upgrading account for:', email);
 
-      const supabase = createClient();
-
-      // Get current anonymous session
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        setError('No active session found. Please refresh and try again.');
-        setLoading(false);
-        return;
-      }
-
-      console.log('[UpgradeAccount] Current anonymous user ID:', session.user.id);
-
-      // Check if email is already in use
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (existingUser) {
-        setError('Email already in use');
-        setLoading(false);
-        return;
-      }
-
-      // Update auth user to convert anonymous → authenticated (client-side)
-      const { error: authError } = await supabase.auth.updateUser({
-        email,
-        password,
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies
+        body: JSON.stringify({
+          email,
+          password,
+          username: displayName.trim() || undefined,
+        }),
       });
 
-      if (authError) {
-        console.error('[UpgradeAccount] Auth error:', authError);
-        setError(authError.message);
-        setLoading(false);
-        return;
-      }
+      const data = await response.json();
 
-      console.log('[UpgradeAccount] Auth user updated successfully');
-
-      // Update user record in database
-      const updateData: any = {
-        email,
-        is_anonymous: false,
-        password_changed_at: new Date().toISOString(),
-        last_login: new Date().toISOString(),
-      };
-
-      if (displayName.trim()) {
-        updateData.display_name = displayName.trim();
-      }
-
-      // Type assertion needed due to Supabase type inference issue
-      const { error: dbError } = await (supabase.from('users') as any)
-        .update(updateData)
-        .eq('id', session.user.id);
-
-      if (dbError) {
-        console.error('[UpgradeAccount] Database error:', dbError);
-        setError('Failed to update user record');
+      if (!response.ok) {
+        setError(data.error || 'Failed to create account');
         setLoading(false);
         return;
       }
 
       console.log('[UpgradeAccount] Account upgrade complete');
 
-      // Success - UserContext's onAuthStateChange will handle the rest
+      // Success - call onSuccess to refresh user context
       setLoading(false);
       onSuccess();
       handleClose();
