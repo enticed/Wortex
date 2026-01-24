@@ -56,6 +56,19 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
   const gameStartTime = useRef<number>(Date.now());
   const dragOverlayRef = useRef<{ x: number; y: number } | null>(null); // Track drag position
 
+  // State to restore final results from sessionStorage
+  const [savedResults, setSavedResults] = useState<{
+    phase1Score: number;
+    phase2Score: number;
+    finalScore: number;
+    bonusCorrect: boolean | null;
+    totalWordsSeen: number;
+    totalUniqueWords: number;
+    reorderMoves: number;
+    hintsUsed: number;
+    puzzleId: string;
+  } | null>(null);
+
   // Configure sensors for both mouse and touch input
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
@@ -71,6 +84,27 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
   });
 
   const sensors = useSensors(mouseSensor, touchSensor);
+
+  // Check sessionStorage for saved final results on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem('wortex-final-results');
+    if (saved) {
+      try {
+        const results = JSON.parse(saved);
+        // Only restore if it's for the current puzzle
+        if (results.puzzleId === puzzle.id) {
+          console.log('[GameBoard] Restoring final results from sessionStorage');
+          setSavedResults(results);
+        } else {
+          console.log('[GameBoard] Saved results are for a different puzzle, clearing');
+          sessionStorage.removeItem('wortex-final-results');
+        }
+      } catch (error) {
+        console.error('[GameBoard] Error parsing saved results:', error);
+        sessionStorage.removeItem('wortex-final-results');
+      }
+    }
+  }, [puzzle.id]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const wordId = event.active.id as string;
@@ -313,6 +347,21 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           } else {
             console.log('[GameBoard] Score submitted successfully');
 
+            // Save final results to sessionStorage so they persist when navigating away
+            const resultsToSave = {
+              phase1Score: gameState.score || 0,
+              phase2Score: gameState.phase2Score || 0,
+              finalScore: gameState.finalScore || 0,
+              bonusCorrect: gameState.bonusCorrect,
+              totalWordsSeen: gameState.totalWordsSeen,
+              totalUniqueWords: puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length,
+              reorderMoves: gameState.reorderMoves,
+              hintsUsed: gameState.hintsUsed,
+              puzzleId: puzzle.id,
+            };
+            sessionStorage.setItem('wortex-final-results', JSON.stringify(resultsToSave));
+            console.log('[GameBoard] Final results saved to sessionStorage');
+
             // Update streak
             // @ts-expect-error - RPC function types not properly inferred in client context
             await supabase.rpc('update_user_streak', {
@@ -380,7 +429,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
     >
       <div className="h-[calc(100dvh-2.5rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
         {/* Top Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 20%, Hidden during bonus round and final results */}
-        {!gameState.isComplete && !(gameState.phase === 2 && gameState.bonusAnswered) && (
+        {!gameState.isComplete && !(gameState.phase === 2 && gameState.bonusAnswered) && !savedResults && (
           <div className={`border-b-2 border-gray-300 dark:border-gray-700 bg-purple-50 dark:bg-purple-950 transition-all duration-500 ${
             gameState.phase === 2 ? 'h-[20%] p-1' : 'h-[15%] p-1.5'
           }`}>
@@ -402,7 +451,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
         {/* Middle Area - Mystery Quote - Phase 1: 35% (40% during bonus), Phase 2: 80%, Final Results: 40% */}
         <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
-          gameState.bonusAnswered ? 'h-[40%]' :
+          gameState.bonusAnswered || savedResults ? 'h-[40%]' :
           gameState.isComplete ? 'h-[40%]' :
           gameState.phase === 2 ? 'h-[80%]' : 'h-[35%]'
         }`}>
@@ -415,7 +464,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
             bgColor="bg-blue-50 dark:bg-blue-950"
             borderColor="border-blue-300 dark:border-blue-700"
             isAutoAssembly={false}
-            isComplete={isTargetComplete}
+            isComplete={isTargetComplete || !!savedResults}
             completedText={puzzle.targetPhrase.text}
             onReorder={gameState.phase === 2 ? reorderWords : undefined}
             dropIndicatorIndex={dropIndicatorIndex}
@@ -433,14 +482,14 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
             totalWordsSeen={gameState.totalWordsSeen}
             totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
             speed={gameState.speed}
-            showFinalResults={gameState.phase === 2 && gameState.bonusAnswered}
-            bonusAnswer={gameState.bonusAnswered ? puzzle.bonusQuestion.options.find(opt => opt.id === puzzle.bonusQuestion.correctAnswerId) : undefined}
+            showFinalResults={(gameState.phase === 2 && gameState.bonusAnswered) || !!savedResults}
+            bonusAnswer={(gameState.bonusAnswered || savedResults) ? puzzle.bonusQuestion.options.find(opt => opt.id === puzzle.bonusQuestion.correctAnswerId) : undefined}
             draggedWord={gameState.phase === 2 && draggedWordText ? draggedWordText : undefined}
           />
         </div>
 
         {/* Bottom Area - Vortex (Phase 1), Bonus Round, or Final Results */}
-        {gameState.phase === 1 && !gameState.bonusAnswered && (
+        {gameState.phase === 1 && !gameState.bonusAnswered && !savedResults && (
           <div className={`relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 ${gameState.isComplete ? 'flex-1' : 'h-[50%]'}`}>
             {gameState.isComplete ? (
               // Show bonus round in vortex area
@@ -493,7 +542,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
         )}
 
         {/* Phase 2 Complete - Show bonus/results in bottom area */}
-        {gameState.phase === 2 && gameState.isComplete && allowBonusRound && !gameState.bonusAnswered && (
+        {gameState.phase === 2 && gameState.isComplete && allowBonusRound && !gameState.bonusAnswered && !savedResults && (
           <div className="flex-1 relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950">
             <div className="h-full flex flex-col">
               <BonusRound
@@ -507,20 +556,23 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           </div>
         )}
 
-        {/* Final Results Section - Full-width bottom 60% when bonus is answered */}
-        {gameState.bonusAnswered && (
+        {/* Final Results Section - Full-width bottom 60% when bonus is answered OR when saved results exist */}
+        {(gameState.bonusAnswered || savedResults) && (
           <div className="h-[60%] bg-gray-100 dark:bg-gray-900">
             <FinalResults
-              phase1Score={gameState.score || 0}
-              phase2Score={gameState.phase2Score || 0}
-              finalScore={gameState.finalScore || 0}
-              bonusCorrect={gameState.bonusCorrect}
-              onPlayAgain={() => window.location.reload()}
-              totalWordsSeen={gameState.totalWordsSeen}
-              totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
+              phase1Score={savedResults?.phase1Score ?? gameState.score ?? 0}
+              phase2Score={savedResults?.phase2Score ?? gameState.phase2Score ?? 0}
+              finalScore={savedResults?.finalScore ?? gameState.finalScore ?? 0}
+              bonusCorrect={savedResults?.bonusCorrect ?? gameState.bonusCorrect}
+              onPlayAgain={() => {
+                sessionStorage.removeItem('wortex-final-results');
+                window.location.reload();
+              }}
+              totalWordsSeen={savedResults?.totalWordsSeen ?? gameState.totalWordsSeen}
+              totalUniqueWords={savedResults?.totalUniqueWords ?? (puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length)}
               isArchiveMode={isArchiveMode}
-              reorderMoves={gameState.reorderMoves}
-              hintsUsed={gameState.hintsUsed}
+              reorderMoves={savedResults?.reorderMoves ?? gameState.reorderMoves}
+              hintsUsed={savedResults?.hintsUsed ?? gameState.hintsUsed}
             />
           </div>
         )}

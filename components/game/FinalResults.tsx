@@ -104,12 +104,13 @@ export default function FinalResults({
             >
               Leaderboard
             </Link>
-            <button
+            <Link
+              href="/"
               onClick={onPlayAgain}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm text-center"
             >
-              Play Again
-            </button>
+              Home
+            </Link>
           </div>
         </div>
       </div>

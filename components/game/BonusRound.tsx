@@ -73,7 +73,7 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
         </div>
 
         {/* Scrollable Content Area - Grows to fill available space with extra padding for button */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-24">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-32">
           {/* Question */}
           <div className="mb-3">
             <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2 mb-3">
@@ -129,8 +129,11 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
         </div>
 
         {/* Actions - Fixed at bottom with safe area */}
-        <div className="flex-shrink-0 px-3 pb-4 pt-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="flex gap-2">
+        <div
+          className="flex-shrink-0 px-3 pt-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+          style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}
+        >
+          <div className="flex gap-2 mb-2">
             {!hasAnswered && (
               <>
                 <button
