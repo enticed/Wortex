@@ -115,16 +115,19 @@ export async function generatePuzzle(
     'STRICT REQUIREMENTS:\n' +
     uniquenessConstraint +
     '1. Target phrase: ' + targetPhraseDesc + '\n' +
-    '   - CRITICAL: MUST be between 8-25 words total (count every single word)\n' +
+    '   - MANDATORY WORD COUNT: MUST be between 8-25 words total\n' +
+    '   - COUNT CAREFULLY: Split by spaces and count - if you get 7 or fewer words, CHOOSE A DIFFERENT QUOTE\n' +
     '   - Must be the exact, complete quote (no truncation)\n' +
     '   - PRESERVE ALL ORIGINAL PUNCTUATION: Include all commas, periods, exclamation marks, question marks, apostrophes, hyphens, semicolons, colons, dashes, and quotation marks from the original quote\n' +
     '   - The punctuation will be stripped during gameplay but must be preserved for the final reveal\n' +
-    '   - Examples with punctuation:\n' +
-    '     * "To be, or not to be—that is the question!" (10 words) ✓\n' +
-    '     * "Ask not what your country can do for you; ask what you can do for your country." (17 words) ✓\n' +
-    '     * "It\'s not the years, honey, it\'s the mileage." (8 words) ✓\n' +
-    '   - TOO SHORT: "I have a dream" (4 words) ✗\n' +
-    '   - Choose quotes with at least 8 words or use a complete sentence\n\n' +
+    '   - Examples with punctuation and word counts:\n' +
+    '     * "To be, or not to be—that is the question!" (10 words) ✓ ACCEPTABLE\n' +
+    '     * "Ask not what your country can do for you; ask what you can do for your country." (17 words) ✓ ACCEPTABLE\n' +
+    '     * "It\'s not the years, honey, it\'s the mileage." (8 words) ✓ ACCEPTABLE (exactly 8)\n' +
+    '     * "I have a dream" (4 words) ✗ REJECTED - TOO SHORT\n' +
+    '     * "The truth shall set you free" (6 words) ✗ REJECTED - TOO SHORT\n' +
+    '   - If a famous quote is too short, add context from surrounding sentences OR choose a longer quote\n' +
+    '   - VERIFY: Before returning, count words again. If 7 or fewer, start over with a different quote.\n\n' +
     '2. Difficulty: ' + calculatedDifficulty + '/5 - ' + difficultyDesc + '\n\n' +
     '3. Facsimile phrase: Create a semantically similar phrase that:\n' +
     '   - Maintains the core meaning of the original\n' +
@@ -253,7 +256,7 @@ export async function generatePuzzle(
   const facsimileWords = puzzle.facsimilePhrase.split(/\s+/).length;
 
   if (targetWords < 8 || targetWords > 25) {
-    throw new Error('Target phrase word count (' + targetWords + ') outside 8-25 range');
+    throw new Error('Target phrase word count (' + targetWords + ') outside 8-25 range. Quote: "' + puzzle.targetPhrase + '"');
   }
 
   const lengthDiff = Math.abs(targetWords - facsimileWords) / targetWords;
@@ -273,7 +276,7 @@ export async function generatePuzzleBatch(
   existingQuotes?: Set<string>
 ): Promise<Array<GeneratedPuzzle & { date: string }>> {
   const puzzles: Array<GeneratedPuzzle & { date: string }> = [];
-  const maxRetries = 5; // Increased retries for duplicate detection
+  const maxRetries = 10; // Increased retries for word count and duplicate detection
   const usedQuotes = new Set<string>(existingQuotes || []);
 
   for (let i = 0; i < count; i++) {
