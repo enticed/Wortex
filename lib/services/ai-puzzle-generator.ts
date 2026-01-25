@@ -117,9 +117,12 @@ export async function generatePuzzle(
     '1. Target phrase: ' + targetPhraseDesc + '\n' +
     '   - CRITICAL: MUST be between 8-25 words total (count every single word)\n' +
     '   - Must be the exact, complete quote (no truncation)\n' +
-    '   - Examples of valid lengths:\n' +
-    '     * "To be or not to be that is the question" (10 words) ✓\n' +
-    '     * "Ask not what your country can do for you" (9 words) ✓\n' +
+    '   - PRESERVE ALL ORIGINAL PUNCTUATION: Include all commas, periods, exclamation marks, question marks, apostrophes, hyphens, semicolons, colons, dashes, and quotation marks from the original quote\n' +
+    '   - The punctuation will be stripped during gameplay but must be preserved for the final reveal\n' +
+    '   - Examples with punctuation:\n' +
+    '     * "To be, or not to be—that is the question!" (10 words) ✓\n' +
+    '     * "Ask not what your country can do for you; ask what you can do for your country." (17 words) ✓\n' +
+    '     * "It\'s not the years, honey, it\'s the mileage." (8 words) ✓\n' +
     '   - TOO SHORT: "I have a dream" (4 words) ✗\n' +
     '   - Choose quotes with at least 8 words or use a complete sentence\n\n' +
     '2. Difficulty: ' + calculatedDifficulty + '/5 - ' + difficultyDesc + '\n\n' +
@@ -134,7 +137,7 @@ export async function generatePuzzle(
     bonusFieldDescription + '\n\n' +
     'Return ONLY valid JSON (no markdown, no code blocks) in this exact format:\n' +
     '{\n' +
-    '  "targetPhrase": "exact quote text here",\n' +
+    '  "targetPhrase": "exact quote with ALL original punctuation",\n' +
     '  "facsimilePhrase": "similar meaning phrase here",\n' +
     '  "source": "Full name of author/speaker",\n' +
     '  "sourceYear": year as number or null,\n' +
@@ -147,7 +150,8 @@ export async function generatePuzzle(
     '- Count words in targetPhrase by splitting on spaces - MUST be 8-25 words\n' +
     '- If your quote has fewer than 8 words, choose a different quote or add context\n' +
     '- bonusOptions array MUST have exactly 4 elements\n' +
-    '- correctAnswerIndex MUST be 0-3 (the index of the correct answer in bonusOptions)\n';
+    '- correctAnswerIndex MUST be 0-3 (the index of the correct answer in bonusOptions)\n' +
+    '- targetPhrase MUST include ALL original punctuation from the quote (commas, periods, apostrophes, etc.)\n';
 
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
