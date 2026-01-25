@@ -81,12 +81,14 @@ export default function PreGamePage() {
               </p>
             </div>
 
-            {/* Ad Placeholder - Ready for future monetization */}
+            {/* Ad Placeholder - Hidden until ready for monetization */}
+            {/* Uncomment this section when ready to add ads:
             <div className="bg-gray-100 dark:bg-gray-700/30 rounded-lg p-4 border-2 border-dashed border-gray-300 dark:border-gray-600">
               <p className="text-xs text-gray-500 dark:text-gray-400 text-center italic">
                 Ad space - Coming soon
               </p>
             </div>
+            */}
 
             {/* Continue Button */}
             <div className="pt-2">
@@ -95,16 +97,6 @@ export default function PreGamePage() {
                 className="block w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white text-lg font-bold rounded-xl shadow-lg text-center transform transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 Continue to Game
-              </Link>
-            </div>
-
-            {/* Skip Link */}
-            <div className="text-center">
-              <Link
-                href="/play"
-                className="text-xs text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-              >
-                Skip
               </Link>
             </div>
           </div>
