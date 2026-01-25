@@ -31,15 +31,40 @@ export default function HomePage() {
   const [currentDate, setCurrentDate] = useState('');
 
   useEffect(() => {
-    // Format date on client side to avoid hydration mismatch
-    const today = new Date();
-    const formatted = today.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    setCurrentDate(formatted);
+    // Function to update the date
+    const updateDate = () => {
+      const today = new Date();
+      const formatted = today.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      setCurrentDate(formatted);
+    };
+
+    // Set initial date
+    updateDate();
+
+    // Calculate milliseconds until midnight
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setHours(24, 0, 0, 0); // Set to midnight
+    const msUntilMidnight = tomorrow.getTime() - now.getTime();
+
+    // Set timeout to update at midnight
+    const midnightTimeout = setTimeout(() => {
+      updateDate();
+
+      // After first midnight update, check every hour for date changes
+      // (in case user's device was asleep at midnight)
+      const hourlyInterval = setInterval(updateDate, 60 * 60 * 1000); // Every hour
+
+      return () => clearInterval(hourlyInterval);
+    }, msUntilMidnight);
+
+    // Cleanup timeout on unmount
+    return () => clearTimeout(midnightTimeout);
   }, []);
 
   return (
