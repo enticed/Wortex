@@ -125,10 +125,23 @@ CREATE INDEX IF NOT EXISTS admin_log_action_idx ON admin_activity_log(action);
 -- Enable RLS on admin_activity_log
 ALTER TABLE admin_activity_log ENABLE ROW LEVEL SECURITY;
 
+-- Drop any existing policies first
+DROP POLICY IF EXISTS admin_log_admin_only ON admin_activity_log;
+
 -- Only admins can view and insert into admin_activity_log
+-- Note: This policy checks the users table which must have is_admin column
+-- The is_admin column should already exist from previous migrations
 CREATE POLICY admin_log_admin_only ON admin_activity_log
   FOR ALL
+  TO authenticated
   USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid()
+      AND users.is_admin = TRUE
+    )
+  )
+  WITH CHECK (
     EXISTS (
       SELECT 1 FROM users
       WHERE users.id = auth.uid()

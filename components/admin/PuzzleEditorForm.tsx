@@ -382,9 +382,8 @@ export default function PuzzleEditorForm({ puzzle, mode }: PuzzleEditorFormProps
                         <input
                           type="number"
                           value={option.year || ''}
-                          onChange={(e) => updateBonusOption(index, 'year', parseInt(e.target.value))}
-                          placeholder="Year"
-                          required
+                          onChange={(e) => updateBonusOption(index, 'year', e.target.value ? parseInt(e.target.value) : undefined)}
+                          placeholder="Year (optional)"
                           className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
                       </>

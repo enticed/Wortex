@@ -75,9 +75,6 @@ export async function generatePuzzle(
   const quoteSource = calculatedQuoteType === 'historical'
     ? 'historical quote from a famous person'
     : 'quote from classic literature or poetry';
-  const targetPhraseDesc = calculatedQuoteType === 'historical'
-    ? 'A famous historical quote'
-    : 'A memorable line from classic literature or poetry';
   const difficultyDesc = difficultyDescriptions[calculatedDifficulty as keyof typeof difficultyDescriptions];
 
   // Different bonus question format based on quote type
@@ -87,17 +84,14 @@ export async function generatePuzzle(
       '    {"person": "Plausible Wrong Person 1", "year": 1945},\n' +
       '    {"person": "Plausible Wrong Person 2", "year": 1960},\n' +
       '    {"person": "Plausible Wrong Person 3", "year": 1955}\n' +
-      '  ],'
+      '  ],\n' +
+      '  NOTE: For ancient figures (before year 1), use null for year: {"person": "Socrates", "year": null}'
     : '  "bonusOptions": [\n' +
       '    {"author": "Correct Author Name", "book": "Book Title"},\n' +
       '    {"author": "Plausible Wrong Author 1", "book": "Their Book Title"},\n' +
       '    {"author": "Plausible Wrong Author 2", "book": "Their Book Title"},\n' +
       '    {"author": "Plausible Wrong Author 3", "book": "Their Book Title"}\n' +
       '  ],';
-
-  const bonusFieldDescription = calculatedQuoteType === 'historical'
-    ? '   - Each option: {"person": "Name", "year": number}'
-    : '   - Each option: {"author": "Author Name", "book": "Book Title"}';
 
   // Build uniqueness constraint for prompt
   let uniquenessConstraint = '';
@@ -111,50 +105,53 @@ export async function generatePuzzle(
       '   - Ensure your quote is unique and has not been used before\n';
   }
 
-  const prompt = 'Generate a word puzzle based on a ' + quoteSource + '.\n\n' +
-    'STRICT REQUIREMENTS:\n' +
-    uniquenessConstraint +
-    '1. Target phrase: ' + targetPhraseDesc + '\n' +
-    '   - MANDATORY WORD COUNT: MUST be between 8-25 words total\n' +
-    '   - COUNT CAREFULLY: Split by spaces and count - if you get 7 or fewer words, CHOOSE A DIFFERENT QUOTE\n' +
-    '   - Must be the exact, complete quote (no truncation)\n' +
-    '   - PRESERVE ALL ORIGINAL PUNCTUATION: Include all commas, periods, exclamation marks, question marks, apostrophes, hyphens, semicolons, colons, dashes, and quotation marks from the original quote\n' +
-    '   - The punctuation will be stripped during gameplay but must be preserved for the final reveal\n' +
-    '   - Examples with punctuation and word counts:\n' +
-    '     * "To be, or not to be—that is the question!" (10 words) ✓ ACCEPTABLE\n' +
-    '     * "Ask not what your country can do for you; ask what you can do for your country." (17 words) ✓ ACCEPTABLE\n' +
-    '     * "It\'s not the years, honey, it\'s the mileage." (8 words) ✓ ACCEPTABLE (exactly 8)\n' +
-    '     * "I have a dream" (4 words) ✗ REJECTED - TOO SHORT\n' +
-    '     * "The truth shall set you free" (6 words) ✗ REJECTED - TOO SHORT\n' +
-    '   - If a famous quote is too short, add context from surrounding sentences OR choose a longer quote\n' +
-    '   - VERIFY: Before returning, count words again. If 7 or fewer, start over with a different quote.\n\n' +
-    '2. Difficulty: ' + calculatedDifficulty + '/5 - ' + difficultyDesc + '\n\n' +
-    '3. Facsimile phrase: Create a semantically similar phrase that:\n' +
-    '   - Maintains the core meaning of the original\n' +
-    '   - Uses different wording (a "spin-off" of the original)\n' +
-    '   - Has similar word count (within ±30% of target phrase length)\n\n' +
-    '4. Bonus question: "Who is the source of this quote?"\n' +
-    '   - MUST include exactly 4 multiple choice options\n' +
-    '   - One correct answer + 3 plausible distractors\n' +
-    '   - All options should be from the same era and context\n' +
-    bonusFieldDescription + '\n\n' +
-    'Return ONLY valid JSON (no markdown, no code blocks) in this exact format:\n' +
-    '{\n' +
-    '  "targetPhrase": "exact quote with ALL original punctuation",\n' +
-    '  "facsimilePhrase": "similar meaning phrase here",\n' +
-    '  "source": "Full name of author/speaker",\n' +
-    '  "sourceYear": year as number or null,\n' +
-    '  "theme": "brief theme description",\n' +
-    '  "tags": ["tag1", "tag2"],\n' +
-    bonusOptionsFormat + '\n' +
-    '  "correctAnswerIndex": 0\n' +
-    '}\n\n' +
-    'CRITICAL VALIDATION (your response will be rejected if these fail):\n' +
-    '- Count words in targetPhrase by splitting on spaces - MUST be 8-25 words\n' +
-    '- If your quote has fewer than 8 words, choose a different quote or add context\n' +
-    '- bonusOptions array MUST have exactly 4 elements\n' +
-    '- correctAnswerIndex MUST be 0-3 (the index of the correct answer in bonusOptions)\n' +
-    '- targetPhrase MUST include ALL original punctuation from the quote (commas, periods, apostrophes, etc.)\n';
+  // Build a list of example quotes that meet the word count requirement
+  const exampleQuotes = calculatedQuoteType === 'historical'
+    ? [
+        '"The only thing we have to fear is fear itself." - Franklin D. Roosevelt (10 words)',
+        '"Ask not what your country can do for you; ask what you can do for your country." - John F. Kennedy (17 words)',
+        '"In the end, we will remember not the words of our enemies, but the silence of our friends." - Martin Luther King Jr. (19 words)',
+        '"The only way to do great work is to love what you do." - Steve Jobs (13 words)',
+        '"That which does not kill us makes us stronger." - Friedrich Nietzsche (10 words)',
+      ]
+    : [
+        '"It was the best of times, it was the worst of times." - Charles Dickens (13 words)',
+        '"All happy families are alike; each unhappy family is unhappy in its own way." - Leo Tolstoy (15 words)',
+        '"It is a truth universally acknowledged that a single man in possession of a good fortune must be in want of a wife." - Jane Austen (24 words)',
+        '"To be, or not to be, that is the question." - William Shakespeare (10 words)',
+        '"The only way out of the labyrinth of suffering is to forgive." - John Green (13 words)',
+      ];
+
+  const prompt = `Generate a word puzzle for a game. The quote MUST have 6-28 words (split by spaces).
+
+${uniquenessConstraint}
+
+EXAMPLES OF VALID ${calculatedQuoteType} QUOTES (6-28 words):
+${exampleQuotes.join('\n')}
+
+TASK:
+- Difficulty: ${calculatedDifficulty}/5 (${difficultyDesc})
+- Quote type: ${quoteSource}
+- Word count: MUST be 6-28 words (count by splitting on spaces)
+
+CRITICAL: First think through your quote choice, then validate word count, then return JSON.
+
+Return in this exact format (no markdown):
+{
+  "thinking": "I'm considering the quote: [quote here]. Let me count: [word 1] [word 2] [word 3]... Total: X words. This is [valid/invalid] because [reason]. [If invalid, repeat with new quote until valid]",
+  "targetPhrase": "exact quote with ALL original punctuation",
+  "facsimilePhrase": "similar meaning phrase here",
+  "source": "Full name of author/speaker",
+  "sourceYear": year as number or null,
+  "theme": "brief theme description",
+  "tags": ["tag1", "tag2"],
+${bonusOptionsFormat}
+  "correctAnswerIndex": 0
+}
+
+The "thinking" field MUST show you counting words. DO NOT skip this step.
+REJECT quotes with 5 or fewer words (too short).
+REJECT quotes with 29+ words (too long for mobile UX).`;
 
   const message = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
@@ -193,6 +190,11 @@ export async function generatePuzzle(
     }
     cleanedText = cleanedText.trim();
     aiResponse = JSON.parse(cleanedText);
+
+    // Log the AI's thinking process if available
+    if (aiResponse.thinking) {
+      console.log('[AI Thinking]:', aiResponse.thinking);
+    }
   } catch (error) {
     console.error('Failed to parse AI response:', content.text);
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -255,8 +257,8 @@ export async function generatePuzzle(
   const targetWords = puzzle.targetPhrase.split(/\s+/).length;
   const facsimileWords = puzzle.facsimilePhrase.split(/\s+/).length;
 
-  if (targetWords < 8 || targetWords > 25) {
-    throw new Error('Target phrase word count (' + targetWords + ') outside 8-25 range. Quote: "' + puzzle.targetPhrase + '"');
+  if (targetWords < 6 || targetWords > 28) {
+    throw new Error('Target phrase word count (' + targetWords + ') outside 6-28 range. Quote: "' + puzzle.targetPhrase + '"');
   }
 
   const lengthDiff = Math.abs(targetWords - facsimileWords) / targetWords;
@@ -293,6 +295,14 @@ export async function generatePuzzleBatch(
         const normalizedQuote = puzzle.targetPhrase.toLowerCase().trim();
         if (usedQuotes.has(normalizedQuote)) {
           throw new Error(`Duplicate quote detected: "${puzzle.targetPhrase}"`);
+        }
+
+        // Check for similar quotes (same beginning - first 30 characters)
+        const quoteBeginning = normalizedQuote.substring(0, 30);
+        for (const existingQuote of usedQuotes) {
+          if (existingQuote.substring(0, 30) === quoteBeginning) {
+            throw new Error(`Similar quote detected (same beginning): "${puzzle.targetPhrase}" matches "${existingQuote}"`);
+          }
         }
 
         // Add to used quotes set to prevent duplicates within this batch

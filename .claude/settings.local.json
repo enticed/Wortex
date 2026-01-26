@@ -53,7 +53,9 @@
       "Bash(node scripts/fix-harpynox-account.mjs:*)",
       "Bash(.env.local)",
       "Bash(node scripts/migrate-existing-account.mjs:*)",
-      "Bash(node scripts/list-accounts.mjs:*)"
+      "Bash(node scripts/list-accounts.mjs:*)",
+      "Bash(node scripts/test-puzzle-buffer.mjs:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

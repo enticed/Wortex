@@ -93,15 +93,22 @@ export async function PATCH(
     const body = await request.json();
     const supabase = createClient();
 
-    // Validate update fields (only allow certain fields to be updated)
-    const allowedFields = ['user_tier', 'display_name', 'username', 'email'];
-    const updates: any = {};
+    // Build update object with proper typing
+    type UserUpdate = {
+      user_tier?: 'free' | 'premium' | 'admin';
+      display_name?: string | null;
+      username?: string | null;
+      email?: string | null;
+      is_admin?: boolean;
+    };
 
-    for (const field of allowedFields) {
-      if (field in body) {
-        updates[field] = body[field];
-      }
-    }
+    const updates: UserUpdate = {};
+
+    // Validate and add allowed fields
+    if ('user_tier' in body) updates.user_tier = body.user_tier;
+    if ('display_name' in body) updates.display_name = body.display_name;
+    if ('username' in body) updates.username = body.username;
+    if ('email' in body) updates.email = body.email;
 
     // Don't allow empty updates
     if (Object.keys(updates).length === 0) {
@@ -119,7 +126,7 @@ export async function PATCH(
     // Update user
     const { data: updatedUser, error } = await supabase
       .from('users')
-      .update(updates as any)
+      .update(updates)
       .eq('id', id)
       .select()
       .single();
