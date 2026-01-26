@@ -19,6 +19,8 @@ interface RecentGame {
   bonus_correct: boolean;
   time_taken_seconds: number;
   speed: number;
+  min_speed: number;
+  max_speed: number;
   created_at: string;
 }
 
@@ -56,6 +58,8 @@ export default function StatsPage() {
           bonus_correct,
           time_taken_seconds,
           speed,
+          min_speed,
+          max_speed,
           created_at,
           puzzles!inner (
             date
@@ -73,6 +77,8 @@ export default function StatsPage() {
           bonus_correct: game.bonus_correct,
           time_taken_seconds: game.time_taken_seconds,
           speed: game.speed,
+          min_speed: game.min_speed || game.speed,
+          max_speed: game.max_speed || game.speed,
           created_at: game.created_at,
         }));
         setRecentGames(formattedGames);

@@ -7,6 +7,8 @@ interface RecentGame {
   bonus_correct: boolean;
   time_taken_seconds: number;
   speed: number;
+  min_speed: number;
+  max_speed: number;
   created_at: string;
 }
 
@@ -108,7 +110,10 @@ export default function RecentGamesTable({ games, loading = false }: RecentGames
                 <td className="py-4 px-4">
                   <div className="text-right">
                     <span className="text-gray-600 dark:text-gray-400">
-                      {game.speed.toFixed(2)}x
+                      {game.min_speed === game.max_speed
+                        ? `${game.min_speed.toFixed(2)}x`
+                        : `${game.min_speed.toFixed(2)}-${game.max_speed.toFixed(2)}x`
+                      }
                     </span>
                   </div>
                 </td>

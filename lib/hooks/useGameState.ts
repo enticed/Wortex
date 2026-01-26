@@ -46,6 +46,8 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
     unnecessaryWordHintsUsed: 0,
     reorderMoves: 0,
     speed: speed,
+    minSpeed: speed,
+    maxSpeed: speed,
     activeHint: null,
     showCompletionAnimation: false,
     showPhase1CompleteDialog: false,
@@ -64,11 +66,13 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
     }
   }, [puzzle]);
 
-  // Update speed when it changes
+  // Update speed when it changes and track min/max
   useEffect(() => {
     setGameState((prev) => ({
       ...prev,
       speed: speed,
+      minSpeed: Math.min(prev.minSpeed, speed),
+      maxSpeed: Math.max(prev.maxSpeed, speed),
     }));
   }, [speed]);
 

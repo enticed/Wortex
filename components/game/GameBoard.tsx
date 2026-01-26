@@ -337,6 +337,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
               bonus_correct: gameState.bonusCorrect || false,
               time_taken_seconds: timeTakenSeconds,
               speed: gameState.speed,
+              min_speed: gameState.minSpeed,
+              max_speed: gameState.maxSpeed,
               first_play_of_day: firstPlayOfDay,
             }, {
               onConflict: 'user_id,puzzle_id'

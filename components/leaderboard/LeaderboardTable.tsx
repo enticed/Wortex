@@ -120,11 +120,14 @@ export default function LeaderboardTable({
                     )}
                   </div>
                 </td>
-                {showSpeed && 'speed' in entry && (
+                {showSpeed && 'min_speed' in entry && 'max_speed' in entry && (
                   <td className="py-4 px-4">
                     <div className="text-center">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {entry.speed.toFixed(2)}x
+                        {entry.min_speed === entry.max_speed
+                          ? `${entry.min_speed.toFixed(2)}x`
+                          : `${entry.min_speed.toFixed(2)}-${entry.max_speed.toFixed(2)}x`
+                        }
                       </span>
                     </div>
                   </td>

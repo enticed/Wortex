@@ -76,6 +76,8 @@ export interface GameState {
   unnecessaryWordHintsUsed: number; // Count of unnecessary word hints used
   reorderMoves: number; // Number of reordering moves made in Phase 2
   speed: number; // Vortex speed multiplier (0.25 - 2.0)
+  minSpeed: number; // Minimum speed used during the game
+  maxSpeed: number; // Maximum speed used during the game
   activeHint: { type: 'unnecessary' | 'correctString' | 'nextWord', wordIds: string[] } | null; // Currently active hint for highlighting
   showCompletionAnimation: boolean; // Brief animation when Phase 2 is completed
   showPhase1CompleteDialog: boolean; // Show confirmation dialog before transitioning to Phase 2
