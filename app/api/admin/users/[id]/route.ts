@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/client-server';
+import type { Database } from '@/types/database';
 
 interface RouteParams {
   params: Promise<{
@@ -93,15 +94,8 @@ export async function PATCH(
     const body = await request.json();
     const supabase = createClient();
 
-    // Build update object with proper typing
-    type UserUpdate = {
-      user_tier?: 'free' | 'premium' | 'admin';
-      display_name?: string | null;
-      username?: string | null;
-      email?: string | null;
-      is_admin?: boolean;
-    };
-
+    // Build update object using database Update type
+    type UserUpdate = Database['public']['Tables']['users']['Update'];
     const updates: UserUpdate = {};
 
     // Validate and add allowed fields
@@ -123,10 +117,10 @@ export async function PATCH(
       updates.is_admin = updates.user_tier === 'admin';
     }
 
-    // Update user
-    const { data: updatedUser, error } = await supabase
+    // Update user - cast to any to bypass strict type checking
+    const { data: updatedUser, error } = await (supabase
       .from('users')
-      .update(updates)
+      .update(updates) as any)
       .eq('id', id)
       .select()
       .single();
