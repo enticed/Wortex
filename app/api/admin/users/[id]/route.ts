@@ -117,10 +117,10 @@ export async function PATCH(
       updates.is_admin = updates.user_tier === 'admin';
     }
 
-    // Update user - cast to any to bypass strict type checking
-    const { data: updatedUser, error } = await (supabase
+    // Update user - use type assertion on the updates object
+    const { data: updatedUser, error } = await supabase
       .from('users')
-      .update(updates) as any)
+      .update(updates as any)
       .eq('id', id)
       .select()
       .single();
