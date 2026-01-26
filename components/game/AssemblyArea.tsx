@@ -250,9 +250,12 @@ export default function AssemblyArea({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          {title}
-        </h2>
+        {/* Title - Hide "Mystery Quote" when dragging in Phase 2 */}
+        {!(!isComplete && phase === 2 && !isAutoAssembly && draggedWord) && (
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            {title}
+          </h2>
+        )}
         {/* Center Counters Display */}
         <span className="flex-1 flex justify-center text-base font-bold flex items-center gap-1">
           {showFinalResults ? (
@@ -264,9 +267,9 @@ export default function AssemblyArea({
             // Complete but header hidden (e.g., hint phrase shown from start) - show nothing
             null
           ) : !isComplete && phase === 2 && !isAutoAssembly ? (
-            // Phase 2 target area: Show dragged word if dragging, otherwise show nothing
+            // Phase 2 target area: Show dragged word in gold box if dragging, otherwise show nothing
             draggedWord ? (
-              <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 font-semibold text-base">
+              <span className="px-3 py-1 rounded-lg bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-100 font-semibold text-base">
                 {draggedWord}
               </span>
             ) : null
@@ -413,8 +416,8 @@ export default function AssemblyArea({
                   <div className="relative w-1 h-12 flex items-center justify-center">
                     {dropIndicatorIndex === index && (
                       <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
-                        {/* Triangle arrow pointing down */}
-                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
+                        {/* Triangle arrow pointing down - Gold/amber color for better visibility */}
+                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-amber-500 dark:border-t-amber-400" />
                       </div>
                     )}
                   </div>
@@ -429,7 +432,7 @@ export default function AssemblyArea({
                     <div className="relative w-1 h-12 flex items-center justify-center">
                       {dropIndicatorIndex === index + 1 && (
                         <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
-                          <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
+                          <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-amber-500 dark:border-t-amber-400" />
                         </div>
                       )}
                     </div>
@@ -441,7 +444,7 @@ export default function AssemblyArea({
             <div className="relative w-1 h-12 flex items-center justify-center">
               {dropIndicatorIndex === sortedWords.length && (
                 <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
-                  <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-blue-500 dark:border-t-blue-400" />
+                  <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-amber-500 dark:border-t-amber-400" />
                 </div>
               )}
             </div>
