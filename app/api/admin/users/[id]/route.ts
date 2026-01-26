@@ -117,10 +117,11 @@ export async function PATCH(
       updates.is_admin = updates.user_tier === 'admin';
     }
 
-    // Update user - use type assertion on the updates object
+    // Update user
+    // @ts-ignore - Supabase type inference issue with Update type
     const { data: updatedUser, error } = await supabase
       .from('users')
-      .update(updates as any)
+      .update(updates)
       .eq('id', id)
       .select()
       .single();
