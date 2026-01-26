@@ -95,7 +95,7 @@ export async function PATCH(
 
     // Validate update fields (only allow certain fields to be updated)
     const allowedFields = ['user_tier', 'display_name', 'username', 'email'];
-    const updates: Record<string, any> = {};
+    const updates: any = {};
 
     for (const field of allowedFields) {
       if (field in body) {
@@ -119,7 +119,7 @@ export async function PATCH(
     // Update user
     const { data: updatedUser, error } = await supabase
       .from('users')
-      .update(updates)
+      .update(updates as any)
       .eq('id', id)
       .select()
       .single();
