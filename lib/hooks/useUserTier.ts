@@ -44,7 +44,7 @@ export function useUserTier() {
         }
 
         if (mounted) {
-          setTier(userData?.user_tier || 'free');
+          setTier((userData as any)?.user_tier || 'free');
           setLoading(false);
         }
       } catch (error) {

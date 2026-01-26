@@ -94,9 +94,8 @@ export async function PATCH(
     const body = await request.json();
     const supabase = createClient();
 
-    // Build update object using database Update type
-    type UserUpdate = Database['public']['Tables']['users']['Update'];
-    const updates: UserUpdate = {};
+    // Build update object as plain object (avoids type inference issues)
+    const updates: Record<string, any> = {};
 
     // Validate and add allowed fields
     if ('user_tier' in body) updates.user_tier = body.user_tier;
@@ -117,9 +116,8 @@ export async function PATCH(
       updates.is_admin = updates.user_tier === 'admin';
     }
 
-    // Update user
-    // @ts-ignore - Supabase type inference issue with Update type
-    const { data: updatedUser, error } = await supabase
+    // Update user - cast supabase client to any to avoid strict typing
+    const { data: updatedUser, error } = await (supabase as any)
       .from('users')
       .update(updates)
       .eq('id', id)
@@ -135,7 +133,7 @@ export async function PATCH(
     }
 
     // Log admin action
-    await supabase.rpc('log_admin_action', {
+    await (supabase as any).rpc('log_admin_action', {
       p_admin_user_id: adminUser.id,
       p_action: 'update_user',
       p_target_user_id: id,
@@ -199,7 +197,7 @@ export async function DELETE(
     }
 
     // Log admin action
-    await supabase.rpc('log_admin_action', {
+    await (supabase as any).rpc('log_admin_action', {
       p_admin_user_id: adminUser.id,
       p_action: 'delete_user',
       p_target_user_id: id,
