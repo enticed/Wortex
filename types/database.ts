@@ -105,6 +105,8 @@ export interface Database {
           bonus_correct: boolean;
           time_taken_seconds: number;
           speed: number;
+          min_speed: number;
+          max_speed: number;
           first_play_of_day: boolean;
           created_at: string;
         };
@@ -116,6 +118,8 @@ export interface Database {
           bonus_correct?: boolean;
           time_taken_seconds: number;
           speed?: number;
+          min_speed?: number;
+          max_speed?: number;
           first_play_of_day?: boolean;
           created_at?: string;
         };
@@ -127,6 +131,8 @@ export interface Database {
           bonus_correct?: boolean;
           time_taken_seconds?: number;
           speed?: number;
+          min_speed?: number;
+          max_speed?: number;
           first_play_of_day?: boolean;
           created_at?: string;
         };
@@ -199,6 +205,8 @@ export interface Database {
           score: number;
           bonus_correct: boolean;
           speed: number;
+          min_speed: number;
+          max_speed: number;
           first_play_of_day: boolean;
           rank: number;
           puzzle_date: string;
@@ -223,6 +231,8 @@ export interface Database {
           score: number;
           bonus_correct: boolean;
           speed: number;
+          min_speed: number;
+          max_speed: number;
           rank: number;
           puzzle_date: string;
         };
