@@ -37,6 +37,12 @@ export default async function AdminLayout({
                   Puzzles
                 </Link>
                 <Link
+                  href="/admin/users"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  Users
+                </Link>
+                <Link
                   href="/admin/puzzles/new"
                   className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                 >
