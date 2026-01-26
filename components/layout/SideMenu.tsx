@@ -101,6 +101,15 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
             </li>
             <li>
               <Link
+                href="/settings"
+                onClick={onClose}
+                className="block px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+              >
+                Settings
+              </Link>
+            </li>
+            <li>
+              <Link
                 href="/archive"
                 onClick={onClose}
                 className="block px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"

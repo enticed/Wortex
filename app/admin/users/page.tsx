@@ -31,6 +31,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [tierFilter, setTierFilter] = useState<'all' | 'free' | 'premium' | 'admin'>('all');
   const [searchInput, setSearchInput] = useState('');
+  const [sortField, setSortField] = useState<'created_at' | 'last_active' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Fetch users
   async function fetchUsers(page = 1) {
@@ -102,26 +104,51 @@ export default function AdminUsersPage() {
     admin: users.filter(u => u.user_tier === 'admin').length,
   };
 
+  // Sort users client-side
+  const sortedUsers = [...users].sort((a, b) => {
+    if (!sortField) return 0;
+
+    const aVal = a[sortField];
+    const bVal = b[sortField];
+
+    if (!aVal && !bVal) return 0;
+    if (!aVal) return 1;
+    if (!bVal) return -1;
+
+    const comparison = new Date(aVal).getTime() - new Date(bVal).getTime();
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  // Toggle sort
+  function toggleSort(field: 'created_at' | 'last_active') {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           User Management
         </h1>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard label="Total Users" value={pagination.total} icon="👥" />
-        <StatCard label="Free" value={tierCounts.free} icon="👤" />
-        <StatCard label="Premium" value={tierCounts.premium} icon="👑" />
-        <StatCard label="Admin" value={tierCounts.admin} icon="🛡️" />
+      {/* Compact Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <CompactStatCard label="Total" value={pagination.total} icon="👥" />
+        <CompactStatCard label="Free" value={tierCounts.free} icon="👤" />
+        <CompactStatCard label="Premium" value={tierCounts.premium} icon="👑" />
+        <CompactStatCard label="Admin" value={tierCounts.admin} icon="🛡️" />
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3">
+        <div className="flex flex-col md:flex-row gap-2">
           {/* Search */}
           <div className="flex-1">
             <div className="flex gap-2">
@@ -131,11 +158,11 @@ export default function AdminUsersPage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
               />
               <button
                 onClick={handleSearch}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
               >
                 🔍 Search
               </button>
@@ -147,7 +174,7 @@ export default function AdminUsersPage() {
             <select
               value={tierFilter}
               onChange={(e) => setTierFilter(e.target.value as any)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Tiers</option>
               <option value="free">Free</option>
@@ -174,54 +201,67 @@ export default function AdminUsersPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                       User
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                       Tier
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Joined
+                    <th
+                      className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-gray-200"
+                      onClick={() => toggleSort('created_at')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Joined
+                        {sortField === 'created_at' && (
+                          <span className="text-blue-600 dark:text-blue-400">
+                            {sortDirection === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Last Active
+                    <th
+                      className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-gray-200"
+                      onClick={() => toggleSort('last_active')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Last Active
+                        {sortField === 'last_active' && (
+                          <span className="text-blue-600 dark:text-blue-400">
+                            {sortDirection === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {users.map((user) => (
+                  {sortedUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-gray-900 dark:text-gray-100">
-                            {user.username || user.display_name || 'Anonymous'}
-                          </span>
-                          {user.is_anonymous && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              (Anonymous)
-                            </span>
-                          )}
-                        </div>
+                      <td className="px-3 py-2">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {user.username || user.display_name || 'Anonymous'}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {user.email || '—'}
-                      </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2">
                         <TierBadge tier={user.user_tier} size="sm" />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
                         {formatDate(user.created_at)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
                         {formatRelativeTime(user.last_active)}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
+                        {user.email || '—'}
+                      </td>
+                      <td className="px-3 py-2 text-right">
                         <Link
                           href={`/admin/users/${user.id}`}
                           className="text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium"
@@ -269,15 +309,15 @@ export default function AdminUsersPage() {
   );
 }
 
-function StatCard({ label, value, icon }: { label: string; value: number; icon: string }) {
+function CompactStatCard({ label, value, icon }: { label: string; value: number; icon: string }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2.5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{label}</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{value}</p>
         </div>
-        <span className="text-3xl">{icon}</span>
+        <span className="text-xl">{icon}</span>
       </div>
     </div>
   );

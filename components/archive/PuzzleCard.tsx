@@ -37,7 +37,7 @@ export default function PuzzleCard({
 
   return (
     <Link
-      href={`/?date=${date}&archive=true`}
+      href={`/play?date=${date}&archive=true`}
       className="block bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700 overflow-hidden"
     >
       <div className="p-4">
