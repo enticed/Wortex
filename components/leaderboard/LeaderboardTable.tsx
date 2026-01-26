@@ -1,14 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import TierBadge from '@/components/admin/TierBadge';
 import type { Database } from '@/types/database';
 
 type LeaderboardRow = Database['public']['Views']['leaderboards']['Row'];
 type LeaderboardPureRow = Database['public']['Views']['leaderboards_pure']['Row'];
 type LeaderboardBoostedRow = Database['public']['Views']['leaderboards_boosted']['Row'];
 
+// Extended types with user_tier
+export type LeaderboardEntryWithTier = (LeaderboardRow | LeaderboardPureRow | LeaderboardBoostedRow) & {
+  user_tier?: 'free' | 'premium' | 'admin';
+};
+
 interface LeaderboardTableProps {
-  entries: LeaderboardRow[] | LeaderboardPureRow[] | LeaderboardBoostedRow[];
+  entries: LeaderboardEntryWithTier[];
   currentUserId?: string;
   loading?: boolean;
   showSpeed?: boolean;
@@ -104,6 +110,9 @@ export default function LeaderboardTable({
                     `}>
                       {entry.display_name || 'Anonymous Player'}
                     </span>
+                    {entry.user_tier && (entry.user_tier === 'premium' || entry.user_tier === 'admin') && (
+                      <TierBadge tier={entry.user_tier} size="sm" showLabel={false} />
+                    )}
                     {isCurrentUser && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
                         You

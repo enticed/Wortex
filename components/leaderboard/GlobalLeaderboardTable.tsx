@@ -1,10 +1,13 @@
 'use client';
 
-interface GlobalLeaderboardEntry {
+import TierBadge from '@/components/admin/TierBadge';
+
+export interface GlobalLeaderboardEntry {
   user_id: string;
   display_name: string | null;
   average_score: number;
   total_games: number;
+  user_tier?: 'free' | 'premium' | 'admin';
 }
 
 interface GlobalLeaderboardTableProps {
@@ -101,6 +104,9 @@ export default function GlobalLeaderboardTable({
                     `}>
                       {entry.display_name || 'Anonymous Player'}
                     </span>
+                    {entry.user_tier && (entry.user_tier === 'premium' || entry.user_tier === 'admin') && (
+                      <TierBadge tier={entry.user_tier} size="sm" showLabel={false} />
+                    )}
                     {isCurrentUser && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
                         You

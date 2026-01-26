@@ -158,12 +158,13 @@ export async function getUserPuzzleScore(
 
 /**
  * Get Pure leaderboard for a specific puzzle (first play, no speed adjustments)
+ * Extended with user_tier from users table
  */
 export async function getPuzzleLeaderboardPure(
   supabase: any,
   puzzleId: string,
   limit: number = 100
-): Promise<LeaderboardPureRow[]> {
+): Promise<Array<LeaderboardPureRow & { user_tier?: 'free' | 'premium' | 'admin' }>> {
   const { data, error } = await supabase
     .from('leaderboards_pure')
     .select('*')
@@ -175,17 +176,34 @@ export async function getPuzzleLeaderboardPure(
     return [];
   }
 
-  return data || [];
+  if (!data || data.length === 0) return [];
+
+  // Fetch user tiers for all users in the leaderboard
+  const userIds = data.map((entry: any) => entry.user_id);
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, user_tier')
+    .in('id', userIds);
+
+  // Create a map of user_id to user_tier
+  const tierMap = new Map(users?.map((u: any) => [u.id, u.user_tier]) || []);
+
+  // Merge user_tier into leaderboard entries
+  return data.map((entry: any) => ({
+    ...entry,
+    user_tier: tierMap.get(entry.user_id) || 'free',
+  }));
 }
 
 /**
  * Get Boosted leaderboard for a specific puzzle (repeat plays or speed adjustments)
+ * Extended with user_tier from users table
  */
 export async function getPuzzleLeaderboardBoosted(
   supabase: any,
   puzzleId: string,
   limit: number = 100
-): Promise<LeaderboardBoostedRow[]> {
+): Promise<Array<LeaderboardBoostedRow & { user_tier?: 'free' | 'premium' | 'admin' }>> {
   const { data, error } = await supabase
     .from('leaderboards_boosted')
     .select('*')
@@ -197,16 +215,33 @@ export async function getPuzzleLeaderboardBoosted(
     return [];
   }
 
-  return data || [];
+  if (!data || data.length === 0) return [];
+
+  // Fetch user tiers for all users in the leaderboard
+  const userIds = data.map((entry: any) => entry.user_id);
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, user_tier')
+    .in('id', userIds);
+
+  // Create a map of user_id to user_tier
+  const tierMap = new Map(users?.map((u: any) => [u.id, u.user_tier]) || []);
+
+  // Merge user_tier into leaderboard entries
+  return data.map((entry: any) => ({
+    ...entry,
+    user_tier: tierMap.get(entry.user_id) || 'free',
+  }));
 }
 
 /**
  * Get Pure global leaderboard (best average scores from Pure games)
+ * Extended with user_tier from users table
  */
 export async function getGlobalLeaderboardPure(
   supabase: any,
   limit: number = 100
-): Promise<GlobalLeaderboardPureRow[]> {
+): Promise<Array<GlobalLeaderboardPureRow & { user_tier?: 'free' | 'premium' | 'admin' }>> {
   const { data, error } = await supabase
     .from('global_leaderboards_pure')
     .select('*')
@@ -217,16 +252,33 @@ export async function getGlobalLeaderboardPure(
     return [];
   }
 
-  return data || [];
+  if (!data || data.length === 0) return [];
+
+  // Fetch user tiers for all users in the leaderboard
+  const userIds = data.map((entry: any) => entry.user_id);
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, user_tier')
+    .in('id', userIds);
+
+  // Create a map of user_id to user_tier
+  const tierMap = new Map(users?.map((u: any) => [u.id, u.user_tier]) || []);
+
+  // Merge user_tier into leaderboard entries
+  return data.map((entry: any) => ({
+    ...entry,
+    user_tier: tierMap.get(entry.user_id) || 'free',
+  }));
 }
 
 /**
  * Get Boosted global leaderboard (best average scores from Boosted games)
+ * Extended with user_tier from users table
  */
 export async function getGlobalLeaderboardBoosted(
   supabase: any,
   limit: number = 100
-): Promise<GlobalLeaderboardBoostedRow[]> {
+): Promise<Array<GlobalLeaderboardBoostedRow & { user_tier?: 'free' | 'premium' | 'admin' }>> {
   const { data, error } = await supabase
     .from('global_leaderboards_boosted')
     .select('*')
@@ -237,5 +289,21 @@ export async function getGlobalLeaderboardBoosted(
     return [];
   }
 
-  return data || [];
+  if (!data || data.length === 0) return [];
+
+  // Fetch user tiers for all users in the leaderboard
+  const userIds = data.map((entry: any) => entry.user_id);
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, user_tier')
+    .in('id', userIds);
+
+  // Create a map of user_id to user_tier
+  const tierMap = new Map(users?.map((u: any) => [u.id, u.user_tier]) || []);
+
+  // Merge user_tier into leaderboard entries
+  return data.map((entry: any) => ({
+    ...entry,
+    user_tier: tierMap.get(entry.user_id) || 'free',
+  }));
 }
