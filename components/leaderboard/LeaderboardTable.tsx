@@ -60,14 +60,14 @@ export default function LeaderboardTable({
             <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Player
             </th>
+            <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+              Score
+            </th>
             {showSpeed && (
               <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                 Speed
               </th>
             )}
-            <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-              Score
-            </th>
           </tr>
         </thead>
         <tbody>
@@ -120,6 +120,13 @@ export default function LeaderboardTable({
                     )}
                   </div>
                 </td>
+                <td className="py-4 px-4">
+                  <div className="text-right">
+                    <span className="font-bold text-gray-900 dark:text-gray-100">
+                      {entry.score.toFixed(2)}
+                    </span>
+                  </div>
+                </td>
                 {showSpeed && 'min_speed' in entry && 'max_speed' in entry && (
                   <td className="py-4 px-4">
                     <div className="text-center">
@@ -132,13 +139,6 @@ export default function LeaderboardTable({
                     </div>
                   </td>
                 )}
-                <td className="py-4 px-4">
-                  <div className="text-right">
-                    <span className="font-bold text-gray-900 dark:text-gray-100">
-                      {entry.score.toFixed(2)}
-                    </span>
-                  </div>
-                </td>
               </tr>
             );
           })}

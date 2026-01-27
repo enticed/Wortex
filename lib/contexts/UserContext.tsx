@@ -39,11 +39,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [stats, setStats] = useState<StatsRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSession, setIsLoadingSession] = useState(false); // Prevent race conditions
   const supabase = createClient();
 
   // Load user data from session API
   async function loadUserFromSession() {
+    // Prevent multiple simultaneous calls
+    if (isLoadingSession) {
+      console.log('[UserContext] Session load already in progress, skipping...');
+      return;
+    }
+
     try {
+      setIsLoadingSession(true);
       console.log('[UserContext] Loading user from session...');
 
       const response = await fetch('/api/auth/session', {
@@ -70,6 +78,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       console.error('[UserContext] Error loading user from session:', error);
     } finally {
       setLoading(false);
+      setIsLoadingSession(false);
     }
   }
 
