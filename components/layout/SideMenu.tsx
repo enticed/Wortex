@@ -75,7 +75,11 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
             <li>
               <Link
                 href="/play"
-                onClick={onClose}
+                onClick={() => {
+                  // Clear any saved final results so user can replay
+                  sessionStorage.removeItem('wortex-final-results');
+                  onClose();
+                }}
                 className="block px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors font-medium"
               >
                 Today's Puzzle

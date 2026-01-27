@@ -267,9 +267,9 @@ export default function AssemblyArea({
             // Complete but header hidden (e.g., hint phrase shown from start) - show nothing
             null
           ) : !isComplete && phase === 2 && !isAutoAssembly ? (
-            // Phase 2 target area: Show dragged word in gold box if dragging, otherwise show nothing
+            // Phase 2 target area: Show dragged word in bright gold box if dragging, otherwise show nothing
             draggedWord ? (
-              <span className="px-3 py-1 rounded-lg bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-100 font-semibold text-base">
+              <span className="inline-block px-2 py-0.5 rounded-md font-semibold text-base" style={{ backgroundColor: '#f97316', color: '#ffffff' }}>
                 {draggedWord}
               </span>
             ) : null
@@ -416,8 +416,8 @@ export default function AssemblyArea({
                   <div className="relative w-1 h-12 flex items-center justify-center">
                     {dropIndicatorIndex === index && (
                       <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
-                        {/* Triangle arrow pointing down - Gold/amber color for better visibility */}
-                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-amber-500 dark:border-t-amber-400" />
+                        {/* Triangle arrow pointing down - Bright orange color for better visibility */}
+                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px]" style={{ borderTopColor: '#f97316' }} />
                       </div>
                     )}
                   </div>
@@ -432,7 +432,7 @@ export default function AssemblyArea({
                     <div className="relative w-1 h-12 flex items-center justify-center">
                       {dropIndicatorIndex === index + 1 && (
                         <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
-                          <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-amber-500 dark:border-t-amber-400" />
+                          <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px]" style={{ borderTopColor: '#f97316' }} />
                         </div>
                       )}
                     </div>
@@ -444,7 +444,7 @@ export default function AssemblyArea({
             <div className="relative w-1 h-12 flex items-center justify-center">
               {dropIndicatorIndex === sortedWords.length && (
                 <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
-                  <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-amber-500 dark:border-t-amber-400" />
+                  <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px]" style={{ borderTopColor: '#f97316' }} />
                 </div>
               )}
             </div>

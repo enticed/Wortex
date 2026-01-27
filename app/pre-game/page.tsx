@@ -135,6 +135,10 @@ export default function PreGamePage() {
         <div className="pb-20 text-center">
           <Link
             href="/play"
+            onClick={() => {
+              // Clear any saved final results so user can replay
+              sessionStorage.removeItem('wortex-final-results');
+            }}
             className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 text-lg font-semibold transition-colors inline-flex items-center gap-2"
           >
             Continue to Game <span className="text-xl">→</span>

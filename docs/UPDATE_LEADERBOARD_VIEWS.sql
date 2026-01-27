@@ -1,37 +1,10 @@
 -- ============================================================================
--- ADD SPEED TRACKING (MIN/MAX SPEEDS)
+-- UPDATE LEADERBOARD VIEWS TO SHOW ONLY BEST SCORE PER USER
 -- ============================================================================
--- This migration adds columns to track the minimum and maximum speeds
--- used during a game, allowing for accurate "Pure Rankings" filtering
--- and better speed reporting in leaderboards.
-
--- Add min_speed and max_speed columns to scores table
-ALTER TABLE scores
-ADD COLUMN IF NOT EXISTS min_speed NUMERIC(3, 2) DEFAULT 1.0,
-ADD COLUMN IF NOT EXISTS max_speed NUMERIC(3, 2) DEFAULT 1.0;
-
--- Update existing rows to use the current speed value for both min and max
-UPDATE scores
-SET min_speed = speed, max_speed = speed
-WHERE min_speed IS NULL OR max_speed IS NULL;
-
--- Make the columns NOT NULL after populating existing data
-ALTER TABLE scores
-ALTER COLUMN min_speed SET NOT NULL,
-ALTER COLUMN max_speed SET NOT NULL;
-
--- Add check constraint to ensure min_speed <= max_speed
-ALTER TABLE scores
-ADD CONSTRAINT scores_speed_range_check
-CHECK (min_speed <= max_speed);
-
--- Add comment explaining the purpose
-COMMENT ON COLUMN scores.min_speed IS 'Minimum vortex speed used during gameplay (0.25 to 2.0)';
-COMMENT ON COLUMN scores.max_speed IS 'Maximum vortex speed used during gameplay (0.25 to 2.0)';
-
--- ============================================================================
--- UPDATE LEADERBOARD VIEWS TO USE MIN/MAX SPEED
--- ============================================================================
+-- This script updates the leaderboard views to show only the best (lowest)
+-- score per user per puzzle, rather than showing all qualifying scores.
+--
+-- Run this after MIGRATION_ADD_SPEED_TRACKING.sql has already been run.
 
 -- Drop existing views first
 DROP VIEW IF EXISTS leaderboards CASCADE;
@@ -97,6 +70,7 @@ JOIN puzzles p ON b.puzzle_id = p.id
 ORDER BY b.puzzle_id, rank;
 
 -- Create the updated leaderboards view to include the new fields
+-- This view still shows ALL scores (not deduplicated) for backwards compatibility
 CREATE VIEW leaderboards AS
 SELECT
   s.puzzle_id,
