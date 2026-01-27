@@ -329,6 +329,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           // Submit score (insert new record for each play to allow multiple scores per puzzle)
           const { error: scoreError } = await supabase
             .from('scores')
+            // @ts-expect-error - Supabase client types not properly inferred in client context
             .insert({
               user_id: userId,
               puzzle_id: puzzle.id,
