@@ -326,11 +326,10 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
           console.log('[GameBoard] Is first play:', isFirstPlay, 'First play of day:', firstPlayOfDay);
 
-          // Submit score (upsert to handle replays)
+          // Submit score (insert new record for each play to allow multiple scores per puzzle)
           const { error: scoreError } = await supabase
             .from('scores')
-            // @ts-expect-error - Supabase client types not properly inferred in client context
-            .upsert({
+            .insert({
               user_id: userId,
               puzzle_id: puzzle.id,
               score: gameState.finalScore,
@@ -340,8 +339,6 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
               min_speed: gameState.minSpeed,
               max_speed: gameState.maxSpeed,
               first_play_of_day: firstPlayOfDay,
-            }, {
-              onConflict: 'user_id,puzzle_id'
             });
 
           if (scoreError) {
