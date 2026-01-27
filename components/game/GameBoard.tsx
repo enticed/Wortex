@@ -315,16 +315,16 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           // Check if this is the user's first play of this puzzle
           const { data: existingScore } = await supabase
             .from('scores')
-            .select('id, first_play_of_day')
+            .select('id')
             .eq('user_id', userId)
             .eq('puzzle_id', puzzle.id)
             .maybeSingle();
 
-          const isFirstPlay = !existingScore;
-          // @ts-ignore - TypeScript doesn't infer maybeSingle return type correctly
-          const firstPlayOfDay = isFirstPlay ? true : (existingScore?.first_play_of_day ?? false);
+          // Only the very first play gets first_play_of_day = true
+          // All subsequent plays should be false (for Boosted Rankings)
+          const firstPlayOfDay = !existingScore;
 
-          console.log('[GameBoard] Is first play:', isFirstPlay, 'First play of day:', firstPlayOfDay);
+          console.log('[GameBoard] First play of day:', firstPlayOfDay);
 
           // Submit score (insert new record for each play to allow multiple scores per puzzle)
           const { error: scoreError } = await supabase
