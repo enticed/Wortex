@@ -105,7 +105,7 @@ export default function FinalResults({
         <div className="max-w-2xl mx-auto space-y-2">
           {/* Phase 1 Score - Compact */}
           <div className="bg-blue-100 dark:bg-blue-900 rounded-lg p-2">
-            <div className="grid grid-cols-3 items-center gap-2">
+            <div className="grid items-center gap-2" style={{ gridTemplateColumns: 'auto 1fr auto' }}>
               <div className="justify-self-start">
                 <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Phase 1
@@ -130,7 +130,7 @@ export default function FinalResults({
 
           {/* Phase 2 Score - Compact */}
           <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2">
-            <div className="grid grid-cols-3 items-center gap-2">
+            <div className="grid items-center gap-2" style={{ gridTemplateColumns: 'auto 1fr auto' }}>
               <div className="justify-self-start">
                 <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Phase 2
@@ -153,7 +153,7 @@ export default function FinalResults({
 
           {/* Final Score - Compact */}
           <div className="rounded-lg p-2 bg-green-100 dark:bg-green-900">
-            <div className="grid grid-cols-3 items-center gap-2">
+            <div className="grid items-center gap-2" style={{ gridTemplateColumns: 'auto 1fr auto' }}>
               <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 justify-self-start">
                 Final Score
               </div>
