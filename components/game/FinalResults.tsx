@@ -114,15 +114,15 @@ export default function FinalResults({
                   Word Collection
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Stars count={phase1Stars} size="sm" color="blue" />
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {phase1Score.toFixed(2)}
-                </div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {phase1Score.toFixed(2)}
               </div>
             </div>
+            <div className="flex items-center justify-center mt-1">
+              <Stars count={phase1Stars} size="sm" color="blue" />
+            </div>
             {totalWordsSeen !== undefined && totalUniqueWords !== undefined && (
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-center">
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 text-center">
                 {totalWordsSeen} / {totalUniqueWords} words
               </div>
             )}
@@ -139,14 +139,14 @@ export default function FinalResults({
                   Word Arrangement
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Stars count={phase2Stars} size="sm" color="purple" />
-                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {phase2Score.toFixed(2)}
-                </div>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {phase2Score.toFixed(2)}
               </div>
             </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-center">
+            <div className="flex items-center justify-center mt-1">
+              <Stars count={phase2Stars} size="sm" color="purple" />
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 text-center">
               {reorderMoves} moves, {hintsUsed} hints
             </div>
           </div>
@@ -154,19 +154,15 @@ export default function FinalResults({
           {/* Final Score - Compact */}
           <div className="rounded-lg p-2 bg-green-100 dark:bg-green-900">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                Final Score
+              <div className="flex items-center gap-2">
+                <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Final Score
+                </div>
+                <Stars count={finalStars} size="lg" color="green" />
               </div>
-              <div className={`text-3xl font-bold ${
-                bonusCorrect
-                  ? 'text-green-600 dark:text-green-400'
-                  : 'text-gray-700 dark:text-gray-300'
-              }`}>
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
                 {finalScore.toFixed(2)}
               </div>
-            </div>
-            <div className="flex items-center justify-center mt-1">
-              <Stars count={finalStars} size="lg" color="green" />
             </div>
             <div className="text-xs text-green-700 dark:text-green-300 mt-1 text-center font-semibold" style={{ minHeight: '16px' }}>
               {bonusCorrect && '✓ 10% bonus applied'}
