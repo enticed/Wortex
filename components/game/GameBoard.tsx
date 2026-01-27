@@ -573,6 +573,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
               isArchiveMode={isArchiveMode}
               reorderMoves={savedResults?.reorderMoves ?? gameState.reorderMoves}
               hintsUsed={savedResults?.hintsUsed ?? gameState.hintsUsed}
+              quoteWordCount={puzzle.targetPhrase.words.length}
             />
           </div>
         )}

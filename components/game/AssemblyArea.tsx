@@ -253,7 +253,7 @@ export default function AssemblyArea({
         {/* Title - Hide "Mystery Quote" when dragging in Phase 2 */}
         {!(!isComplete && phase === 2 && !isAutoAssembly && draggedWord) && (
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            {title}
+            {showFinalResults && id === 'target' ? 'Congratulations! You solved the Mystery Quote:' : title}
           </h2>
         )}
         {/* Center Counters Display */}
