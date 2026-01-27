@@ -46,8 +46,8 @@ function calculatePhase2Stars(score: number, quoteWordCount: number): number {
 
 // Star display component
 function Stars({ count, size = 'sm', color = 'yellow' }: { count: number; size?: 'sm' | 'lg'; color?: 'yellow' | 'blue' | 'purple' | 'green' }) {
-  // Use pixel values for precise control
-  const starSize = size === 'sm' ? 12 : 24;
+  // Use pixel values for precise control - matching score size
+  const starSize = size === 'sm' ? 20 : 28;
 
   const filledColorClass =
     color === 'blue' ? 'text-blue-500 dark:text-blue-400' :
@@ -56,7 +56,7 @@ function Stars({ count, size = 'sm', color = 'yellow' }: { count: number; size?:
     'text-yellow-500 dark:text-yellow-400';
 
   return (
-    <div className="flex items-center justify-center gap-0.5">
+    <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
@@ -110,19 +110,19 @@ export default function FinalResults({
                 <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Phase 1
                 </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400">
+                <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight" style={{ maxWidth: '60px' }}>
                   Word Collection
                 </div>
               </div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {phase1Score.toFixed(2)}
+              <div className="flex items-center gap-2">
+                <Stars count={phase1Stars} size="sm" color="blue" />
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {phase1Score.toFixed(2)}
+                </div>
               </div>
             </div>
-            <div className="mt-0.5">
-              <Stars count={phase1Stars} size="sm" color="blue" />
-            </div>
             {totalWordsSeen !== undefined && totalUniqueWords !== undefined && (
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 text-center">
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-center">
                 {totalWordsSeen} / {totalUniqueWords} words
               </div>
             )}
@@ -135,48 +135,42 @@ export default function FinalResults({
                 <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Phase 2
                 </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400">
+                <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight" style={{ maxWidth: '60px' }}>
                   Word Arrangement
                 </div>
               </div>
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {phase2Score.toFixed(2)}
+              <div className="flex items-center gap-2">
+                <Stars count={phase2Stars} size="sm" color="purple" />
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {phase2Score.toFixed(2)}
+                </div>
               </div>
             </div>
-            <div className="mt-0.5">
-              <Stars count={phase2Stars} size="sm" color="purple" />
-            </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-center">
               {reorderMoves} moves, {hintsUsed} hints
             </div>
           </div>
 
           {/* Final Score - Compact */}
-          <div className={`rounded-lg p-2 ${
-            bonusCorrect
-              ? 'bg-green-100 dark:bg-green-900'
-              : 'bg-gray-200 dark:bg-gray-800'
-          }`}>
+          <div className="rounded-lg p-2 bg-green-100 dark:bg-green-900">
             <div className="flex items-center justify-between">
               <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                 Final Score
               </div>
-              <div className="flex items-center gap-3">
-                <div className={`text-3xl font-bold ${
-                  bonusCorrect
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-gray-700 dark:text-gray-300'
-                }`}>
-                  {finalScore.toFixed(2)}
-                </div>
-                <Stars count={finalStars} size="lg" color={bonusCorrect ? "green" : "yellow"} />
+              <div className={`text-3xl font-bold ${
+                bonusCorrect
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-gray-700 dark:text-gray-300'
+              }`}>
+                {finalScore.toFixed(2)}
               </div>
             </div>
-            {bonusCorrect && (
-              <div className="text-xs text-green-700 dark:text-green-300 mt-2 text-center font-semibold">
-                ✓ 10% bonus applied
-              </div>
-            )}
+            <div className="flex items-center justify-center mt-1">
+              <Stars count={finalStars} size="lg" color="green" />
+            </div>
+            <div className="text-xs text-green-700 dark:text-green-300 mt-1 text-center font-semibold" style={{ minHeight: '16px' }}>
+              {bonusCorrect && '✓ 10% bonus applied'}
+            </div>
           </div>
 
           {/* Buttons - Half-width side by side */}
