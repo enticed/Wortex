@@ -105,7 +105,7 @@ export default function FinalResults({
         <div className="max-w-2xl mx-auto space-y-2">
           {/* Phase 1 Score - Compact */}
           <div className="bg-blue-100 dark:bg-blue-900 rounded-lg p-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-1">
               <div>
                 <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Phase 1
@@ -114,15 +114,15 @@ export default function FinalResults({
                   Word Collection
                 </div>
               </div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {phase1Score.toFixed(2)}
+              <div className="flex items-center gap-2">
+                <Stars count={phase1Stars} size="sm" color="blue" />
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {phase1Score.toFixed(2)}
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-center mt-1">
-              <Stars count={phase1Stars} size="sm" color="blue" />
-            </div>
             {totalWordsSeen !== undefined && totalUniqueWords !== undefined && (
-              <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 text-center">
+              <div className="text-xs text-gray-600 dark:text-gray-400 text-center">
                 {totalWordsSeen} / {totalUniqueWords} words
               </div>
             )}
@@ -130,7 +130,7 @@ export default function FinalResults({
 
           {/* Phase 2 Score - Compact */}
           <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-1">
               <div>
                 <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Phase 2
@@ -139,32 +139,34 @@ export default function FinalResults({
                   Word Arrangement
                 </div>
               </div>
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {phase2Score.toFixed(2)}
+              <div className="flex items-center gap-2">
+                <Stars count={phase2Stars} size="sm" color="purple" />
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {phase2Score.toFixed(2)}
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-center mt-1">
-              <Stars count={phase2Stars} size="sm" color="purple" />
-            </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 text-center">
               {reorderMoves} moves, {hintsUsed} hints
             </div>
           </div>
 
           {/* Final Score - Compact */}
           <div className="rounded-lg p-2 bg-green-100 dark:bg-green-900">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="relative mb-1">
+              <div className="flex items-center justify-between">
                 <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Final Score
                 </div>
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  {finalScore.toFixed(2)}
+                </div>
+              </div>
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                 <Stars count={finalStars} size="lg" color="green" />
               </div>
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {finalScore.toFixed(2)}
-              </div>
             </div>
-            <div className="text-xs text-green-700 dark:text-green-300 mt-1 text-center font-semibold" style={{ minHeight: '16px' }}>
+            <div className="text-xs text-green-700 dark:text-green-300 text-center font-semibold" style={{ minHeight: '16px' }}>
               {bonusCorrect && '✓ 10% bonus applied'}
             </div>
           </div>
