@@ -9,11 +9,13 @@ export default function DebugEnvPage() {
   const { userId, user } = useUser();
   const { tier, isPremium, isAdmin } = useUserTier();
   const [supabaseUrl, setSupabaseUrl] = useState<string>('');
+  const [hostname, setHostname] = useState<string>('');
   const [dbUserData, setDbUserData] = useState<any>(null);
 
   useEffect(() => {
     // Get Supabase URL from environment
     setSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || 'Not set');
+    setHostname(window.location.hostname);
 
     // Fetch user data directly from database
     async function fetchDbUser() {
@@ -51,11 +53,11 @@ export default function DebugEnvPage() {
           <div className="space-y-2 font-mono text-sm">
             <div>
               <span className="text-gray-600 dark:text-gray-400">Domain:</span>{' '}
-              <span className="text-gray-900 dark:text-gray-100">{window.location.hostname}</span>
+              <span className="text-gray-900 dark:text-gray-100">{hostname || 'Loading...'}</span>
             </div>
             <div>
               <span className="text-gray-600 dark:text-gray-400">Supabase URL:</span>{' '}
-              <span className="text-gray-900 dark:text-gray-100">{supabaseUrl}</span>
+              <span className="text-gray-900 dark:text-gray-100">{supabaseUrl || 'Loading...'}</span>
             </div>
           </div>
         </div>
