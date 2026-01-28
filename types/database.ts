@@ -108,6 +108,7 @@ export interface Database {
           min_speed: number;
           max_speed: number;
           first_play_of_day: boolean;
+          stars: number | null;
           created_at: string;
         };
         Insert: {
@@ -121,6 +122,7 @@ export interface Database {
           min_speed?: number;
           max_speed?: number;
           first_play_of_day?: boolean;
+          stars?: number | null;
           created_at?: string;
         };
         Update: {
@@ -134,6 +136,7 @@ export interface Database {
           min_speed?: number;
           max_speed?: number;
           first_play_of_day?: boolean;
+          stars?: number | null;
           created_at?: string;
         };
       };

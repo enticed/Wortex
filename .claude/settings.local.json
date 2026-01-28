@@ -55,7 +55,8 @@
       "Bash(node scripts/migrate-existing-account.mjs:*)",
       "Bash(node scripts/list-accounts.mjs:*)",
       "Bash(node scripts/test-puzzle-buffer.mjs:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(node scripts/backfill-stars.mjs:*)"
     ],
     "deny": [],
     "ask": []

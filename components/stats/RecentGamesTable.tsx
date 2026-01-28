@@ -1,6 +1,7 @@
 'use client';
 
 interface RecentGame {
+  id: string;
   puzzle_id: string;
   puzzle_date: string;
   score: number;
@@ -9,6 +10,7 @@ interface RecentGame {
   speed: number;
   min_speed: number;
   max_speed: number;
+  stars: number | null;
   created_at: string;
 }
 
@@ -64,6 +66,9 @@ export default function RecentGamesTable({ games, loading = false }: RecentGames
             <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Score
             </th>
+            <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+              Stars
+            </th>
             <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Speed
             </th>
@@ -82,7 +87,7 @@ export default function RecentGamesTable({ games, loading = false }: RecentGames
 
             return (
               <tr
-                key={game.puzzle_id}
+                key={game.id}
                 className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
               >
                 <td className="py-4 px-4">
@@ -105,6 +110,28 @@ export default function RecentGamesTable({ games, loading = false }: RecentGames
                     <span className="font-bold text-gray-900 dark:text-gray-100">
                       {game.score.toFixed(2)}
                     </span>
+                  </div>
+                </td>
+                <td className="py-4 px-4">
+                  <div className="flex items-center justify-center gap-0.5">
+                    {game.stars ? (
+                      <>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <svg
+                            key={star}
+                            className={star <= game.stars! ? 'text-yellow-500 dark:text-yellow-400' : 'text-gray-300 dark:text-gray-600'}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                            width={16}
+                            height={16}
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-400 dark:text-gray-600">-</span>
+                    )}
                   </div>
                 </td>
                 <td className="py-4 px-4">

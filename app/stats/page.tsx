@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import StatsCard from '@/components/stats/StatsCard';
 import RecentGamesTable from '@/components/stats/RecentGamesTable';
+import StarsHistogram from '@/components/stats/StarsHistogram';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/contexts/UserContext';
 import { getUserStats } from '@/lib/supabase/scores';
@@ -13,6 +14,7 @@ import type { Database } from '@/types/database';
 type StatsRow = Database['public']['Tables']['stats']['Row'];
 
 interface RecentGame {
+  id: string;
   puzzle_id: string;
   puzzle_date: string;
   score: number;
@@ -21,13 +23,20 @@ interface RecentGame {
   speed: number;
   min_speed: number;
   max_speed: number;
+  stars: number | null;
   created_at: string;
+}
+
+interface StarDistribution {
+  [key: number]: number; // Maps star rating (0-5) to count
 }
 
 export default function StatsPage() {
   const { userId, user, loading: userLoading } = useUser();
   const [stats, setStats] = useState<StatsRow | null>(null);
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
+  const [pureStarDistribution, setPureStarDistribution] = useState<StarDistribution>({});
+  const [boostedStarDistribution, setBoostedStarDistribution] = useState<StarDistribution>({});
   const [loading, setLoading] = useState(true);
 
   const router = useRouter();
@@ -49,10 +58,11 @@ export default function StatsPage() {
       const userStats = await getUserStats(supabase, userId);
       setStats(userStats);
 
-      // Get recent games (last 10)
+      // Get recent games (last 30)
       const { data: games } = await supabase
         .from('scores')
         .select(`
+          id,
           puzzle_id,
           score,
           bonus_correct,
@@ -60,6 +70,7 @@ export default function StatsPage() {
           speed,
           min_speed,
           max_speed,
+          stars,
           created_at,
           puzzles!inner (
             date
@@ -67,10 +78,11 @@ export default function StatsPage() {
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(30);
 
       if (games) {
         const formattedGames = games.map((game: any) => ({
+          id: game.id,
           puzzle_id: game.puzzle_id,
           puzzle_date: game.puzzles.date,
           score: game.score,
@@ -79,9 +91,46 @@ export default function StatsPage() {
           speed: game.speed,
           min_speed: game.min_speed || game.speed,
           max_speed: game.max_speed || game.speed,
+          stars: game.stars,
           created_at: game.created_at,
         }));
         setRecentGames(formattedGames);
+      }
+
+      // Get star distribution for Pure games (first play, 1.0x speed only)
+      const { data: pureGames } = await supabase
+        .from('scores')
+        .select('stars')
+        .eq('user_id', userId)
+        .eq('first_play_of_day', true)
+        .eq('min_speed', 1.0)
+        .eq('max_speed', 1.0)
+        .not('stars', 'is', null);
+
+      if (pureGames) {
+        const pureDistribution: StarDistribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        pureGames.forEach((game: any) => {
+          const stars = game.stars ?? 0;
+          pureDistribution[stars] = (pureDistribution[stars] || 0) + 1;
+        });
+        setPureStarDistribution(pureDistribution);
+      }
+
+      // Get star distribution for Boosted games (repeat plays or speed adjustments)
+      const { data: boostedGames } = await supabase
+        .from('scores')
+        .select('stars')
+        .eq('user_id', userId)
+        .or('first_play_of_day.eq.false,min_speed.neq.1.0,max_speed.neq.1.0')
+        .not('stars', 'is', null);
+
+      if (boostedGames) {
+        const boostedDistribution: StarDistribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        boostedGames.forEach((game: any) => {
+          const stars = game.stars ?? 0;
+          boostedDistribution[stars] = (boostedDistribution[stars] || 0) + 1;
+        });
+        setBoostedStarDistribution(boostedDistribution);
       }
 
     } catch (error) {
@@ -172,30 +221,46 @@ export default function StatsPage() {
             </div>
           ) : (
             <>
-              {/* Stats Grid */}
+              {/* Compact Stats Grid */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 mb-6">
+                <div className="grid grid-cols-2 divide-x divide-y divide-gray-200 dark:divide-gray-700">
+                  <div className="p-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Games Played</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_games}</p>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Avg Score</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.average_score.toFixed(2)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">Lower is better</p>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Current Streak</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      {stats.current_streak} {getStreakEmoji(stats.current_streak)}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">{stats.current_streak === 1 ? 'day' : 'days'}</p>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Best Streak</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.best_streak}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">{stats.best_streak === 1 ? 'day' : 'days'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Star Distribution Histograms */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <StatsCard
-                  label="Total Games Played"
-                  value={stats.total_games}
-                  icon="🎮"
+                <StarsHistogram
+                  title="Pure Games"
+                  starCounts={pureStarDistribution}
+                  color="emerald"
+                  loading={loading}
                 />
-                <StatsCard
-                  label="Average Score"
-                  value={stats.average_score.toFixed(2)}
-                  icon="📊"
-                  subtitle="Lower is better"
-                />
-                <StatsCard
-                  label="Current Streak"
-                  value={stats.current_streak}
-                  icon={getStreakEmoji(stats.current_streak)}
-                  subtitle={stats.current_streak === 1 ? 'day' : 'days'}
-                />
-                <StatsCard
-                  label="Best Streak"
-                  value={stats.best_streak}
-                  icon="🏆"
-                  subtitle={stats.best_streak === 1 ? 'day' : 'days'}
+                <StarsHistogram
+                  title="Boosted Games"
+                  starCounts={boostedStarDistribution}
+                  color="purple"
+                  loading={loading}
                 />
               </div>
 
@@ -221,7 +286,7 @@ export default function StatsPage() {
                     Recent Games
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Your last 10 puzzle attempts
+                    Your last 30 puzzle attempts
                   </p>
                 </div>
                 <div className="p-6">

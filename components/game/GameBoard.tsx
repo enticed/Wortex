@@ -326,6 +326,17 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
           console.log('[GameBoard] First play of day:', firstPlayOfDay);
 
+          // Calculate stars for this game
+          const { calculateFinalStars } = await import('@/lib/utils/stars');
+          const quoteWordCount = puzzle.targetPhrase.words.length;
+          const stars = calculateFinalStars(
+            gameState.score || 0,
+            gameState.phase2Score || 0,
+            quoteWordCount
+          );
+
+          console.log('[GameBoard] Calculated stars:', stars);
+
           // Submit score (insert new record for each play to allow multiple scores per puzzle)
           const { error: scoreError } = await supabase
             .from('scores')
@@ -340,6 +351,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
               min_speed: gameState.minSpeed,
               max_speed: gameState.maxSpeed,
               first_play_of_day: firstPlayOfDay,
+              stars: stars,
             });
 
           if (scoreError) {
