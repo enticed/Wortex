@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 
-export default function SubscribeSuccessPage() {
+function SuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
@@ -98,5 +98,22 @@ export default function SubscribeSuccessPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function SubscribeSuccessPage() {
+  return (
+    <Suspense fallback={
+      <AppLayout>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+          </div>
+        </div>
+      </AppLayout>
+    }>
+      <SuccessContent />
+    </Suspense>
   );
 }
