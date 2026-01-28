@@ -46,24 +46,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let customerId = user.stripe_customer_id;
+    let customerId = (user as any).stripe_customer_id as string | null;
 
     // Create or retrieve Stripe customer
     if (!customerId) {
       console.log('[Checkout] Creating new Stripe customer for user:', userId.substring(0, 12));
 
       const customer = await stripe.customers.create({
-        email: user.email || undefined,
+        email: (user as any).email || undefined,
         metadata: {
           user_id: userId,
-          display_name: user.display_name || 'Anonymous Player',
+          display_name: (user as any).display_name || 'Anonymous Player',
         },
       });
 
       customerId = customer.id;
 
       // Save customer ID to database
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('users')
         .update({ stripe_customer_id: customerId })
         .eq('id', userId);

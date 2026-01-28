@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         console.log('[Webhook] Subscription ID:', subscriptionId);
 
         // Update user tier and subscription ID
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('users')
           .update({
             user_tier: 'premium',
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 
         console.log('[Webhook] Subscription created for user:', userId.substring(0, 12));
 
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('users')
           .update({
             user_tier: 'premium',
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
           updateData.stripe_subscription_id = null;
         }
 
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('users')
           .update(updateData)
           .eq('stripe_subscription_id', subscription.id);
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
         console.log('[Webhook] Subscription deleted:', subscription.id);
 
         // Downgrade user to free tier
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('users')
           .update({
             user_tier: 'free',
@@ -173,12 +173,12 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = invoice.subscription as string;
+        const subscriptionId = (invoice as any).subscription as string;
 
         console.log('[Webhook] Payment succeeded for subscription:', subscriptionId);
 
         // Ensure user still has premium tier
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('users')
           .update({ user_tier: 'premium' })
           .eq('stripe_subscription_id', subscriptionId);
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        const subscriptionId = invoice.subscription as string;
+        const subscriptionId = (invoice as any).subscription as string;
 
         console.log('[Webhook] Payment failed for subscription:', subscriptionId);
         console.log('[Webhook] Attempt:', invoice.attempt_count);
