@@ -295,7 +295,6 @@ export default function LeaderboardPage() {
                       entries={dailyEntriesBoosted}
                       currentUserId={userId || undefined}
                       loading={loading}
-                      showSpeed={true}
                     />
                     {!loading && dailyEntriesBoosted.length === 0 && (
                       <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
