@@ -27,15 +27,17 @@ export function useUserTier() {
           return;
         }
 
-        // Fetch user tier from users table
+        console.log('[useUserTier] Fetching tier for user:', user.id.substring(0, 12));
+
+        // Fetch user tier from users table with cache bypass
         const { data: userData, error } = await supabase
           .from('users')
-          .select('user_tier')
+          .select('user_tier, is_admin')
           .eq('id', user.id)
           .single();
 
         if (error) {
-          console.error('Error fetching user tier:', error);
+          console.error('[useUserTier] Error fetching user tier:', error);
           if (mounted) {
             setTier('free');
             setLoading(false);
@@ -43,12 +45,16 @@ export function useUserTier() {
           return;
         }
 
+        console.log('[useUserTier] Fetched data:', userData);
+
         if (mounted) {
-          setTier((userData as any)?.user_tier || 'free');
+          const userTier = (userData as any)?.user_tier || 'free';
+          setTier(userTier);
           setLoading(false);
+          console.log('[useUserTier] Set tier to:', userTier);
         }
       } catch (error) {
-        console.error('Error in useUserTier:', error);
+        console.error('[useUserTier] Error in useUserTier:', error);
         if (mounted) {
           setTier('free');
           setLoading(false);

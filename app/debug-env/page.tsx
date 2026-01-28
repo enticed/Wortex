@@ -11,11 +11,19 @@ export default function DebugEnvPage() {
   const [supabaseUrl, setSupabaseUrl] = useState<string>('');
   const [hostname, setHostname] = useState<string>('');
   const [dbUserData, setDbUserData] = useState<any>(null);
+  const [authUser, setAuthUser] = useState<any>(null);
 
   useEffect(() => {
     // Get Supabase URL from environment
     setSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || 'Not set');
     setHostname(window.location.hostname);
+
+    // Fetch auth user
+    async function fetchAuthUser() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setAuthUser(user);
+    }
 
     // Fetch user data directly from database
     async function fetchDbUser() {
@@ -35,6 +43,7 @@ export default function DebugEnvPage() {
       }
     }
 
+    fetchAuthUser();
     fetchDbUser();
   }, [userId]);
 
@@ -58,6 +67,23 @@ export default function DebugEnvPage() {
             <div>
               <span className="text-gray-600 dark:text-gray-400">Supabase URL:</span>{' '}
               <span className="text-gray-900 dark:text-gray-100">{supabaseUrl || 'Loading...'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Auth User Info */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Supabase Auth User
+          </h2>
+          <div className="space-y-2 font-mono text-sm">
+            <div>
+              <span className="text-gray-600 dark:text-gray-400">Auth User ID:</span>{' '}
+              <span className="text-gray-900 dark:text-gray-100">{authUser?.id || 'Not found'}</span>
+            </div>
+            <div>
+              <span className="text-gray-600 dark:text-gray-400">Auth Email:</span>{' '}
+              <span className="text-gray-900 dark:text-gray-100">{authUser?.email || 'N/A'}</span>
             </div>
           </div>
         </div>
