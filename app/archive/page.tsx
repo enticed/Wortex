@@ -218,7 +218,7 @@ export default function ArchivePage() {
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
-                  onClick={() => alert('Stripe payment integration coming soon!')}
+                  onClick={() => router.push('/subscribe')}
                   className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg"
                 >
                   Upgrade to Premium - $1/month
