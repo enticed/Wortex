@@ -3,6 +3,38 @@ import { getSessionFromRequest, createSession, setSessionCookie } from '@/lib/au
 import { createClient } from '@/lib/supabase/client-server';
 import { v4 as uuidv4 } from 'uuid';
 
+// Bot detection - common bot user agents
+const BOT_PATTERNS = [
+  /bot/i,
+  /crawler/i,
+  /spider/i,
+  /scrapy/i,
+  /curl/i,
+  /wget/i,
+  /python-requests/i,
+  /googlebot/i,
+  /bingbot/i,
+  /slurp/i,
+  /duckduckbot/i,
+  /baiduspider/i,
+  /yandexbot/i,
+  /facebookexternalhit/i,
+  /twitterbot/i,
+  /linkedinbot/i,
+  /whatsapp/i,
+  /telegrambot/i,
+  /slackbot/i,
+  /discordbot/i,
+  /uptimerobot/i,
+  /pingdom/i,
+  /headless/i,
+];
+
+function isLikelyBot(userAgent: string | null): boolean {
+  if (!userAgent) return true; // No user agent = suspicious
+  return BOT_PATTERNS.some(pattern => pattern.test(userAgent));
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Get session from cookie
@@ -10,7 +42,21 @@ export async function GET(request: NextRequest) {
 
     // If no session, create an anonymous user
     if (!session) {
+      // Bot detection
+      const userAgent = request.headers.get('user-agent');
+      const isBot = isLikelyBot(userAgent);
+
+      if (isBot) {
+        console.log('[SessionAPI] Bot detected, not creating user. UA:', userAgent?.substring(0, 100));
+        return NextResponse.json(
+          { error: 'Bot detected' },
+          { status: 403 }
+        );
+      }
+
       console.log('[SessionAPI] No session found, creating anonymous user...');
+      console.log('[SessionAPI] User-Agent:', userAgent?.substring(0, 100));
+      console.log('[SessionAPI] IP:', request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown');
 
       const anonymousId = uuidv4();
       const supabase = createClient();
@@ -38,10 +84,12 @@ export async function GET(request: NextRequest) {
       }
 
       // Create session for anonymous user
-      console.log('[SessionAPI] Creating session token for:', anonymousId.substring(0, 12));
+      console.log('[SessionAPI] ✓ Successfully created anonymous user:', anonymousId.substring(0, 12));
+      console.log('[SessionAPI]   Timestamp:', new Date().toISOString());
+      console.log('[SessionAPI]   Display name: Anon-' + anonymousId.slice(0, 8));
+
       const token = await createSession(anonymousId, true);
-      console.log('[SessionAPI] Session token created, length:', token.length);
-      console.log('[SessionAPI] Token preview:', token.substring(0, 50) + '...');
+      console.log('[SessionAPI] ✓ Session token created successfully');
 
       // Return the newly created anonymous user with cookie
       const response = NextResponse.json({
@@ -56,10 +104,6 @@ export async function GET(request: NextRequest) {
       });
 
       // Set cookie in response (use correct cookie name)
-      console.log('[SessionAPI] Setting wortex-session cookie');
-      console.log('[SessionAPI] Environment:', process.env.NODE_ENV);
-      console.log('[SessionAPI] Secure flag:', process.env.NODE_ENV === 'production');
-
       response.cookies.set('wortex-session', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -68,7 +112,7 @@ export async function GET(request: NextRequest) {
         path: '/',
       });
 
-      console.log('[SessionAPI] Cookie set, returning response');
+      console.log('[SessionAPI] ✓ Cookie set, returning user session');
       return response;
     }
 

@@ -1,7 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getSessionFromRequest, createSession, setSessionCookieInResponse } from '@/lib/auth/session';
-import { createClient } from '@/lib/supabase/client-server';
-import { v4 as uuidv4 } from 'uuid';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -11,34 +9,14 @@ export async function middleware(request: NextRequest) {
   });
 
   try {
-    // Check if user has a valid session
+    // Check if user has a valid session (but don't create one here)
+    // Session creation is now handled by /api/auth/session to prevent duplicate user creation
     const session = await getSessionFromRequest(request);
 
-    // If no session or session is invalid, create an anonymous user
-    if (!session) {
-      // Create anonymous user in database
-      const anonymousId = uuidv4();
-      const supabase = createClient();
-
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert([{
-          id: anonymousId,
-          display_name: `Anon-${anonymousId.slice(0, 8)}`,
-          is_admin: false,
-          is_anonymous: true,
-        }] as any)
-
-      if (insertError) {
-        console.error('[Middleware] Failed to create anonymous user:', insertError);
-        return response; // Continue without blocking
-      }
-
-      // Create session for anonymous user
-      const token = await createSession(anonymousId, true);
-      setSessionCookieInResponse(response, token);
-
-      console.log('[Middleware] Created anonymous user:', anonymousId);
+    // Optional: Add session info to request headers for downstream use
+    if (session) {
+      response.headers.set('x-user-id', session.userId);
+      response.headers.set('x-is-anonymous', session.isAnonymous.toString());
     }
   } catch (err) {
     console.error('[Middleware] Unexpected error:', err);

@@ -259,7 +259,7 @@ export default function LeaderboardPage() {
                         </span>
                       </div>
                       <p className="text-xs text-gray-600 dark:text-gray-400">
-                        First play of the puzzle with no speed adjustments (1.0x speed only)
+                        First play of the puzzle with no speed adjustments
                       </p>
                     </div>
                     <LeaderboardTable
