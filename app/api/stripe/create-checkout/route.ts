@@ -3,11 +3,17 @@ import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/client-server';
 import { getSessionFromRequest } from '@/lib/auth/session';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-12-15.clover',
-});
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-12-15.clover',
+  });
+}
 
 export async function POST(request: NextRequest) {
+  const stripe = getStripe();
   try {
     // Get user session
     const session = await getSessionFromRequest(request);
