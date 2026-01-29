@@ -66,6 +66,10 @@ function ResetPasswordForm() {
 
       console.log('[Password Reset] Attempting to update password...');
 
+      // Get the current session to verify recovery
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[Password Reset] Session user:', session?.user?.email);
+
       // Update the user's password
       const { data, error: updateError } = await supabase.auth.updateUser({
         password: password,
@@ -80,9 +84,16 @@ function ResetPasswordForm() {
         return;
       }
 
-      console.log('[Password Reset] Password updated successfully');
+      if (data?.user) {
+        console.log('[Password Reset] Password updated successfully for:', data.user.email);
+      }
+
       setSuccess(true);
       setLoading(false);
+
+      // Sign out to clear the recovery session and force fresh login
+      await supabase.auth.signOut();
+      console.log('[Password Reset] Signed out, redirecting...');
 
       // Redirect to home page after 2 seconds
       setTimeout(() => {
