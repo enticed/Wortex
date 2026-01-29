@@ -57,10 +57,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       id: subscription.id,
       status: subscription.status,
-      currentPeriodEnd: subscription.current_period_end,
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
-      amount: subscription.items.data[0]?.price.unit_amount || 0,
-      interval: subscription.items.data[0]?.price.recurring?.interval || 'month',
+      currentPeriodEnd: (subscription as any).current_period_end,
+      cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
+      amount: (subscription as any).items.data[0]?.price.unit_amount || 0,
+      interval: (subscription as any).items.data[0]?.price.recurring?.interval || 'month',
     });
 
   } catch (error) {
