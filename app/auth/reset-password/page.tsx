@@ -18,9 +18,16 @@ function ResetPasswordForm() {
 
   useEffect(() => {
     // Check if we have the necessary hash parameters from the email link
+    console.log('Full URL:', window.location.href);
+    console.log('Hash:', window.location.hash);
+    console.log('Search:', window.location.search);
+
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get('access_token');
     const type = hashParams.get('type');
+
+    console.log('Parsed - accessToken:', accessToken ? 'present' : 'missing');
+    console.log('Parsed - type:', type);
 
     if (type !== 'recovery') {
       setTokenError('Invalid password reset link. Please request a new one.');
