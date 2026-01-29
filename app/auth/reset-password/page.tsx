@@ -17,39 +17,27 @@ function ResetPasswordForm() {
   const [tokenError, setTokenError] = useState<string | null>(null);
 
   useEffect(() => {
-    const validateToken = async () => {
-      // Supabase sends reset links with a code in query params
-      const urlParams = new URLSearchParams(window.location.search);
-      const tokenHash = urlParams.get('code');
-
-      console.log('Password reset - token hash present:', tokenHash ? 'yes' : 'no');
-
-      if (!tokenHash) {
-        setTokenError('Invalid password reset link. Please request a new one.');
-        setValidatingToken(false);
-        return;
-      }
-
-      // Verify the OTP token to establish a session
+    const checkSession = async () => {
+      // Check if user has a valid recovery session
       const supabase = createClient();
-      const { error } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: 'recovery'
-      });
+      const { data: { session }, error } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error('Error verifying OTP:', error);
-        setTokenError('This reset link has expired or is invalid. Please request a new one.');
+      console.log('Password reset - checking session');
+      console.log('Session present:', session ? 'yes' : 'no');
+      console.log('Session error:', error);
+
+      if (!session || error) {
+        setTokenError('Invalid or expired password reset link. Please request a new one.');
         setValidatingToken(false);
         return;
       }
 
-      // Token is valid and session is established
-      console.log('Password reset session established');
+      // Session is valid
+      console.log('Password reset session valid');
       setValidatingToken(false);
     };
 
-    validateToken();
+    checkSession();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

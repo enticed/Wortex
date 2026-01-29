@@ -285,7 +285,7 @@ export async function resetPassword(
                    (typeof window !== 'undefined' ? window.location.origin : 'https://wortex.live');
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${appUrl}/auth/reset-password`,
+      redirectTo: `${appUrl}/auth/callback`,
     });
 
     if (error) {
