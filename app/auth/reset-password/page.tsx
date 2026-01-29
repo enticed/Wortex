@@ -22,9 +22,13 @@ function ResetPasswordForm() {
       const supabase = createClient();
       const { data: { session }, error } = await supabase.auth.getSession();
 
-      console.log('Password reset - checking session');
-      console.log('Session present:', session ? 'yes' : 'no');
-      console.log('Session error:', error);
+      console.log('[Password Reset] Checking session');
+      console.log('[Password Reset] Session present:', session ? 'yes' : 'no');
+      if (session) {
+        console.log('[Password Reset] User email:', session.user?.email);
+        console.log('[Password Reset] User ID:', session.user?.id);
+      }
+      console.log('[Password Reset] Session error:', error);
 
       if (!session || error) {
         setTokenError('Invalid or expired password reset link. Please request a new one.');
@@ -33,7 +37,7 @@ function ResetPasswordForm() {
       }
 
       // Session is valid
-      console.log('Password reset session valid');
+      console.log('[Password Reset] Session valid for user:', session.user?.email);
       setValidatingToken(false);
     };
 
@@ -60,17 +64,23 @@ function ResetPasswordForm() {
     try {
       const supabase = createClient();
 
+      console.log('[Password Reset] Attempting to update password...');
+
       // Update the user's password
-      const { error: updateError } = await supabase.auth.updateUser({
+      const { data, error: updateError } = await supabase.auth.updateUser({
         password: password,
       });
 
+      console.log('[Password Reset] Update response:', { data, error: updateError });
+
       if (updateError) {
+        console.error('[Password Reset] Update failed:', updateError);
         setError(updateError.message);
         setLoading(false);
         return;
       }
 
+      console.log('[Password Reset] Password updated successfully');
       setSuccess(true);
       setLoading(false);
 
