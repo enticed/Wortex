@@ -17,32 +17,36 @@ function ResetPasswordForm() {
   const [tokenError, setTokenError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if we have the necessary hash parameters from the email link
-    console.log('Full URL:', window.location.href);
-    console.log('Hash:', window.location.hash);
-    console.log('Search:', window.location.search);
+    const validateToken = async () => {
+      // Supabase sends reset links with PKCE code in query params
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
 
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const type = hashParams.get('type');
+      console.log('Password reset - code present:', code ? 'yes' : 'no');
 
-    console.log('Parsed - accessToken:', accessToken ? 'present' : 'missing');
-    console.log('Parsed - type:', type);
+      if (!code) {
+        setTokenError('Invalid password reset link. Please request a new one.');
+        setValidatingToken(false);
+        return;
+      }
 
-    if (type !== 'recovery') {
-      setTokenError('Invalid password reset link. Please request a new one.');
+      // Exchange the code for a session using Supabase
+      const supabase = createClient();
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+      if (error) {
+        console.error('Error exchanging code:', error);
+        setTokenError('This reset link has expired or is invalid. Please request a new one.');
+        setValidatingToken(false);
+        return;
+      }
+
+      // Token is valid and session is established
+      console.log('Password reset session established');
       setValidatingToken(false);
-      return;
-    }
+    };
 
-    if (!accessToken) {
-      setTokenError('Missing authentication token. Please request a new password reset link.');
-      setValidatingToken(false);
-      return;
-    }
-
-    // Token is valid
-    setValidatingToken(false);
+    validateToken();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
