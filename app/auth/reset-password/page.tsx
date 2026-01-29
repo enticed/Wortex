@@ -74,7 +74,7 @@ export default function ResetPasswordPage() {
       if (user) {
         await supabase
           .from('users')
-          .update({ password_changed_at: new Date().toISOString() })
+          .update({ password_changed_at: new Date().toISOString() } as any)
           .eq('id', user.id);
       }
 
