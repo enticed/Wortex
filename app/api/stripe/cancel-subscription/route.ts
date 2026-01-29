@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     // Cancel subscription at period end (don't immediately revoke access)
     const subscription = await stripe.subscriptions.update(subscriptionId, {
       cancel_at_period_end: true,
-    });
+    }) as Stripe.Subscription;
 
     console.log('[Cancel] Subscription marked for cancellation:', subscriptionId);
 
