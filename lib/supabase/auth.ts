@@ -280,8 +280,12 @@ export async function resetPassword(
   email: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // Get the app URL from environment variable or use window.location.origin as fallback
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ||
+                   (typeof window !== 'undefined' ? window.location.origin : 'https://wortex.live');
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/reset-password`,
+      redirectTo: `${appUrl}/auth/reset-password`,
     });
 
     if (error) {
