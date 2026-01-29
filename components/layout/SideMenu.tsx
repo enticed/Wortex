@@ -131,6 +131,30 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
               </Link>
             </li>
           </ul>
+
+          {/* Subscription Section */}
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/subscribe"
+                  onClick={onClose}
+                  className="block px-4 py-3 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors font-medium"
+                >
+                  Subscribe to Premium
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/account/subscription"
+                  onClick={onClose}
+                  className="block px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                >
+                  Manage Subscription
+                </Link>
+              </li>
+            </ul>
+          </div>
         </nav>
       </div>
     </>

@@ -12,6 +12,7 @@ export default function SubscribePage() {
   const { tier, isPremium, loading: tierLoading } = useUserTier();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual'); // Default to annual for better value
 
   const handleSubscribe = async () => {
     if (!userId) {
@@ -28,9 +29,13 @@ export default function SubscribePage() {
     setError(null);
 
     try {
-      const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY;
+      const priceId = selectedPlan === 'monthly'
+        ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY || ''
+        : process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ANNUAL || '';
 
       if (!priceId) {
+        console.error(`[Subscribe] Missing NEXT_PUBLIC_STRIPE_PRICE_ID_${selectedPlan.toUpperCase()}`);
+        console.error('[Subscribe] Available env vars:', Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC')));
         throw new Error('Stripe price ID not configured');
       }
 
@@ -122,29 +127,69 @@ export default function SubscribePage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-20">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
               Upgrade to Premium
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              Unlock exclusive features for just $1/month
+              Choose the plan that works best for you
             </p>
+          </div>
+
+          {/* Plan Toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+              <button
+                onClick={() => setSelectedPlan('monthly')}
+                className={`px-6 py-2 rounded-md font-medium transition-all ${
+                  selectedPlan === 'monthly'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setSelectedPlan('annual')}
+                className={`px-6 py-2 rounded-md font-medium transition-all relative ${
+                  selectedPlan === 'annual'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                Annual
+                <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  Save 17%
+                </span>
+              </button>
+            </div>
           </div>
 
           {/* Pricing Card */}
           <div className="max-w-md mx-auto mb-8">
             <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl shadow-xl border-2 border-blue-200 dark:border-blue-700 p-8">
               {/* Badge */}
-              <div className="inline-block bg-blue-600 text-white text-sm font-semibold px-4 py-1 rounded-full mb-4">
-                BEST VALUE
-              </div>
+              {selectedPlan === 'annual' && (
+                <div className="inline-block bg-green-600 text-white text-sm font-semibold px-4 py-1 rounded-full mb-4">
+                  BEST VALUE
+                </div>
+              )}
 
               {/* Price */}
               <div className="mb-6">
                 <div className="flex items-baseline">
-                  <span className="text-5xl font-bold text-gray-900 dark:text-gray-100">$1</span>
-                  <span className="text-2xl text-gray-600 dark:text-gray-400 ml-2">/month</span>
+                  <span className="text-5xl font-bold text-gray-900 dark:text-gray-100">
+                    ${selectedPlan === 'monthly' ? '1' : '10'}
+                  </span>
+                  <span className="text-2xl text-gray-600 dark:text-gray-400 ml-2">
+                    /{selectedPlan === 'monthly' ? 'month' : 'year'}
+                  </span>
                 </div>
+                {selectedPlan === 'annual' && (
+                  <p className="text-sm text-green-600 dark:text-green-400 mt-1 font-medium">
+                    That's only $0.83/month!
+                  </p>
+                )}
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                   Cancel anytime • No hidden fees
                 </p>
