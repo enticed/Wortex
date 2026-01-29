@@ -69,15 +69,6 @@ export default function ResetPasswordPage() {
         return;
       }
 
-      // Update password_changed_at timestamp in users table
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from('users')
-          .update({ password_changed_at: new Date().toISOString() } as any)
-          .eq('id', user.id);
-      }
-
       setSuccess(true);
       setLoading(false);
 
