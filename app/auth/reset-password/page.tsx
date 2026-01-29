@@ -18,24 +18,27 @@ function ResetPasswordForm() {
 
   useEffect(() => {
     const validateToken = async () => {
-      // Supabase sends reset links with PKCE code in query params
+      // Supabase sends reset links with a code in query params
       const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
+      const tokenHash = urlParams.get('code');
 
-      console.log('Password reset - code present:', code ? 'yes' : 'no');
+      console.log('Password reset - token hash present:', tokenHash ? 'yes' : 'no');
 
-      if (!code) {
+      if (!tokenHash) {
         setTokenError('Invalid password reset link. Please request a new one.');
         setValidatingToken(false);
         return;
       }
 
-      // Exchange the code for a session using Supabase
+      // Verify the OTP token to establish a session
       const supabase = createClient();
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: 'recovery'
+      });
 
       if (error) {
-        console.error('Error exchanging code:', error);
+        console.error('Error verifying OTP:', error);
         setTokenError('This reset link has expired or is invalid. Please request a new one.');
         setValidatingToken(false);
         return;
