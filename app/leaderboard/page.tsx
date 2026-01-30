@@ -42,15 +42,6 @@ export default function LeaderboardPage() {
   const [globalEntriesBoosted, setGlobalEntriesBoosted] = useState<GlobalLeaderboardBoostedRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [puzzleDate, setPuzzleDate] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<{
-    timezone: string;
-    calculatedDate: string;
-    puzzleError: string | null;
-  }>({
-    timezone: '',
-    calculatedDate: '',
-    puzzleError: null
-  });
 
   const router = useRouter();
   const supabase = createClient();
@@ -86,12 +77,6 @@ export default function LeaderboardPage() {
       });
       console.log('[Leaderboard] Step 1 complete - TZ:', userTimezone, 'Date:', calculatedDate);
 
-      setDebugInfo({
-        timezone: userTimezone,
-        calculatedDate,
-        puzzleError: null
-      });
-
       // If we have a saved puzzle date, fetch that specific puzzle, otherwise get today's
       console.log('[Leaderboard] Step 2: Fetching puzzle...');
       let puzzle;
@@ -102,14 +87,6 @@ export default function LeaderboardPage() {
       } else {
         puzzle = await getTodaysPuzzle(supabase);
         console.log('[Leaderboard] Step 2 complete - Today\'s puzzle:', puzzle?.date || 'NOT FOUND');
-      }
-
-      if (!puzzle) {
-        setDebugInfo({
-          timezone: userTimezone,
-          calculatedDate,
-          puzzleError: 'No puzzle found in database'
-        });
       }
 
       if (puzzle) {
@@ -185,20 +162,6 @@ export default function LeaderboardPage() {
     <AppLayout>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-20">
         <div className="max-w-4xl mx-auto">
-          {/* Debug Info - Remove after fixing */}
-          <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs space-y-1">
-            <div>
-              <strong>Debug:</strong> UserContext: {userLoading ? '⏳' : '✓'} | Loading: {loading ? '⏳' : '✓'} |
-              Pure: {dailyEntriesPure.length} | Boosted: {dailyEntriesBoosted.length} |
-              Puzzle: {puzzleDate || 'none'} | UserID: {userId ? userId.substring(0, 8) + '...' : 'none'}
-            </div>
-            <div>
-              TZ: {debugInfo.timezone || '?'} |
-              Date: {debugInfo.calculatedDate || '?'} |
-              {debugInfo.puzzleError && <span className="text-red-600">Error: {debugInfo.puzzleError}</span>}
-            </div>
-          </div>
-
           {/* Header */}
           <div className="mb-6 flex items-start justify-between">
             <div>
