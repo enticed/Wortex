@@ -5,13 +5,15 @@ interface StarsHistogramProps {
   starCounts: { [key: number]: number }; // Maps star rating (0-5) to count
   color?: 'emerald' | 'purple';
   loading?: boolean;
+  todayStars?: number | null; // Today's star rating to highlight
 }
 
 export default function StarsHistogram({
   title,
   starCounts,
   color = 'emerald',
-  loading = false
+  loading = false,
+  todayStars = null
 }: StarsHistogramProps) {
   // Calculate total games and max count for scaling
   const totalGames = Object.values(starCounts).reduce((sum, count) => sum + count, 0);
@@ -72,20 +74,23 @@ export default function StarsHistogram({
           const count = starCounts[stars] || 0;
           const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
           const displayPercentage = totalGames > 0 ? ((count / totalGames) * 100).toFixed(0) : 0;
+          const isToday = todayStars !== null && todayStars === stars;
 
           return (
             <div key={stars} className="flex items-center gap-2">
               {/* Star label */}
               <div className="flex items-center justify-end w-16 gap-0.5">
                 {stars === 0 ? (
-                  <span className="text-xs text-gray-600 dark:text-gray-400">DNF</span>
+                  <span className={`text-xs ${isToday ? 'font-bold text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>
+                    DNF
+                  </span>
                 ) : (
                   <>
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    <span className={`text-xs font-medium ${isToday ? 'font-bold text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
                       {stars}
                     </span>
                     <svg
-                      className="text-yellow-500 dark:text-yellow-400"
+                      className={isToday ? 'text-yellow-400 dark:text-yellow-300' : 'text-yellow-500 dark:text-yellow-400'}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       width={14}
@@ -98,9 +103,9 @@ export default function StarsHistogram({
               </div>
 
               {/* Bar */}
-              <div className="flex-1 h-6 bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden">
+              <div className={`flex-1 h-6 bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden ${isToday ? 'ring-2 ring-offset-1 ring-blue-500 dark:ring-blue-400' : ''}`}>
                 <div
-                  className={`h-full ${colors.bg} transition-all duration-300 flex items-center justify-end pr-2`}
+                  className={`h-full ${colors.bg} transition-all duration-300 flex items-center justify-end pr-2 ${isToday ? 'brightness-110' : ''}`}
                   style={{ width: `${percentage}%` }}
                 >
                   {count > 0 && (
@@ -113,7 +118,7 @@ export default function StarsHistogram({
 
               {/* Percentage */}
               <div className="w-10 text-right">
-                <span className="text-xs text-gray-600 dark:text-gray-400">
+                <span className={`text-xs ${isToday ? 'font-bold text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>
                   {displayPercentage}%
                 </span>
               </div>

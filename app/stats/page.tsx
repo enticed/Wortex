@@ -37,6 +37,8 @@ export default function StatsPage() {
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
   const [pureStarDistribution, setPureStarDistribution] = useState<StarDistribution>({});
   const [boostedStarDistribution, setBoostedStarDistribution] = useState<StarDistribution>({});
+  const [todayPureStars, setTodayPureStars] = useState<number | null>(null);
+  const [todayBoostedStars, setTodayBoostedStars] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,10 +103,21 @@ export default function StatsPage() {
         setRecentGames(formattedGames);
       }
 
+      // Get today's date in user's timezone
+      const userTimezone = typeof window !== 'undefined'
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone
+        : 'America/Los_Angeles';
+      const today = new Date().toLocaleDateString('en-CA', {
+        timeZone: userTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+
       // Get star distribution for Pure games (first play, 1.0x speed only)
       const { data: pureGames, error: pureError } = await supabase
         .from('scores')
-        .select('stars')
+        .select('stars, puzzles!inner(date)')
         .eq('user_id', userId)
         .eq('first_play_of_day', true)
         .eq('min_speed', 1.0)
@@ -115,17 +128,26 @@ export default function StatsPage() {
         console.error('[Stats] Error loading pure games:', pureError);
       } else if (pureGames) {
         const pureDistribution: StarDistribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        let todayPure: number | null = null;
+
         pureGames.forEach((game: any) => {
           const stars = game.stars ?? 0;
           pureDistribution[stars] = (pureDistribution[stars] || 0) + 1;
+
+          // Check if this is today's game
+          if (game.puzzles?.date === today) {
+            todayPure = stars;
+          }
         });
+
         setPureStarDistribution(pureDistribution);
+        setTodayPureStars(todayPure);
       }
 
       // Get star distribution for Boosted games (repeat plays or speed adjustments)
       const { data: boostedGames, error: boostedError } = await supabase
         .from('scores')
-        .select('stars')
+        .select('stars, puzzles!inner(date)')
         .eq('user_id', userId)
         .or('first_play_of_day.eq.false,min_speed.neq.1.0,max_speed.neq.1.0')
         .not('stars', 'is', null);
@@ -134,11 +156,20 @@ export default function StatsPage() {
         console.error('[Stats] Error loading boosted games:', boostedError);
       } else if (boostedGames) {
         const boostedDistribution: StarDistribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        let todayBoosted: number | null = null;
+
         boostedGames.forEach((game: any) => {
           const stars = game.stars ?? 0;
           boostedDistribution[stars] = (boostedDistribution[stars] || 0) + 1;
+
+          // Check if this is today's game
+          if (game.puzzles?.date === today) {
+            todayBoosted = stars;
+          }
         });
+
         setBoostedStarDistribution(boostedDistribution);
+        setTodayBoostedStars(todayBoosted);
       }
 
     } catch (error) {
@@ -279,12 +310,14 @@ export default function StatsPage() {
                   starCounts={pureStarDistribution}
                   color="emerald"
                   loading={loading}
+                  todayStars={todayPureStars}
                 />
                 <StarsHistogram
                   title="Boosted Games"
                   starCounts={boostedStarDistribution}
                   color="purple"
                   loading={loading}
+                  todayStars={todayBoostedStars}
                 />
               </div>
 

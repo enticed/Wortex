@@ -67,6 +67,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
     reorderMoves: number;
     hintsUsed: number;
     puzzleId: string;
+    puzzleDate?: string;
   } | null>(null);
 
   // Configure sensors for both mouse and touch input
@@ -359,21 +360,6 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           } else {
             console.log('[GameBoard] Score submitted successfully');
 
-            // Save final results to sessionStorage so they persist when navigating away
-            const resultsToSave = {
-              phase1Score: gameState.score || 0,
-              phase2Score: gameState.phase2Score || 0,
-              finalScore: gameState.finalScore || 0,
-              bonusCorrect: gameState.bonusCorrect,
-              totalWordsSeen: gameState.totalWordsSeen,
-              totalUniqueWords: puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length,
-              reorderMoves: gameState.reorderMoves,
-              hintsUsed: gameState.hintsUsed,
-              puzzleId: puzzle.id,
-            };
-            sessionStorage.setItem('wortex-final-results', JSON.stringify(resultsToSave));
-            console.log('[GameBoard] Final results saved to sessionStorage');
-
             // Update streak
             // @ts-expect-error - RPC function types not properly inferred in client context
             await supabase.rpc('update_user_streak', {
@@ -391,7 +377,28 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
     }
 
     submitScore();
-  }, [gameState.bonusAnswered, scoreSubmitted, userId, gameState.finalScore, gameState.bonusCorrect, puzzle.id, refreshStats]);
+  }, [gameState.bonusAnswered, scoreSubmitted, userId, gameState.finalScore, gameState.bonusCorrect, puzzle.id, refreshStats, isArchiveMode]);
+
+  // Save results to sessionStorage when bonus is answered (for both archive and normal mode)
+  // This allows leaderboard to show the correct puzzle even after midnight or in archive mode
+  useEffect(() => {
+    if (gameState.bonusAnswered && gameState.finalScore !== null) {
+      const resultsToSave = {
+        phase1Score: gameState.score || 0,
+        phase2Score: gameState.phase2Score || 0,
+        finalScore: gameState.finalScore || 0,
+        bonusCorrect: gameState.bonusCorrect,
+        totalWordsSeen: gameState.totalWordsSeen,
+        totalUniqueWords: puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length,
+        reorderMoves: gameState.reorderMoves,
+        hintsUsed: gameState.hintsUsed,
+        puzzleId: puzzle.id,
+        puzzleDate: puzzle.date,
+      };
+      sessionStorage.setItem('wortex-final-results', JSON.stringify(resultsToSave));
+      console.log('[GameBoard] Final results saved to sessionStorage for puzzle:', puzzle.date);
+    }
+  }, [gameState.bonusAnswered, gameState.finalScore, gameState.bonusCorrect, gameState.score, gameState.phase2Score, gameState.totalWordsSeen, gameState.reorderMoves, gameState.hintsUsed, puzzle.id, puzzle.date, puzzle.targetPhrase.words.length, puzzle.facsimilePhrase.words.length]);
 
   // Auto-remove unnecessary word after brief highlight
   useEffect(() => {

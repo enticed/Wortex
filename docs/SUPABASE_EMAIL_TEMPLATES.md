@@ -16,6 +16,11 @@ This document contains the recommended email templates to configure in Supabase 
 ## 1. Reset Password Email
 
 **When to use:** User clicks "Forgot Password" and requests password reset
+**Original:**
+<h2>We received a request to send a password reset link to this email. If it wasn't you, please ignore.</h2>
+
+<p>Follow this link to reset your password:</p>
+<p><a href="{{ .ConfirmationURL }}">Reset Password</a></p>
 
 **Template:**
 
@@ -63,6 +68,55 @@ This document contains the recommended email templates to configure in Supabase 
   </div>
 </div>
 ```
+**Alt 1:**
+This template adds a professional structure, a clear Call-to-Action (CTA) "button" (styled via inline CSS for maximum email client compatibility), and a security reassurance clause.
+Why this is better:
+Context: It explicitly states the email address ({{ .Email }}) so the user knows which account is being reset.
+Visual Hierarchy: The button draws the eye immediately to the primary action.
+Fallback: It includes the raw URL at the bottom, which is crucial for users with aggressive email firewalls that strip buttons.
+
+<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2>Reset your password</h2>
+  <p>Hello,</p>
+  <p>We received a request to reset the password for the account associated with <strong>{{ .Email }}</strong>.</p>
+  <p>No changes have been made to your account yet.</p>
+  
+  <p style="padding: 10px 0;">
+    <a href="{{ .ConfirmationURL }}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
+  </p>
+
+  <p>If you did not request this email, you can safely ignore it. Your password will remain the same.</p>
+  
+  <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;">
+  
+  <p style="font-size: 12px; color: #666;">
+    Button not working? Copy and paste this link into your browser:<br>
+    <a href="{{ .ConfirmationURL }}" style="color: #4F46E5;">{{ .ConfirmationURL }}</a>
+  </p>
+</div>
+
+Variable Usage: I used {{ .Email }} in both templates. This is a critical security feature; it helps the user verify that the reset request is for this specific service and account, preventing confusion if they have multiple aliases.
+Styling: In Option 1, I used background-color: #4F46E5 (Indigo). You should change this hex code to match your specific brand color to maintain consistency.
+
+**Alt 2:** 
+There is a counter-intuitive school of thought (often used by indie hackers and highly technical tools) that HTML-heavy emails often land in "Promotions" tabs. This template mimics a plain-text personal email, which often yields higher trust and inbox placement.
+Why consider this:
+Authenticity: It feels like a human wrote it.
+Deliverability: Fewer HTML tags lower the spam score.
+
+<p>Hi there,</p>
+
+<p>You requested a password reset for <strong>{{ .Email }}</strong>.</p>
+
+<p>Click the link below to set a new password:</p>
+
+<p><a href="{{ .ConfirmationURL }}">{{ .ConfirmationURL }}</a></p>
+
+<p>If this wasn't you, please ignore this message.</p>
+
+<p>Thanks,<br>
+The Team</p>
+
 
 ---
 

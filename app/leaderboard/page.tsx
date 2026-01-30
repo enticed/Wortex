@@ -61,6 +61,21 @@ export default function LeaderboardPage() {
       console.log('[Leaderboard] Using userId from UserContext:', userId?.substring(0, 12) || 'none');
       setLoading(true);
 
+      // Check if there's a saved puzzle date from a completed game (for cases where user finished after midnight)
+      let targetPuzzleDate: string | null = null;
+      const savedResults = sessionStorage.getItem('wortex-final-results');
+      if (savedResults) {
+        try {
+          const results = JSON.parse(savedResults);
+          if (results.puzzleDate) {
+            targetPuzzleDate = results.puzzleDate;
+            console.log('[Leaderboard] Using saved puzzle date:', targetPuzzleDate);
+          }
+        } catch (e) {
+          console.warn('[Leaderboard] Failed to parse saved results:', e);
+        }
+      }
+
       // Get today's puzzle
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const calculatedDate = new Date().toLocaleDateString('en-CA', {
@@ -77,9 +92,17 @@ export default function LeaderboardPage() {
         puzzleError: null
       });
 
-      console.log('[Leaderboard] Step 2: Fetching today\'s puzzle...');
-      const puzzle = await getTodaysPuzzle(supabase);
-      console.log('[Leaderboard] Step 2 complete - Today\'s puzzle:', puzzle?.date || 'NOT FOUND');
+      // If we have a saved puzzle date, fetch that specific puzzle, otherwise get today's
+      console.log('[Leaderboard] Step 2: Fetching puzzle...');
+      let puzzle;
+      if (targetPuzzleDate) {
+        const { getPuzzleByDate } = await import('@/lib/supabase/puzzles');
+        puzzle = await getPuzzleByDate(supabase, targetPuzzleDate);
+        console.log('[Leaderboard] Step 2 complete - Saved puzzle:', puzzle?.date || 'NOT FOUND');
+      } else {
+        puzzle = await getTodaysPuzzle(supabase);
+        console.log('[Leaderboard] Step 2 complete - Today\'s puzzle:', puzzle?.date || 'NOT FOUND');
+      }
 
       if (!puzzle) {
         setDebugInfo({

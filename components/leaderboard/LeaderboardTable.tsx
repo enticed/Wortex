@@ -40,13 +40,7 @@ export default function LeaderboardTable({
   }
 
   if (entries.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 dark:text-gray-400 text-lg">
-          No scores yet. Be the first to play!
-        </p>
-      </div>
-    );
+    return null; // Let parent handle empty state messaging
   }
 
   return (
