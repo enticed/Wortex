@@ -38,6 +38,7 @@ export default function StatsPage() {
   const [pureStarDistribution, setPureStarDistribution] = useState<StarDistribution>({});
   const [boostedStarDistribution, setBoostedStarDistribution] = useState<StarDistribution>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
   const supabase = createClient();
@@ -51,6 +52,7 @@ export default function StatsPage() {
 
     try {
       setLoading(true);
+      setError(null);
 
       console.log('[Stats] Loading stats for user:', userId.substring(0, 12));
 
@@ -59,7 +61,7 @@ export default function StatsPage() {
       setStats(userStats);
 
       // Get recent games (last 30)
-      const { data: games } = await supabase
+      const { data: games, error: gamesError } = await supabase
         .from('scores')
         .select(`
           id,
@@ -80,7 +82,9 @@ export default function StatsPage() {
         .order('created_at', { ascending: false })
         .limit(30);
 
-      if (games) {
+      if (gamesError) {
+        console.error('[Stats] Error loading recent games:', gamesError);
+      } else if (games) {
         const formattedGames = games.map((game: any) => ({
           id: game.id,
           puzzle_id: game.puzzle_id,
@@ -98,7 +102,7 @@ export default function StatsPage() {
       }
 
       // Get star distribution for Pure games (first play, 1.0x speed only)
-      const { data: pureGames } = await supabase
+      const { data: pureGames, error: pureError } = await supabase
         .from('scores')
         .select('stars')
         .eq('user_id', userId)
@@ -107,7 +111,9 @@ export default function StatsPage() {
         .eq('max_speed', 1.0)
         .not('stars', 'is', null);
 
-      if (pureGames) {
+      if (pureError) {
+        console.error('[Stats] Error loading pure games:', pureError);
+      } else if (pureGames) {
         const pureDistribution: StarDistribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
         pureGames.forEach((game: any) => {
           const stars = game.stars ?? 0;
@@ -117,14 +123,16 @@ export default function StatsPage() {
       }
 
       // Get star distribution for Boosted games (repeat plays or speed adjustments)
-      const { data: boostedGames } = await supabase
+      const { data: boostedGames, error: boostedError } = await supabase
         .from('scores')
         .select('stars')
         .eq('user_id', userId)
         .or('first_play_of_day.eq.false,min_speed.neq.1.0,max_speed.neq.1.0')
         .not('stars', 'is', null);
 
-      if (boostedGames) {
+      if (boostedError) {
+        console.error('[Stats] Error loading boosted games:', boostedError);
+      } else if (boostedGames) {
         const boostedDistribution: StarDistribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
         boostedGames.forEach((game: any) => {
           const stars = game.stars ?? 0;
@@ -134,7 +142,8 @@ export default function StatsPage() {
       }
 
     } catch (error) {
-      console.error('Error loading stats:', error);
+      console.error('[Stats] Error loading stats:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load stats');
     } finally {
       setLoading(false);
     }
@@ -196,7 +205,22 @@ export default function StatsPage() {
             </button>
           </div>
 
-          {loading ? (
+          {error ? (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-8 text-center">
+              <p className="text-red-900 dark:text-red-300 text-lg mb-4">
+                Unable to load stats
+              </p>
+              <p className="text-red-700 dark:text-red-400 text-sm mb-6">
+                {error}
+              </p>
+              <button
+                onClick={() => loadStats()}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : loading ? (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map((i) => (

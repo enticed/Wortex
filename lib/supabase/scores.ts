@@ -68,9 +68,9 @@ export async function getUserStats(supabase: any, userId: string): Promise<Stats
     .from('stats')
     .select('*')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code !== 'PGRST116') {
+  if (error) {
     console.error('Error fetching user stats:', error);
     return null;
   }
