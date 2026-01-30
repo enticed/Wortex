@@ -69,20 +69,51 @@ function ResetPasswordForm() {
       // Get the current session to verify recovery
       const { data: { session } } = await supabase.auth.getSession();
       console.log('[Password Reset] Session user:', session?.user?.email);
+      console.log('[Password Reset] Session user ID:', session?.user?.id);
 
-      // Update the user's password
+      if (!session?.user) {
+        setError('Session expired. Please request a new password reset link.');
+        setLoading(false);
+        return;
+      }
+
+      // Update the Supabase Auth password
       const { data, error: updateError } = await supabase.auth.updateUser({
         password: password,
       });
 
-      console.log('[Password Reset] Update response:', { data, error: updateError });
+      console.log('[Password Reset] Supabase Auth update response:', { data, error: updateError });
 
       if (updateError) {
-        console.error('[Password Reset] Update failed:', updateError);
+        console.error('[Password Reset] Supabase Auth update failed:', updateError);
         setError(updateError.message);
         setLoading(false);
         return;
       }
+
+      // Also update the custom password_hash in the users table
+      // This app uses custom password authentication for sign-in
+      console.log('[Password Reset] Updating custom password hash via API...');
+
+      const hashResponse = await fetch('/api/auth/update-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          userId: session.user.id,
+          newPassword: password
+        }),
+      });
+
+      if (!hashResponse.ok) {
+        const hashError = await hashResponse.json();
+        console.error('[Password Reset] Custom password update failed:', hashError);
+        setError('Failed to update password. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('[Password Reset] Custom password hash updated successfully');
 
       if (data?.user) {
         console.log('[Password Reset] Password updated successfully for:', data.user.email);

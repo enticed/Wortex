@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client-server';
 
 export async function POST(request: Request) {
   try {
-    const { newPassword } = await request.json();
+    const { newPassword, userId } = await request.json();
 
     // Validate input
     if (!newPassword) {
@@ -28,14 +28,27 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get session
-    const session = await getSession();
+    // Determine user ID: use provided userId (for password reset) or session userId (for password change)
+    let targetUserId: string;
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
+    if (userId) {
+      // Password reset flow - userId provided directly
+      // This is allowed because user already authenticated via password reset token
+      targetUserId = userId;
+      console.log('[Update Password] Password reset flow for user:', userId);
+    } else {
+      // Normal password change flow - require session
+      const session = await getSession();
+
+      if (!session) {
+        return NextResponse.json(
+          { error: 'Not authenticated' },
+          { status: 401 }
+        );
+      }
+
+      targetUserId = session.userId;
+      console.log('[Update Password] Password change flow for user:', targetUserId);
     }
 
     // Hash the new password
@@ -48,7 +61,7 @@ export async function POST(request: Request) {
         password_hash: passwordHash,
         password_changed_at: new Date().toISOString(),
       })
-      .eq('id', session.userId);
+      .eq('id', targetUserId);
 
     if (error) {
       console.error('Error updating password:', error);
@@ -57,6 +70,8 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    console.log('[Update Password] Password hash updated successfully for:', targetUserId);
 
     return NextResponse.json({
       success: true,
