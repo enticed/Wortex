@@ -140,9 +140,9 @@ This project was cloned from Wortex. Follow this checklist to complete the setup
   - [ ] ``SUPABASE_SERVICE_ROLE_KEY``
 
 - [ ] Generate SESSION_SECRET:
-  ``````bash
+  ```bash
   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-  ``````
+  ```
 
 - [ ] Run ``npm install``
 
@@ -196,9 +196,9 @@ Write-Host "Step 7: Creating quick start guide..." -ForegroundColor Yellow
 # Woodles Quick Start
 
 ## 1. Install Dependencies
-``````bash
+```bash
 npm install
-``````
+```
 
 ## 2. Create Supabase Project
 1. Go to https://app.supabase.com
@@ -215,9 +215,9 @@ npm install
 - Import to Woodles Supabase project
 
 ## 5. Test the App
-``````bash
+```bash
 npm run dev
-``````
+```
 
 ## 6. Follow SETUP_CHECKLIST.md
 Complete all items for full setup.
