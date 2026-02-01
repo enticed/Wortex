@@ -629,7 +629,8 @@ export const tutorialCompleteSteps: DriveStep[] = [
           <p class="font-semibold">Good luck! 🌀</p>
         </div>
       `,
-      side: "center",
+      side: "over",
+      align: "center",
     },
   },
 ];
