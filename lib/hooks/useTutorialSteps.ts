@@ -48,23 +48,23 @@ export function useTutorialSteps({
     const originalOnDestroyed = driverInstance.getConfig().onDestroyed;
 
     driverInstance.setConfig({
-      onDestroyStarted: () => {
+      onDestroyStarted: (element, step, opts) => {
         console.log('[useTutorialSteps Debug] onDestroyStarted wrapper called for phase:', phase);
         if (originalOnDestroyStarted) {
-          const result = originalOnDestroyStarted();
+          const result = originalOnDestroyStarted(element, step, opts);
           console.log('[useTutorialSteps Debug] Original handler returned:', result);
           if (result === false) return false;
         }
         console.log('[useTutorialSteps Debug] Wrapper returning true');
         return true; // Allow destruction to proceed
       },
-      onDestroyed: () => {
+      onDestroyed: (element, step, opts) => {
         console.log('[useTutorialSteps Debug] onDestroyed wrapper called for phase:', phase);
 
         // IMPORTANT: Call the original onDestroyed first (sets isActive to false)
         if (originalOnDestroyed) {
           console.log('[useTutorialSteps Debug] Calling original onDestroyed');
-          originalOnDestroyed();
+          originalOnDestroyed(element, step, opts);
         }
 
         // Mark this phase as completed
