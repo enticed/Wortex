@@ -477,7 +477,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
       let targetWords = prev.targetPhraseWords;
 
       // In tutorial/archive mode, shuffle the words to ensure Phase 2 always requires interaction
-      if (isArchiveMode && targetWords.length > 0) {
+      if (isArchiveMode && targetWords.length > 0 && prev.puzzle) {
         const expectedWords = prev.puzzle.targetPhrase.words;
         let shuffled = shuffleArray(targetWords);
 
