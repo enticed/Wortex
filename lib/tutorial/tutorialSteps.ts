@@ -278,6 +278,7 @@ export const phase1Steps: DriveStep[] = [
 export const phase2Steps: DriveStep[] = [
   {
     element: ".mystery-quote-area",
+    disableActiveInteraction: false,
     popover: {
       title: "Phase 2: Word Arrangement",
       description: `
@@ -298,11 +299,11 @@ export const phase2Steps: DriveStep[] = [
       side: "top",
       align: "start",
       showButtons: ["next", "previous", "close"],
-      disableActiveInteraction: false,
     },
   },
   {
     element: ".mystery-quote-area",
+    disableActiveInteraction: false,
     popover: {
       title: "The Assembly Header - Your Friend!",
       description: `
@@ -315,7 +316,6 @@ export const phase2Steps: DriveStep[] = [
       side: "top",
       align: "start",
       showButtons: ["next", "previous", "close"],
-      disableActiveInteraction: false,
     },
   },
   {
@@ -339,6 +339,7 @@ export const phase2Steps: DriveStep[] = [
   },
   {
     element: ".mystery-quote-area",
+    disableActiveInteraction: false,
     popover: {
       title: "Dealing with Unneeded Words",
       description: `
@@ -354,11 +355,11 @@ export const phase2Steps: DriveStep[] = [
       side: "top",
       align: "start",
       showButtons: ["next", "previous", "close"],
-      disableActiveInteraction: false,
     },
   },
   {
     element: ".mystery-quote-area",
+    disableActiveInteraction: false,
     popover: {
       title: "How to Know You're Correct",
       description: `
@@ -376,7 +377,6 @@ export const phase2Steps: DriveStep[] = [
       side: "top",
       align: "start",
       showButtons: ["previous", "close"],
-      disableActiveInteraction: false,
       onPopoverRender: (popover, options) => {
         const mysteryQuoteArea = document.querySelector('.mystery-quote-area');
         if (mysteryQuoteArea) {
@@ -398,6 +398,7 @@ export const phase2Steps: DriveStep[] = [
 export const bonusRoundSteps: DriveStep[] = [
   {
     element: ".bonus-round-container",
+    disableActiveInteraction: false,
     popover: {
       title: "Bonus Round",
       description: `
@@ -416,7 +417,6 @@ export const bonusRoundSteps: DriveStep[] = [
       side: "top",
       align: "start",
       showButtons: ["close"],
-      disableActiveInteraction: false,
       onPopoverRender: (popover, options) => {
         // Watch for the final results header to appear (indicating bonus was answered)
         const observer = new MutationObserver(() => {
@@ -442,6 +442,7 @@ export const finalResultsSteps: DriveStep[] = [
   // Step 15: Understanding Your Score
   {
     element: ".final-results-container",
+    disableActiveInteraction: false,
     popover: {
       title: "Understanding Your Score",
       description: `
@@ -457,7 +458,6 @@ export const finalResultsSteps: DriveStep[] = [
       side: "bottom",
       align: "start",
       showButtons: ["next", "previous", "close"],
-      disableActiveInteraction: false,
     },
   },
   // Step 16: Track Your Improvement
@@ -539,6 +539,7 @@ export const finalResultsSteps: DriveStep[] = [
   // Step 21: Return to Home (FINAL STEP - requires user action)
   {
     element: "#home-link",
+    disableActiveInteraction: false,
     popover: {
       title: "🏠 Return to Homepage",
       description: `
@@ -554,7 +555,6 @@ export const finalResultsSteps: DriveStep[] = [
       side: "bottom",
       align: "start",
       showButtons: ["previous", "close"],
-      disableActiveInteraction: false,
       onPopoverRender: (popover, options) => {
         const homeLink = document.querySelector('#home-link');
         if (homeLink) {
