@@ -51,12 +51,9 @@ export function useTutorialSteps({
       onDestroyStarted: (element, step, opts) => {
         console.log('[useTutorialSteps Debug] onDestroyStarted wrapper called for phase:', phase);
         if (originalOnDestroyStarted) {
-          const result = originalOnDestroyStarted(element, step, opts);
-          console.log('[useTutorialSteps Debug] Original handler returned:', result);
-          if (result === false) return false;
+          originalOnDestroyStarted(element, step, opts);
         }
-        console.log('[useTutorialSteps Debug] Wrapper returning true');
-        return true; // Allow destruction to proceed
+        console.log('[useTutorialSteps Debug] Wrapper completed');
       },
       onDestroyed: (element, step, opts) => {
         console.log('[useTutorialSteps Debug] onDestroyed wrapper called for phase:', phase);
