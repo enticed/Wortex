@@ -64,7 +64,7 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
 
   return (
     <div className="w-full h-full max-w-2xl mx-auto animate-fade-in flex flex-col relative">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col absolute inset-0 overflow-hidden mx-2">
+      <div className="bonus-round-container bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col absolute inset-0 overflow-hidden mx-2">
         {/* Header - Fixed at top */}
         <div className="flex-shrink-0 px-3 pt-2 pb-1">
           <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
@@ -75,8 +75,8 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
         {/* Scrollable Content Area - Grows to fill available space with extra padding for button */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-3" style={{ paddingBottom: '80px' }}>
           {/* Question */}
-          <div className="mb-2">
-            <div className="bg-purple-100 dark:bg-purple-900 rounded-lg p-2 mb-2">
+          <div className="bonus-question-and-answers mb-2">
+            <div className="bonus-question-container bg-purple-100 dark:bg-purple-900 rounded-lg p-2 mb-2">
               <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
                 {bonusQuestion.question}
               </p>

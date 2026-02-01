@@ -21,6 +21,9 @@ import FinalResults from './FinalResults';
 import { useGameState } from '@/lib/hooks/useGameState';
 import { isPhraseComplete } from '@/lib/utils/game';
 import { useUser } from '@/lib/contexts/UserContext';
+import { useTutorial } from '@/lib/contexts/TutorialContext';
+import { useTutorialSteps } from '@/lib/hooks/useTutorialSteps';
+import { phase1Steps, phase2Steps, bonusRoundSteps, finalResultsSteps } from '@/lib/tutorial/tutorialSteps';
 import { createClient } from '@/lib/supabase/client';
 import type { Puzzle } from '@/types/game';
 
@@ -44,8 +47,9 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
     useCorrectStringHint,
     useNextWordHint,
     confirmPhase1Complete,
-  } = useGameState(puzzle, vortexSpeed);
+  } = useGameState(puzzle, vortexSpeed, isArchiveMode);
   const { userId, refreshStats } = useUser();
+  const { hasCompletedTutorial } = useTutorial();
   const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
   const [draggedWordText, setDraggedWordText] = useState<string | null>(null);
   const [draggedWordBelongsTo, setDraggedWordBelongsTo] = useState<'target' | 'facsimile' | 'spurious' | null>(null);
@@ -106,6 +110,38 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
       }
     }
   }, [puzzle.id]);
+
+  // Tutorial: Phase 1 steps (show on game start if tutorial not completed)
+  useTutorialSteps({
+    phase: 'phase1',
+    steps: phase1Steps,
+    autoStart: !hasCompletedTutorial && gameState.phase === 1 && !gameState.isComplete,
+    delay: 1000,
+  });
+
+  // Tutorial: Phase 2 steps (show when transitioning to phase 2)
+  useTutorialSteps({
+    phase: 'phase2',
+    steps: phase2Steps,
+    autoStart: !hasCompletedTutorial && gameState.phase === 2 && !savedResults,
+    delay: 500,
+  });
+
+  // Tutorial: Bonus Round (step 14) - show when puzzle is complete and bonus round appears
+  useTutorialSteps({
+    phase: 'bonusRound',
+    steps: bonusRoundSteps,
+    autoStart: !hasCompletedTutorial && gameState.isComplete && allowBonusRound && !gameState.bonusAnswered && !savedResults,
+    delay: 500,
+  });
+
+  // Tutorial: Final Results (steps 15-19) - consolidated multi-step phase
+  useTutorialSteps({
+    phase: 'finalResults',
+    steps: finalResultsSteps,
+    autoStart: !hasCompletedTutorial && (gameState.bonusAnswered || !!savedResults),
+    delay: 500,
+  });
 
   const handleDragStart = (event: DragStartEvent) => {
     const wordId = event.active.id as string;
@@ -449,7 +485,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
       <div className="h-[calc(100dvh-2.5rem)] w-full flex flex-col bg-gray-50 dark:bg-gray-900 touch-none overscroll-none">
         {/* Top Area - Hint Phrase (always shown completed) - Phase 1: 15%, Phase 2: 20%, Hidden during bonus round and final results */}
         {!gameState.isComplete && !(gameState.phase === 2 && gameState.bonusAnswered) && !savedResults && (
-          <div className={`border-b-2 border-gray-300 dark:border-gray-700 bg-purple-50 dark:bg-purple-950 transition-all duration-500 ${
+          <div className={`hint-phrase-container border-b-2 border-gray-300 dark:border-gray-700 bg-purple-50 dark:bg-purple-950 transition-all duration-500 ${
             gameState.phase === 2 ? 'h-[20%] p-1' : 'h-[15%] p-1.5'
           }`}>
             <AssemblyArea
@@ -469,7 +505,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
         )}
 
         {/* Middle Area - Mystery Quote - Phase 1: 35% (40% during bonus), Phase 2: 80%, Final Results: 40% */}
-        <div className={`border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
+        <div className={`mystery-quote-area border-b-2 border-gray-300 dark:border-gray-700 p-3 bg-blue-50 dark:bg-blue-950 transition-all duration-500 ${
           gameState.bonusAnswered || savedResults ? 'h-[40%]' :
           gameState.isComplete ? 'h-[40%]' :
           gameState.phase === 2 ? 'h-[80%]' : 'h-[35%]'
@@ -509,7 +545,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
         {/* Bottom Area - Vortex (Phase 1), Bonus Round, or Final Results */}
         {gameState.phase === 1 && !gameState.bonusAnswered && !savedResults && (
-          <div className={`relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 ${gameState.isComplete ? 'flex-1' : 'h-[50%]'}`}>
+          <div className={`vortex-container relative bg-gradient-to-b from-purple-100 to-indigo-100 dark:from-purple-950 dark:to-indigo-950 ${gameState.isComplete ? 'flex-1' : 'h-[50%]'}`}>
             {gameState.isComplete ? (
               // Show bonus round in vortex area
               <div className="h-full flex flex-col">
@@ -536,7 +572,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
           {/* Speed Slider - Center Left (z-50 keeps it above fog overlay at z-30) */}
           {!gameState.isComplete && (
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1 z-50">
+            <div className="speed-slider absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1 z-50">
               <input
                 type="range"
                 min="0"
@@ -544,7 +580,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
                 step="0.25"
                 value={vortexSpeed}
                 onChange={(e) => setVortexSpeed(parseFloat(e.target.value))}
-                className="speed-slider h-54 cursor-pointer"
+                className="speed-slider-input h-54 cursor-pointer"
                 style={{
                   WebkitAppearance: 'slider-vertical' as any,
                   writingMode: 'vertical-lr' as any,

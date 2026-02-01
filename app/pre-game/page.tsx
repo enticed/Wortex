@@ -5,6 +5,9 @@ import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import { createClient } from '@/lib/supabase/client';
 import { getTodaysPuzzle } from '@/lib/supabase/puzzles';
+import { useTutorial } from '@/lib/contexts/TutorialContext';
+import { useTutorialSteps } from '@/lib/hooks/useTutorialSteps';
+import { preGameSteps } from '@/lib/tutorial/tutorialSteps';
 import type { Puzzle } from '@/types/game';
 
 // Collection of game tips - randomly select one
@@ -58,6 +61,23 @@ const GAME_TIPS = [
 export default function PreGamePage() {
   const [currentTip, setCurrentTip] = useState(GAME_TIPS[0]);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
+  const { hasCompletedTutorial } = useTutorial();
+
+  // Show pre-game tutorial steps if not completed
+  useEffect(() => {
+    console.log('[PreGame Debug] Tutorial state:', {
+      hasCompletedTutorial,
+      puzzle: puzzle !== null,
+      shouldAutoStart: !hasCompletedTutorial && puzzle !== null,
+    });
+  }, [hasCompletedTutorial, puzzle]);
+
+  useTutorialSteps({
+    phase: 'pre-game',
+    steps: preGameSteps,
+    autoStart: !hasCompletedTutorial && puzzle !== null,
+    delay: 1000, // Increased delay to allow previous tutorial to fully close
+  });
 
   useEffect(() => {
     // Select a random tip when the page loads
@@ -75,7 +95,7 @@ export default function PreGamePage() {
 
   return (
     <AppLayout>
-      <div className="min-h-[calc(100vh-2.5rem)] bg-linear-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-950 dark:to-indigo-950 flex flex-col">
+      <div id="pre-game-container" className="min-h-[calc(100vh-2.5rem)] bg-linear-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-950 dark:to-indigo-950 flex flex-col">
         {/* Hint Phrase at Top */}
         {puzzle && (
           <div className="border-b-2 border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950 p-3 overflow-hidden">
@@ -134,6 +154,7 @@ export default function PreGamePage() {
         {/* Continue Link - Bottom Pegged with safe area padding */}
         <div className="pb-20 text-center">
           <Link
+            id="continue-to-game-button"
             href="/play"
             onClick={() => {
               // Clear any saved final results so user can replay

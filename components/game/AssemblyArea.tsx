@@ -248,8 +248,8 @@ export default function AssemblyArea({
   const ongoingScore = calculateOngoingScore();
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between mb-1">
+    <div className={`assembly-area h-full flex flex-col ${id === 'target' ? 'assembly-area-target' : ''}`}>
+      <div className={`assembly-area-header flex items-center justify-between mb-1 ${id === 'target' ? 'assembly-area-header-target' : ''}`}>
         {/* Title - Hide "Mystery Quote" when dragging in Phase 2 */}
         {!(!isComplete && phase === 2 && !isAutoAssembly && draggedWord) && (
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -461,7 +461,7 @@ export default function AssemblyArea({
 
       {/* Phase 2 Hint Buttons */}
       {phase === 2 && isSortable && !isComplete && (
-        <div className="mt-1.5 pt-1.5 border-t border-gray-300 dark:border-gray-600">
+        <div className="hint-buttons mt-1.5 pt-1.5 border-t border-gray-300 dark:border-gray-600">
           <div className="flex flex-col gap-1.5">
             {/* Hint Buttons - Horizontal layout with text on right */}
             <div className="flex items-center gap-2">

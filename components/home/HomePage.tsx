@@ -2,6 +2,7 @@
 
 import { useUser } from '@/lib/contexts/UserContext';
 import AppLayout from '@/components/layout/AppLayout';
+import TutorialPrompt from '@/components/tutorial/TutorialPrompt';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -27,8 +28,11 @@ function getStreakMessage(streak: number): string {
 }
 
 export default function HomePage() {
-  const { user, userData, stats, loading } = useUser();
+  const { userData, stats, loading } = useUser();
   const [currentDate, setCurrentDate] = useState('');
+
+  // Note: Tutorial is now triggered only when user clicks "Yes" on the tutorial prompt
+  // which navigates to /tutorial page where the tutorial actually starts
 
   useEffect(() => {
     // Function to update the date
@@ -69,7 +73,10 @@ export default function HomePage() {
 
   return (
     <AppLayout>
-      <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-950 dark:to-indigo-950 flex items-center justify-center p-3">
+      {/* Tutorial Prompt Modal - shown to first-time visitors */}
+      <TutorialPrompt />
+
+      <div id="app-container" className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-950 dark:to-indigo-950 flex items-center justify-center p-3">
       <div className="max-w-2xl w-full space-y-4">
         {/* Hero Section - Compact */}
         <div className="text-center">
@@ -141,6 +148,7 @@ export default function HomePage() {
         {/* Play Button - Compact */}
         <div className="text-center">
           <Link
+            id="play-button"
             href="/pre-game"
             className="inline-block px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white text-lg font-bold rounded-xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
           >

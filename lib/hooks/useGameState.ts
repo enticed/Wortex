@@ -21,7 +21,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
+export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchiveMode: boolean = false) {
   const lastWordSpawnTime = useRef<number>(0); // Track last spawn to prevent simultaneous spawns
 
   const [gameState, setGameState] = useState<GameState>({
@@ -473,12 +473,48 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0) {
 
   // Confirm Phase 1 completion and transition to Phase 2
   const confirmPhase1Complete = useCallback(() => {
-    setGameState((prev) => ({
-      ...prev,
-      phase: 2,
-      showPhase1CompleteDialog: false,
-    }));
-  }, []);
+    setGameState((prev) => {
+      let targetWords = prev.targetPhraseWords;
+
+      // In tutorial/archive mode, shuffle the words to ensure Phase 2 always requires interaction
+      if (isArchiveMode && targetWords.length > 0) {
+        const expectedWords = prev.puzzle.targetPhrase.words;
+        let shuffled = shuffleArray(targetWords);
+
+        // Keep shuffling until we get an order that's NOT correct
+        // This ensures Phase 2 always requires user interaction
+        let attempts = 0;
+        const maxAttempts = 100; // Prevent infinite loop
+        while (attempts < maxAttempts) {
+          const isCorrectOrder = expectedWords.every((expectedWord, index) => {
+            const word = shuffled[index];
+            return word && word.word.toLowerCase() === expectedWord.toLowerCase();
+          });
+
+          if (!isCorrectOrder) {
+            break; // Found a non-correct order, use it
+          }
+
+          // Shuffle again
+          shuffled = shuffleArray(targetWords);
+          attempts++;
+        }
+
+        targetWords = shuffled.map((word, index) => ({
+          ...word,
+          position: index,
+        }));
+        console.log('[useGameState] Tutorial mode: Shuffled Phase 2 words to incorrect order to ensure user interaction');
+      }
+
+      return {
+        ...prev,
+        phase: 2,
+        showPhase1CompleteDialog: false,
+        targetPhraseWords: targetWords,
+      };
+    });
+  }, [isArchiveMode]);
 
   // Dismiss a word from vortex (drag to right edge) - skips next cycle
   const dismissWord = useCallback((wordId: string) => {

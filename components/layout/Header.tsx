@@ -92,7 +92,7 @@ export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderPr
     <>
       <header className="fixed top-0 left-0 right-0 h-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-50 flex items-center justify-between px-4">
         {/* Logo/Title */}
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+        <Link id="home-link" href="/" className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
           <svg
             className="w-5 h-5"
             fill="none"
@@ -111,6 +111,7 @@ export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderPr
           {/* Account Menu Button */}
           <div className="relative" ref={menuRef}>
             <button
+              id="user-menu-button"
               onClick={() => setShowAccountMenu(!showAccountMenu)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               aria-label="Account menu"

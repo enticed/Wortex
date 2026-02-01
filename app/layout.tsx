@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "driver.js/dist/driver.css";
 import { UserProvider } from "@/lib/contexts/UserContext";
+import { TutorialProvider } from "@/lib/contexts/TutorialContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
@@ -32,7 +34,9 @@ export default function RootLayout({
       >
         <ErrorBoundary>
           <UserProvider>
-            {children}
+            <TutorialProvider>
+              {children}
+            </TutorialProvider>
           </UserProvider>
         </ErrorBoundary>
       </body>

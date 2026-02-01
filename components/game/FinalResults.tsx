@@ -92,9 +92,9 @@ export default function FinalResults({
   const phase2Stars = calculatePhase2Stars(phase2Score, quoteWordCount);
   const finalStars = Math.round((phase1Stars + phase2Stars) / 2);
   return (
-    <div className="h-full w-full flex flex-col overflow-y-auto">
+    <div className="final-results-container h-full w-full flex flex-col overflow-y-auto">
       {/* Header - Match Mystery Quote header style */}
-      <div className="flex items-center justify-center py-2 px-3 bg-gray-200 dark:bg-gray-800">
+      <div className="final-results-header flex items-center justify-center py-2 px-3 bg-gray-200 dark:bg-gray-800">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           Final Results
         </h2>
@@ -172,12 +172,14 @@ export default function FinalResults({
           {/* Buttons - Half-width side by side */}
           <div className="flex gap-2 mt-2">
             <Link
+              id="compare-previous-button"
               href="/stats"
               className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm text-center"
             >
               Compare to Your Previous Results...
             </Link>
             <Link
+              id="compare-leaderboard-button"
               href="/leaderboard"
               className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm text-center"
             >

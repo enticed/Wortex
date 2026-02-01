@@ -67,7 +67,7 @@ html:has(#game-root) {
 }
 
 /* Speed Slider - Cross-browser vertical slider styling with 2px thin track */
-.speed-slider {
+.speed-slider-input {
   -webkit-appearance: slider-vertical;
   width: 2px;
   /* Use background gradient on the input element for Chrome/Safari */
@@ -77,7 +77,7 @@ html:has(#game-root) {
 
 /* Firefox-specific vertical slider support using writing-mode */
 @-moz-document url-prefix() {
-  .speed-slider {
+  .speed-slider-input {
     -moz-appearance: none;
     appearance: none;
     background: linear-gradient(to top, #9333ea 0%, #6366f1 100%);
@@ -86,13 +86,13 @@ html:has(#game-root) {
     height: 194px; /* 10% shorter than h-54 (216px) */
   }
 
-  .speed-slider::-moz-range-track {
+  .speed-slider-input::-moz-range-track {
     background: transparent; /* Gradient is on the input element */
     border-radius: 1px;
     width: 2px;
   }
 
-  .speed-slider::-moz-range-thumb {
+  .speed-slider-input::-moz-range-thumb {
     background: white;
     border: 2px solid #6366f1;
     border-radius: 50%;
@@ -103,13 +103,13 @@ html:has(#game-root) {
 }
 
 /* Webkit browsers (Chrome, Safari) - vertical slider with 2px track */
-.speed-slider::-webkit-slider-track {
+.speed-slider-input::-webkit-slider-track {
   background: transparent; /* Gradient is on the input element */
   border-radius: 1px;
   width: 2px;
 }
 
-.speed-slider::-webkit-slider-thumb {
+.speed-slider-input::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   background: white;
@@ -124,18 +124,18 @@ html:has(#game-root) {
 
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
-  .speed-slider {
+  .speed-slider-input {
     background: linear-gradient(to bottom, #8b5cf6 0%, #6366f1 100%);
   }
 
   @-moz-document url-prefix() {
-    .speed-slider {
+    .speed-slider-input {
       background: linear-gradient(to top, #8b5cf6 0%, #6366f1 100%);
     }
   }
 
-  .speed-slider::-webkit-slider-thumb,
-  .speed-slider::-moz-range-thumb {
+  .speed-slider-input::-webkit-slider-thumb,
+  .speed-slider-input::-moz-range-thumb {
     background: #1f2937;
     border-color: #8b5cf6;
   }

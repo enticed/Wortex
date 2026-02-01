@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { useTutorial } from '@/lib/contexts/TutorialContext';
 
 interface SideMenuProps {
   isOpen: boolean;
@@ -9,6 +10,8 @@ interface SideMenuProps {
 }
 
 export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
+  const { resetTutorial } = useTutorial();
+
   // Close menu on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -128,6 +131,15 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
                 className="block px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
               >
                 How to Play
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/tutorial"
+                onClick={onClose}
+                className="block px-4 py-3 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors font-medium"
+              >
+                ↻ Replay Tutorial
               </Link>
             </li>
           </ul>
