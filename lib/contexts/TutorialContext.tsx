@@ -73,34 +73,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
         setCurrentTutorialPhase(null);
       },
       onDestroyStarted: () => {
-        const activeIndex = driverObj.getActiveIndex();
-        const totalSteps = driverObj.getConfig("steps")?.length || 0;
-
-        console.log('[Tutorial Debug] onDestroyStarted called', { activeIndex, totalSteps });
-
-        // If user is on the last step, they completed it naturally
-        if (activeIndex === totalSteps - 1) {
-          console.log('[Tutorial Debug] Last step - allowing destruction without confirmation');
-          return true; // Allow destruction, no confirmation needed
-        }
-
-        // User clicked skip/close in the middle - ask for confirmation
-        if (activeIndex !== null && activeIndex < totalSteps - 1) {
-          console.log('[Tutorial Debug] Mid-tutorial close - showing confirmation');
-          const shouldSkip = confirm(
-            "Are you sure you want to skip the tutorial? You can always access it later from the menu."
-          );
-          if (!shouldSkip) {
-            console.log('[Tutorial Debug] User cancelled skip');
-            return false; // Cancel destruction
-          }
-          console.log('[Tutorial Debug] User confirmed skip');
-          skipTutorial();
-          return true; // Allow destruction after skipping
-        }
-
-        // Default: allow destruction
-        console.log('[Tutorial Debug] Default case - allowing destruction');
+        console.log('[Tutorial Debug] onDestroyStarted called');
+        // Always allow destruction - the tutorial steps handle their own confirmation
         return true;
       },
     });

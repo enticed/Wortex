@@ -44,8 +44,8 @@ export function useTutorialSteps({
     startTutorial(phase);
 
     // Set up completion callback
-    const originalOnDestroyStarted = driverInstance.getConfig("onDestroyStarted");
-    const originalOnDestroyed = driverInstance.getConfig("onDestroyed");
+    const originalOnDestroyStarted = driverInstance.getConfig().onDestroyStarted;
+    const originalOnDestroyed = driverInstance.getConfig().onDestroyed;
 
     driverInstance.setConfig({
       onDestroyStarted: () => {
