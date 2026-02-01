@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useTutorial } from '@/lib/contexts/TutorialContext';
 
@@ -13,9 +14,15 @@ import { useTutorial } from '@/lib/contexts/TutorialContext';
 export default function TutorialPrompt() {
   const router = useRouter();
   const { hasSeenTutorialPrompt, dismissTutorialPrompt } = useTutorial();
+  const [mounted, setMounted] = React.useState(false);
 
-  // Don't show if user has already seen the prompt
-  if (hasSeenTutorialPrompt) {
+  // Wait for client-side hydration to complete
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't show anything during SSR or if user has already seen the prompt
+  if (!mounted || hasSeenTutorialPrompt) {
     return null;
   }
 

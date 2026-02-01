@@ -22,6 +22,8 @@ export type TutorialPhase =
   | "phase1"
   | "phase1-complete"
   | "phase2"
+  | "bonusRound"
+  | "finalResults"
   | "scoring"
   | "stats"
   | "leaderboard"
@@ -36,25 +38,22 @@ const TUTORIAL_PHASES_KEY = "wortex-tutorial-phases-completed";
 const TUTORIAL_PROMPT_DISMISSED_KEY = "wortex-tutorial-prompt-dismissed";
 
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
-  // Initialize from localStorage to prevent flash of tutorial prompt
-  const [hasCompletedTutorial, setHasCompletedTutorial] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const completed = localStorage.getItem(TUTORIAL_STORAGE_KEY) === "true";
-    const skipped = localStorage.getItem(TUTORIAL_SKIPPED_KEY) === "true";
-    return completed || skipped;
-  });
-
-  const [hasSeenTutorialPrompt, setHasSeenTutorialPrompt] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const completed = localStorage.getItem(TUTORIAL_STORAGE_KEY) === "true";
-    const skipped = localStorage.getItem(TUTORIAL_SKIPPED_KEY) === "true";
-    const promptDismissed = localStorage.getItem(TUTORIAL_PROMPT_DISMISSED_KEY) === "true";
-    return completed || skipped || promptDismissed;
-  });
-
+  const [hasCompletedTutorial, setHasCompletedTutorial] = useState(false);
+  const [hasSeenTutorialPrompt, setHasSeenTutorialPrompt] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [currentTutorialPhase, setCurrentTutorialPhase] = useState<TutorialPhase | null>(null);
   const [driverInstance, setDriverInstance] = useState<Driver | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Check tutorial completion and prompt dismissal status on mount
+  useEffect(() => {
+    const completed = localStorage.getItem(TUTORIAL_STORAGE_KEY) === "true";
+    const skipped = localStorage.getItem(TUTORIAL_SKIPPED_KEY) === "true";
+    const promptDismissed = localStorage.getItem(TUTORIAL_PROMPT_DISMISSED_KEY) === "true";
+    setHasCompletedTutorial(completed || skipped);
+    setHasSeenTutorialPrompt(completed || skipped || promptDismissed);
+    setIsHydrated(true);
+  }, []);
 
   // Initialize Driver.js instance
   useEffect(() => {
