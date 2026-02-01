@@ -64,7 +64,6 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       nextBtnText: "Next →",
       prevBtnText: "← Previous",
       doneBtnText: "Got it! →",
-      closeBtnText: "Skip Tutorial",
       allowClose: true,
       overlayOpacity: 0.7,
       popoverClass: "wortex-tutorial-popover",
