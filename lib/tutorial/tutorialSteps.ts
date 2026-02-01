@@ -37,7 +37,8 @@ export const welcomeSteps: DriveStep[] = [
           <div class="text-xs text-gray-400 mt-4">1 of 21</div>
         </div>
       `,
-      side: "center",
+      side: "over",
+      align: "center",
       showButtons: ["next", "close"],
     },
   },
