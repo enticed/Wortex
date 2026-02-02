@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useTutorial } from '@/lib/contexts/TutorialContext';
+import { useUser } from '@/lib/contexts/UserContext';
 
 /**
  * Tutorial Prompt Modal
@@ -14,6 +15,7 @@ import { useTutorial } from '@/lib/contexts/TutorialContext';
 export default function TutorialPrompt() {
   const router = useRouter();
   const { hasSeenTutorialPrompt, dismissTutorialPrompt } = useTutorial();
+  const { stats, loading } = useUser();
   const [mounted, setMounted] = React.useState(false);
 
   // Wait for client-side hydration to complete
@@ -21,8 +23,14 @@ export default function TutorialPrompt() {
     setMounted(true);
   }, []);
 
-  // Don't show anything during SSR or if user has already seen the prompt
-  if (!mounted || hasSeenTutorialPrompt) {
+  // Don't show if:
+  // - Still hydrating
+  // - User has seen the prompt before (localStorage)
+  // - User is loading
+  // - User has played before (has totalGames > 0)
+  const hasPlayedBefore = stats && stats.totalGames > 0;
+
+  if (!mounted || hasSeenTutorialPrompt || loading || hasPlayedBefore) {
     return null;
   }
 

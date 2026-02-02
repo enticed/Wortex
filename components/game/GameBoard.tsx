@@ -112,10 +112,13 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
   }, [puzzle.id]);
 
   // Tutorial: Phase 1 steps (show on game start if tutorial not completed)
+  // ONLY run tutorial on the actual tutorial puzzle, not on daily puzzles
+  const isTutorialPuzzle = puzzle.id === 'tutorial-puzzle';
+
   useTutorialSteps({
     phase: 'phase1',
     steps: phase1Steps,
-    autoStart: !hasCompletedTutorial && gameState.phase === 1 && !gameState.isComplete,
+    autoStart: isTutorialPuzzle && !hasCompletedTutorial && gameState.phase === 1 && !gameState.isComplete,
     delay: 1000,
   });
 
@@ -123,7 +126,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
   useTutorialSteps({
     phase: 'phase2',
     steps: phase2Steps,
-    autoStart: !hasCompletedTutorial && gameState.phase === 2 && !savedResults,
+    autoStart: isTutorialPuzzle && !hasCompletedTutorial && gameState.phase === 2 && !savedResults,
     delay: 500,
   });
 
@@ -131,7 +134,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
   useTutorialSteps({
     phase: 'bonusRound',
     steps: bonusRoundSteps,
-    autoStart: !hasCompletedTutorial && gameState.isComplete && allowBonusRound && !gameState.bonusAnswered && !savedResults,
+    autoStart: isTutorialPuzzle && !hasCompletedTutorial && gameState.isComplete && allowBonusRound && !gameState.bonusAnswered && !savedResults,
     delay: 500,
   });
 
@@ -139,7 +142,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
   useTutorialSteps({
     phase: 'finalResults',
     steps: finalResultsSteps,
-    autoStart: !hasCompletedTutorial && (gameState.bonusAnswered || !!savedResults),
+    autoStart: isTutorialPuzzle && !hasCompletedTutorial && (gameState.bonusAnswered || !!savedResults),
     delay: 500,
   });
 
