@@ -59,7 +59,10 @@
       "Bash(node scripts/backfill-stars.mjs:*)",
       "Bash(mkdir:*)",
       "Bash(node scripts/test-password-reset.mjs:*)",
-      "Bash(node scripts/diagnose-password-reset.mjs:*)"
+      "Bash(node scripts/diagnose-password-reset.mjs:*)",
+      "Bash(timeout 30 bash -c 'while ! curl -s http://localhost:3000 > nul 2>&1; do sleep 2; done && echo \"\"Server is live\"\"')",
+      "Bash(/dev/null)",
+      "Bash(timeout 5 bash:*)"
     ],
     "deny": [],
     "ask": []

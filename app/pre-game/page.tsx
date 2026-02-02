@@ -104,11 +104,11 @@ export default function PreGamePage() {
             </h2>
             <div className="flex items-center justify-center overflow-hidden">
               <div className="animate-scroll-horizontal whitespace-nowrap">
-                <p className="font-serif italic text-lg text-purple-900 dark:text-purple-100 inline-block px-4">
+                <p className="font-serif text-lg text-purple-900 dark:text-purple-100 inline-block px-4" style={{ fontStyle: 'italic', fontFamily: 'Georgia, serif' }}>
                   &ldquo;{puzzle.facsimilePhrase.text}&rdquo;
                 </p>
                 {/* Duplicate for seamless loop */}
-                <p className="font-serif italic text-lg text-purple-900 dark:text-purple-100 inline-block px-4">
+                <p className="font-serif text-lg text-purple-900 dark:text-purple-100 inline-block px-4" style={{ fontStyle: 'italic', fontFamily: 'Georgia, serif' }}>
                   &ldquo;{puzzle.facsimilePhrase.text}&rdquo;
                 </p>
               </div>
