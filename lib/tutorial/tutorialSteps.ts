@@ -40,6 +40,7 @@ export const welcomeSteps: DriveStep[] = [
       align: "center",
       showButtons: ["next", "close"],
       progressText: "1 of 21",
+      showProgress: true,
     },
   },
   {
@@ -59,6 +60,7 @@ export const welcomeSteps: DriveStep[] = [
       align: "center",
       showButtons: ["previous", "close"],
       progressText: "2 of 21",
+      showProgress: true,
       onPopoverRender: (popover, options) => {
         const playButton = document.querySelector('#play-button');
         if (playButton) {
@@ -93,6 +95,7 @@ export const preGameSteps: DriveStep[] = [
       align: "center",
       showButtons: ["next", "previous", "close"],
       progressText: "3 of 21",
+      showProgress: true,
     },
   },
   // Step 4: Two Phases of Gameplay
@@ -113,6 +116,7 @@ export const preGameSteps: DriveStep[] = [
       align: "start",
       showButtons: ["next", "previous", "close"],
       progressText: "4 of 21",
+      showProgress: true,
     },
   },
   // Step 5: Continue to Game (action required)
@@ -133,6 +137,7 @@ export const preGameSteps: DriveStep[] = [
       align: "center",
       showButtons: ["previous", "close"],
       progressText: "5 of 21",
+      showProgress: true,
       onPopoverRender: (popover, options) => {
         const continueButton = document.querySelector('#continue-to-game-button');
         if (continueButton) {
@@ -170,6 +175,7 @@ export const phase1Steps: DriveStep[] = [
       align: "start",
       showButtons: ["next", "previous", "close"],
       progressText: "6 of 21",
+      showProgress: true,
     },
   },
   {
@@ -186,6 +192,7 @@ export const phase1Steps: DriveStep[] = [
       align: "center",
       showButtons: ["next", "previous", "close"],
       progressText: "7 of 21",
+      showProgress: true,
     },
   },
   {
@@ -212,6 +219,7 @@ export const phase1Steps: DriveStep[] = [
       align: "start",
       showButtons: ["next", "previous", "close"],
       progressText: "8 of 21",
+      showProgress: true,
     },
   },
   {
@@ -232,6 +240,7 @@ export const phase1Steps: DriveStep[] = [
       align: "center",
       showButtons: ["next", "previous", "close"],
       progressText: "9 of 21",
+      showProgress: true,
     },
   },
   {
@@ -257,6 +266,7 @@ export const phase1Steps: DriveStep[] = [
       align: "center",
       showButtons: ["previous", "close"],
       progressText: "10 of 21",
+      showProgress: true,
       onPopoverRender: (popover, options) => {
         const vortexContainer = document.querySelector('.vortex-container');
         if (vortexContainer) {
@@ -299,6 +309,7 @@ export const phase2Steps: DriveStep[] = [
       align: "start",
       showButtons: ["next", "previous", "close"],
       progressText: "11 of 21",
+      showProgress: true,
     },
   },
   {
@@ -316,6 +327,7 @@ export const phase2Steps: DriveStep[] = [
       align: "start",
       showButtons: ["next", "previous", "close"],
       progressText: "12 of 21",
+      showProgress: true,
     },
   },
   {
@@ -335,6 +347,7 @@ export const phase2Steps: DriveStep[] = [
       align: "start",
       showButtons: ["next", "previous", "close"],
       progressText: "13 of 21",
+      showProgress: true,
     },
   },
   {
@@ -355,6 +368,7 @@ export const phase2Steps: DriveStep[] = [
       align: "start",
       showButtons: ["next", "previous", "close"],
       progressText: "14 of 21",
+      showProgress: true,
     },
   },
   {
@@ -377,6 +391,7 @@ export const phase2Steps: DriveStep[] = [
       align: "start",
       showButtons: ["previous", "close"],
       progressText: "15 of 21",
+      showProgress: true,
       onPopoverRender: (popover, options) => {
         const mysteryQuoteArea = document.querySelector('.mystery-quote-area');
         if (mysteryQuoteArea) {
@@ -417,6 +432,7 @@ export const bonusRoundSteps: DriveStep[] = [
       align: "start",
       showButtons: ["close"],
       progressText: "16 of 21",
+      showProgress: true,
       onPopoverRender: (popover, options) => {
         // Watch for the final results header to appear (indicating bonus was answered)
         const observer = new MutationObserver(() => {
@@ -458,6 +474,7 @@ export const finalResultsSteps: DriveStep[] = [
       align: "start",
       showButtons: ["next", "previous", "close"],
       progressText: "17 of 21",
+      showProgress: true,
     },
   },
   // Step 16: Track Your Improvement
@@ -482,6 +499,7 @@ export const finalResultsSteps: DriveStep[] = [
       align: "start",
       showButtons: ["next", "previous", "close"],
       progressText: "18 of 21",
+      showProgress: true,
     },
   },
   // Step 17: Pure vs Boosted Rankings
@@ -511,6 +529,7 @@ export const finalResultsSteps: DriveStep[] = [
       align: "start",
       showButtons: ["next", "previous", "close"],
       progressText: "19 of 21",
+      showProgress: true,
     },
   },
   // Step 20: Create an Account
@@ -534,6 +553,7 @@ export const finalResultsSteps: DriveStep[] = [
       align: "end",
       showButtons: ["next", "previous", "close"],
       progressText: "20 of 21",
+      showProgress: true,
     },
   },
   // Step 21: Return to Home (FINAL STEP - requires user action)
@@ -555,6 +575,7 @@ export const finalResultsSteps: DriveStep[] = [
       align: "start",
       showButtons: ["previous", "close"],
       progressText: "21 of 21",
+      showProgress: true,
       onPopoverRender: (popover, options) => {
         const homeLink = document.querySelector('#home-link');
         if (homeLink) {
