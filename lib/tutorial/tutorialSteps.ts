@@ -33,9 +33,7 @@ export const welcomeSteps: DriveStep[] = [
           <p>Wortex is a unique word puzzle where you collect and arrange words to reveal famous quotes.</p>
           <p><strong>This quick tutorial will guide you through the game.</strong></p>
           <p class="text-sm"><strong>💡 Tutorial Tip:</strong> Steps with a <span style="background-color: #fef3c7; padding: 0.125rem 0.25rem; border-radius: 0.25rem;">yellow background</span> require you to interact with the game (not just click "Next").</p>
-          <p>Click "Next" to continue, or you can skip it anytime and replay it later from the menu.</p>
-          <div class="text-xs text-gray-400 mt-4">1 of 21</div>
-        </div>
+          <p>Click "Next" to continue, or you can skip it anytime and replay it later from the menu.</p>        </div>
       `,
       side: "over",
       align: "center",
@@ -52,9 +50,7 @@ export const welcomeSteps: DriveStep[] = [
         </div>
         <div class="space-y-2">
           <p><strong>Click the "Start Tutorial" button below</strong> to continue to the next page.</p>
-          <p class="text-sm">The tutorial will automatically resume on the next page!</p>
-          <div class="text-xs text-gray-400 mt-4">2 of 21</div>
-        </div>
+          <p class="text-sm">The tutorial will automatically resume on the next page!</p>        </div>
       `,
       side: "top",
       align: "center",
@@ -86,9 +82,7 @@ export const preGameSteps: DriveStep[] = [
         <div class="space-y-2">
           <p>Every puzzle has a <strong>Hint Phrase</strong> that gives you clues about the Mystery Quote.</p>
           <p class="text-sm">In this tutorial, the hint phrase is <em>"Minimalist design philosophy"</em> and the mystery quote is <em>"Less is more"</em>.</p>
-          <p class="text-sm">The Hint Phrase is NOT the answer - it's just a clue to help you identify the right words!</p>
-          <div class="text-xs text-gray-400 mt-4">3 of 21</div>
-        </div>
+          <p class="text-sm">The Hint Phrase is NOT the answer - it's just a clue to help you identify the right words!</p>        </div>
       `,
       side: "bottom",
       align: "center",
@@ -106,9 +100,7 @@ export const preGameSteps: DriveStep[] = [
           Grab the right words from the spinning vortex</p>
           <p><strong>Phase 2: Word Arrangement</strong><br/>
           Rearrange them to form the correct quote</p>
-          <p class="text-sm"><strong>Scoring:</strong> Lower scores are better! The fewer words you see and the fewer moves you make, the better your score.</p>
-          <div class="text-xs text-gray-400 mt-4">4 of 21</div>
-        </div>
+          <p class="text-sm"><strong>Scoring:</strong> Lower scores are better! The fewer words you see and the fewer moves you make, the better your score.</p>        </div>
       `,
       side: "bottom",
       align: "start",
@@ -126,9 +118,7 @@ export const preGameSteps: DriveStep[] = [
         </div>
         <div class="space-y-2">
           <p>Now let's try it out with a simple practice puzzle!</p>
-          <p class="text-sm font-semibold">Click "Continue to Game" below to start playing!</p>
-          <div class="text-xs text-gray-400 mt-4">5 of 21</div>
-        </div>
+          <p class="text-sm font-semibold">Click "Continue to Game" below to start playing!</p>        </div>
       `,
       side: "top",
       align: "center",
@@ -163,9 +153,7 @@ export const phase1Steps: DriveStep[] = [
             <li>You must figure out which words belong to the actual quote</li>
             <li>Hint phrase words are extras you don't need</li>
           </ul>
-          <p class="text-sm italic">Think of it as a helpful distraction! 😊</p>
-          <div class="text-xs text-gray-400 mt-4">6 of 21</div>
-        </div>
+          <p class="text-sm italic">Think of it as a helpful distraction! 😊</p>        </div>
       `,
       side: "bottom",
       align: "start",
@@ -179,9 +167,7 @@ export const phase1Steps: DriveStep[] = [
       description: `
         <div class="space-y-2">
           <p><strong>Drag words UP</strong> from the vortex to the Mystery Quote area above.</p>
-          <p class="text-sm">Note: Sometimes words stack on top of each other in the vortex. This is a known visual bug we're working on - just grab the visible word and others will appear!</p>
-          <div class="text-xs text-gray-400 mt-4">7 of 21</div>
-        </div>
+          <p class="text-sm">Note: Sometimes words stack on top of each other in the vortex. This is a known visual bug we're working on - just grab the visible word and others will appear!</p>        </div>
       `,
       side: "top",
       align: "center",
@@ -205,9 +191,7 @@ export const phase1Steps: DriveStep[] = [
             <li>❌ Harder to grab moving words</li>
           </ul>
           <p class="font-semibold">Pro tip: Start fast to see which words you need, then slow down to grab them!</p>
-          <p class="text-xs italic">⚠️ Using speeds other than 1.0x affects your leaderboard ranking (more on that later)</p>
-          <div class="text-xs text-gray-400 mt-4">8 of 21</div>
-        </div>
+          <p class="text-xs italic">⚠️ Using speeds other than 1.0x affects your leaderboard ranking (more on that later)</p>        </div>
       `,
       side: "left",
       align: "start",
@@ -225,9 +209,7 @@ export const phase1Steps: DriveStep[] = [
             <li>❌ Remove words once added to Mystery Quote</li>
             <li>❌ Reorder words (that comes in Phase 2!)</li>
           </ul>
-          <p class="text-sm">Don't worry about making mistakes - you'll fix everything in Phase 2. Just collect all the words you think belong to the quote!</p>
-          <div class="text-xs text-gray-400 mt-4">9 of 21</div>
-        </div>
+          <p class="text-sm">Don't worry about making mistakes - you'll fix everything in Phase 2. Just collect all the words you think belong to the quote!</p>        </div>
       `,
       side: "bottom",
       align: "center",
@@ -250,9 +232,7 @@ export const phase1Steps: DriveStep[] = [
             <li>You want to clear clutter</li>
           </ul>
           <p class="text-xs italic">This doesn't affect your score - it's completely optional and just helps you focus!</p>
-          <p class="text-sm font-semibold mt-2">Try grabbing a word to get started!</p>
-          <div class="text-xs text-gray-400 mt-4">10 of 21</div>
-        </div>
+          <p class="text-sm font-semibold mt-2">Try grabbing a word to get started!</p>        </div>
       `,
       side: "top",
       align: "center",
@@ -292,9 +272,7 @@ export const phase2Steps: DriveStep[] = [
             <li>Look for the <strong>gold indicator arrows</strong> showing where it will drop</li>
             <li><strong>Release</strong> to place it</li>
           </ol>
-          <p class="text-xs">Each move costs 0.25 points, so think before you move!</p>
-          <div class="text-xs text-gray-400 mt-4">11 of 21</div>
-        </div>
+          <p class="text-xs">Each move costs 0.25 points, so think before you move!</p>        </div>
       `,
       side: "top",
       align: "start",
@@ -309,9 +287,7 @@ export const phase2Steps: DriveStep[] = [
       description: `
         <div class="space-y-2">
           <p>When you grab a word, it appears in the header in <strong class="text-orange-500">bright orange</strong>.</p>
-          <p class="text-sm">This confirms you've grabbed the right word before you move it!</p>
-          <div class="text-xs text-gray-400 mt-4">12 of 21</div>
-        </div>
+          <p class="text-sm">This confirms you've grabbed the right word before you move it!</p>        </div>
       `,
       side: "top",
       align: "start",
@@ -328,9 +304,7 @@ export const phase2Steps: DriveStep[] = [
           <p><strong>1. Unneeded Word:</strong> Identifies and removes a word that doesn't belong</p>
           <p><strong>2. Correct String:</strong> Temporarily highlights consecutive words already in the right order with a green border</p>
           <p><strong>3. Next Word:</strong> Shows which word should come next in sequence</p>
-          <p class="text-sm italic">Use these when you're truly stuck - they're lifesavers!</p>
-          <div class="text-xs text-gray-400 mt-4">13 of 21</div>
-        </div>
+          <p class="text-sm italic">Use these when you're truly stuck - they're lifesavers!</p>        </div>
       `,
       side: "top",
       align: "start",
@@ -348,9 +322,7 @@ export const phase2Steps: DriveStep[] = [
           A: Trial and error! Or use the "Unneeded Word" hint.</p>
           <p><strong>Q: What do I do with unneeded words?</strong><br/>
           A: Move them to the <strong>end of the word block</strong>. The app ignores anything after the correct quote!</p>
-          <p class="text-sm">Think of it like sweeping clutter to the end of your desk.</p>
-          <div class="text-xs text-gray-400 mt-4">14 of 21</div>
-        </div>
+          <p class="text-sm">Think of it like sweeping clutter to the end of your desk.</p>        </div>
       `,
       side: "top",
       align: "start",
@@ -370,9 +342,7 @@ export const phase2Steps: DriveStep[] = [
           <p><strong>Use "Correct String" Hint:</strong> Temporarily highlights consecutive words already in the right order with a green border</p>
           <p><strong>Use "Next Word" Hint:</strong> Shows which word should come next in sequence</p>
           <p class="text-sm italic">When you've arranged all words correctly, the puzzle completes automatically! 🎉</p>
-          <p class="text-sm font-semibold mt-2">Try grabbing a word to get started!</p>
-          <div class="text-xs text-gray-400 mt-4">15 of 21</div>
-        </div>
+          <p class="text-sm font-semibold mt-2">Try grabbing a word to get started!</p>        </div>
       `,
       side: "top",
       align: "start",
@@ -410,9 +380,7 @@ export const bonusRoundSteps: DriveStep[] = [
           <p><strong>Correct answer:</strong> Get a 10% bonus (your score is multiplied by 0.9)</p>
           <p><strong>Wrong or skipped:</strong> No penalty, score stays the same</p>
           <p class="text-sm italic">Remember: Lower scores are better, so the bonus actually reduces your score! 🎯</p>
-          <p class="text-sm font-semibold mt-2">Select an answer and click Submit to continue!</p>
-          <div class="text-xs text-gray-400 mt-4">16 of 21</div>
-        </div>
+          <p class="text-sm font-semibold mt-2">Select an answer and click Submit to continue!</p>        </div>
       `,
       side: "top",
       align: "start",
@@ -451,9 +419,7 @@ export const finalResultsSteps: DriveStep[] = [
           <p><strong>Phase 2 Score:</strong> (Moves × 0.25) + (Hints × 0.5)</p>
           <p><strong>Final Score:</strong> Phase 1 + Phase 2</p>
           <p><strong>Bonus Correct:</strong> Final Score × 0.9 (10% reduction!)</p>
-          <p class="font-semibold text-lg">Remember: Lower scores are better!</p>
-          <div class="text-xs text-gray-400 mt-4">17 of 21</div>
-        </div>
+          <p class="font-semibold text-lg">Remember: Lower scores are better!</p>        </div>
       `,
       side: "bottom",
       align: "start",
@@ -475,9 +441,7 @@ export const finalResultsSteps: DriveStep[] = [
             <li>Score distribution histogram</li>
             <li>Recent game history</li>
           </ul>
-          <p class="text-sm">Look for <strong>downward trends</strong> in your average - that means you're improving!</p>
-          <div class="text-xs text-gray-400 mt-4">18 of 21</div>
-        </div>
+          <p class="text-sm">Look for <strong>downward trends</strong> in your average - that means you're improving!</p>        </div>
       `,
       side: "top",
       align: "start",
@@ -504,9 +468,7 @@ export const finalResultsSteps: DriveStep[] = [
             <li>Any speed setting permitted</li>
             <li>Practice makes perfect!</li>
           </ul>
-          <p class="text-xs italic">Separate lists ensure fair comparisons since speed adjustments and retries provide advantages.</p>
-          <div class="text-xs text-gray-400 mt-4">19 of 21</div>
-        </div>
+          <p class="text-xs italic">Separate lists ensure fair comparisons since speed adjustments and retries provide advantages.</p>        </div>
       `,
       side: "top",
       align: "start",
@@ -527,9 +489,7 @@ export const finalResultsSteps: DriveStep[] = [
             <li>🏆 Compete on the leaderboard</li>
             <li>⭐ Earn achievement stars</li>
           </ul>
-          <p class="text-sm italic">Plus, premium subscribers ($1/month) can access the full puzzle archive!</p>
-          <div class="text-xs text-gray-400 mt-4">20 of 21</div>
-        </div>
+          <p class="text-sm italic">Plus, premium subscribers ($1/month) can access the full puzzle archive!</p>        </div>
       `,
       side: "bottom",
       align: "end",
@@ -548,9 +508,7 @@ export const finalResultsSteps: DriveStep[] = [
         </div>
         <div class="space-y-2">
           <p>Click the <strong>Wortex</strong> title to return to the homepage and complete the tutorial!</p>
-          <p class="text-sm">You can always click this to get back home from anywhere in the app.</p>
-          <div class="text-xs text-gray-400 mt-4">21 of 21</div>
-        </div>
+          <p class="text-sm">You can always click this to get back home from anywhere in the app.</p>        </div>
       `,
       side: "bottom",
       align: "start",

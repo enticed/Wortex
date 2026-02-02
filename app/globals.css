@@ -140,3 +140,34 @@ html:has(#game-root) {
     border-color: #8b5cf6;
   }
 }
+
+/* Tutorial Popover Customizations */
+.wortex-tutorial-popover {
+  /* Hide the X close button - it's non-functional and we have footer Close buttons */
+  .driver-popover-close-btn {
+    display: none !important;
+  }
+
+  /* Move progress text inline with buttons to save vertical space */
+  .driver-popover-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
+  }
+
+  .driver-popover-progress-text {
+    order: 0 !important;
+    margin: 0 !important;
+    font-size: 0.75rem !important;
+    color: #6b7280 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .driver-popover-footer-buttons {
+    order: 1 !important;
+    display: flex !important;
+    gap: 0.5rem !important;
+    margin-left: auto !important;
+  }
+}
