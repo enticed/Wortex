@@ -75,8 +75,8 @@ export default function TutorialPage() {
                 <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-100 mb-2">
                   Today's Hint Phrase:
                 </h3>
-                <p className="text-lg font-medium text-purple-700 dark:text-purple-300">
-                  {tutorialPuzzle.facsimilePhrase.text}
+                <p className="text-lg font-medium text-purple-700 dark:text-purple-300" style={{ fontStyle: 'italic', fontFamily: 'Georgia, serif' }}>
+                  &ldquo;{tutorialPuzzle.facsimilePhrase.text}&rdquo;
                 </p>
                 <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">
                   Use this as a clue, but remember it's not the answer!
