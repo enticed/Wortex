@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AppLayout from '@/components/layout/AppLayout';
 import { createClient } from '@/lib/supabase/client';
 import { getTodaysPuzzle } from '@/lib/supabase/puzzles';
+import { getUserStats } from '@/lib/supabase/scores';
 import { useTutorial } from '@/lib/contexts/TutorialContext';
 import { useTutorialSteps } from '@/lib/hooks/useTutorialSteps';
 import { preGameSteps } from '@/lib/tutorial/tutorialSteps';
@@ -61,21 +62,54 @@ const GAME_TIPS = [
 export default function PreGamePage() {
   const [currentTip, setCurrentTip] = useState(GAME_TIPS[0]);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
+  const [isReturningUser, setIsReturningUser] = useState<boolean | null>(null);
   const { hasCompletedTutorial } = useTutorial();
 
-  // Show pre-game tutorial steps if not completed
+  // Check if user has played before by checking database stats
+  useEffect(() => {
+    async function checkUserHistory() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        // Anonymous users - rely on localStorage only
+        setIsReturningUser(false);
+        return;
+      }
+
+      // Check if user has any game history in database
+      const stats = await getUserStats(supabase, user.id);
+      const hasPlayedBefore = stats && stats.total_games > 0;
+
+      console.log('[PreGame Debug] User history check:', {
+        userId: user.id,
+        totalGames: stats?.total_games || 0,
+        hasPlayedBefore,
+      });
+
+      setIsReturningUser(hasPlayedBefore);
+    }
+
+    checkUserHistory();
+  }, []);
+
+  // Show pre-game tutorial steps ONLY if:
+  // 1. User hasn't completed tutorial (localStorage check)
+  // 2. User is NOT a returning user (database check)
+  // 3. Puzzle is loaded
   useEffect(() => {
     console.log('[PreGame Debug] Tutorial state:', {
       hasCompletedTutorial,
+      isReturningUser,
       puzzle: puzzle !== null,
-      shouldAutoStart: !hasCompletedTutorial && puzzle !== null,
+      shouldAutoStart: !hasCompletedTutorial && !isReturningUser && puzzle !== null && isReturningUser !== null,
     });
-  }, [hasCompletedTutorial, puzzle]);
+  }, [hasCompletedTutorial, isReturningUser, puzzle]);
 
   useTutorialSteps({
     phase: 'pre-game',
     steps: preGameSteps,
-    autoStart: !hasCompletedTutorial && puzzle !== null,
+    autoStart: !hasCompletedTutorial && !isReturningUser && puzzle !== null && isReturningUser !== null,
     delay: 1000, // Increased delay to allow previous tutorial to fully close
   });
 
