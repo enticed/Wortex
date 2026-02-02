@@ -27,8 +27,8 @@ export default function TutorialPrompt() {
   // - Still hydrating
   // - User has seen the prompt before (localStorage)
   // - User is loading
-  // - User has played before (has totalGames > 0)
-  const hasPlayedBefore = stats && stats.totalGames > 0;
+  // - User has played before (has total_games > 0)
+  const hasPlayedBefore = stats && stats.total_games > 0;
 
   if (!mounted || hasSeenTutorialPrompt || loading || hasPlayedBefore) {
     return null;
