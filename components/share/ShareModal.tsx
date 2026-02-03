@@ -7,9 +7,10 @@ interface ShareModalProps {
   shareText: string;
   isOpen: boolean;
   onClose: () => void;
+  title?: string;
 }
 
-export default function ShareModal({ shareText, isOpen, onClose }: ShareModalProps) {
+export default function ShareModal({ shareText, isOpen, onClose, title = 'Share Your Score' }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
   const [showNativeShare, setShowNativeShare] = useState(false);
 
@@ -61,7 +62,7 @@ export default function ShareModal({ shareText, isOpen, onClose }: ShareModalPro
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Share Your Score
+            {title}
           </h3>
           <button
             onClick={onClose}

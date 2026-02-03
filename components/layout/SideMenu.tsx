@@ -28,7 +28,7 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
 
           if (puzzle) {
             const text = generateInviteText({
-              facsimilePhrase: puzzle.facsimile_phrase,
+              facsimilePhrase: puzzle.facsimilePhrase.text,
               puzzleDate: puzzle.date,
             });
             setInviteText(text);
@@ -227,6 +227,7 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
           setShowShareModal(false);
           onClose(); // Also close the side menu after sharing
         }}
+        title="Share Wortex"
       />
     </>
   );
