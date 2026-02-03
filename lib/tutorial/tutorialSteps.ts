@@ -183,8 +183,8 @@ export const phase1Steps: DriveStep[] = [
       description: `
         <div class="space-y-2">
           <p>Delivers words from both the hint phrase and the mystery quote.</p>
-          <p>The center of the vortex shows the number of words delivered.</p>
-          <p>Consider using the speed slider if you want to control the flow of words.</p>
+          <p>The center of the vortex counts the number of words delivered.</p>
+          <p class="text-xs">Consider using the speed slider if you want to control the flow of words.</p>
         </div>
           
       `,
@@ -233,7 +233,7 @@ export const phase1Steps: DriveStep[] = [
             <li>❌ Remove words</li>
             <li>❌ Reorder words</li>
           </ul>
-          <p class="text-sm">Just focus on collecting all the words you think belong to the quote!</p>        </div>
+          <p class="text-sm">You'll work around this in Phase 2. Just focus on collecting all the words you think belong to the quote!</p>        </div>
           
       `,
       side: "bottom",
@@ -290,6 +290,9 @@ export const phase2Steps: DriveStep[] = [
       title: "Phase 2: Word Arrangement",
       description: `
         <div class="space-y-2">
+          <p>Here are the steps (don't do it yet!)</p>
+        </div>
+        <div class="space-y-2">
           <ol class="list-decimal pl-5 space-y-1 text-sm">
             <li><strong>Tap/click</strong> a word to grab it</li>
             <li>Confirm you grabbed the right one</li>
@@ -311,11 +314,9 @@ export const phase2Steps: DriveStep[] = [
     element: ".mystery-quote-area",
     disableActiveInteraction: false,
     popover: {
-      title: "The Assembly Header",
       description: `
         <div class="space-y-2">
-          <p class="text-sm">Shows your running score</p>
-          <p class="text-sm">Will show which word you've grabbed</p>        </div>
+          <p class="text-xs">The "Mystery Quote" header shows your running score, and will show whatever word you grab.</p>
           
       `,
       side: "top",
