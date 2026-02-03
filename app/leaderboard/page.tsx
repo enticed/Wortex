@@ -252,6 +252,8 @@ export default function LeaderboardPage() {
                       entries={dailyEntriesPure}
                       currentUserId={userId || undefined}
                       loading={loading}
+                      puzzleDate={puzzleDate || undefined}
+                      rankingType="pure"
                     />
                     {!loading && dailyEntriesPure.length === 0 && (
                       <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
@@ -281,6 +283,8 @@ export default function LeaderboardPage() {
                       entries={dailyEntriesBoosted}
                       currentUserId={userId || undefined}
                       loading={loading}
+                      puzzleDate={puzzleDate || undefined}
+                      rankingType="boosted"
                     />
                     {!loading && dailyEntriesBoosted.length === 0 && (
                       <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">

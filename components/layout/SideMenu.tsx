@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTutorial } from '@/lib/contexts/TutorialContext';
+import ShareModal from '@/components/share/ShareModal';
+import { generateInviteText } from '@/lib/utils/shareText';
+import { createClient } from '@/lib/supabase/client';
 
 interface SideMenuProps {
   isOpen: boolean;
@@ -11,6 +14,32 @@ interface SideMenuProps {
 
 export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
   const { resetTutorial } = useTutorial();
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [inviteText, setInviteText] = useState('');
+
+  // Fetch today's puzzle for invite sharing
+  useEffect(() => {
+    if (isOpen) {
+      const supabase = createClient();
+      const fetchPuzzle = async () => {
+        try {
+          const { getTodaysPuzzle } = await import('@/lib/supabase/puzzles');
+          const puzzle = await getTodaysPuzzle(supabase);
+
+          if (puzzle) {
+            const text = generateInviteText({
+              facsimilePhrase: puzzle.facsimile_phrase,
+              puzzleDate: puzzle.date,
+            });
+            setInviteText(text);
+          }
+        } catch (error) {
+          console.error('Error fetching puzzle for invite:', error);
+        }
+      };
+      fetchPuzzle();
+    }
+  }, [isOpen]);
 
   // Close menu on escape key
   useEffect(() => {
@@ -144,6 +173,26 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
             </li>
           </ul>
 
+          {/* Share Section */}
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <ul className="space-y-2">
+              <li>
+                <button
+                  onClick={() => {
+                    setShowShareModal(true);
+                  }}
+                  disabled={!inviteText}
+                  className="w-full text-left px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  Share Wortex
+                </button>
+              </li>
+            </ul>
+          </div>
+
           {/* Subscription Section */}
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <ul className="space-y-2">
@@ -169,6 +218,16 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
           </div>
         </nav>
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        shareText={inviteText}
+        isOpen={showShareModal}
+        onClose={() => {
+          setShowShareModal(false);
+          onClose(); // Also close the side menu after sharing
+        }}
+      />
     </>
   );
 }

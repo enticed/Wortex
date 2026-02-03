@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import TierBadge from '@/components/admin/TierBadge';
+import ShareModal from '@/components/share/ShareModal';
+import { generateLeaderboardShareText } from '@/lib/utils/shareText';
 import type { Database } from '@/types/database';
 
 type LeaderboardRow = Database['public']['Views']['leaderboards']['Row'];
@@ -18,14 +20,36 @@ interface LeaderboardTableProps {
   currentUserId?: string;
   loading?: boolean;
   showSpeed?: boolean;
+  puzzleDate?: string;
+  rankingType?: 'pure' | 'boosted';
 }
 
 export default function LeaderboardTable({
   entries,
   currentUserId,
   loading = false,
-  showSpeed = false
+  showSpeed = false,
+  puzzleDate,
+  rankingType = 'pure'
 }: LeaderboardTableProps) {
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareText, setShareText] = useState('');
+
+  const handleShare = (entry: LeaderboardEntryWithTier) => {
+    if (!puzzleDate) return;
+
+    const text = generateLeaderboardShareText({
+      rank: entry.rank,
+      score: entry.score,
+      totalPlayers: entries.length,
+      rankingType,
+      puzzleDate,
+    });
+
+    setShareText(text);
+    setShowShareModal(true);
+  };
+
   if (loading) {
     return (
       <div className="space-y-2">
@@ -61,6 +85,9 @@ export default function LeaderboardTable({
               <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                 Speed
               </th>
+            )}
+            {puzzleDate && (
+              <th className="w-12"></th>
             )}
           </tr>
         </thead>
@@ -133,11 +160,35 @@ export default function LeaderboardTable({
                     </div>
                   </td>
                 )}
+                {puzzleDate && isCurrentUser && (
+                  <td className="py-4 px-2">
+                    <button
+                      onClick={() => handleShare(entry)}
+                      className="p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
+                      title="Share your ranking"
+                      aria-label="Share your ranking"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                    </button>
+                  </td>
+                )}
+                {puzzleDate && !isCurrentUser && (
+                  <td className="py-4 px-2"></td>
+                )}
               </tr>
             );
           })}
         </tbody>
       </table>
+
+      {/* Share Modal */}
+      <ShareModal
+        shareText={shareText}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
     </div>
   );
 }
