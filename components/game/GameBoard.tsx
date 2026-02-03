@@ -334,11 +334,11 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
     }
   };
 
-  // Submit score when bonus is answered (skip in archive mode)
+  // Submit score when bonus is answered
   useEffect(() => {
     async function submitScore() {
       // CRITICAL: Check if user is loaded before submitting
-      if (gameState.bonusAnswered && !scoreSubmitted && gameState.finalScore !== null && !isArchiveMode) {
+      if (gameState.bonusAnswered && !scoreSubmitted && gameState.finalScore !== null) {
         if (!userId) {
           console.error('[GameBoard] CRITICAL: Cannot submit score - userId is null!');
           console.error('[GameBoard] This indicates UserContext failed to initialize properly');
@@ -353,7 +353,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
         const supabase = createClient();
 
         try {
-          console.log('[GameBoard] Submitting score for user:', userId.substring(0, 12));
+          console.log('[GameBoard] Submitting score for user:', userId.substring(0, 12), isArchiveMode ? '(archive mode)' : '');
 
           // Check if this is the user's first play of this puzzle
           const { data: existingScore } = await supabase
@@ -365,7 +365,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
 
           // Only the very first play gets first_play_of_day = true
           // All subsequent plays should be false (for Boosted Rankings)
-          const firstPlayOfDay = !existingScore;
+          // Archive plays are never first_play_of_day
+          const firstPlayOfDay = !existingScore && !isArchiveMode;
 
           console.log('[GameBoard] First play of day:', firstPlayOfDay);
 
@@ -402,15 +403,18 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
           } else {
             console.log('[GameBoard] Score submitted successfully');
 
-            // Update streak
-            // @ts-expect-error - RPC function types not properly inferred in client context
-            await supabase.rpc('update_user_streak', {
-              p_user_id: userId,
-              p_puzzle_date: puzzle.date,
-            });
+            // Only update streak and stats for non-archive plays
+            if (!isArchiveMode) {
+              // Update streak
+              // @ts-expect-error - RPC function types not properly inferred in client context
+              await supabase.rpc('update_user_streak', {
+                p_user_id: userId,
+                p_puzzle_date: puzzle.date,
+              });
 
-            // Refresh user stats
-            await refreshStats();
+              // Refresh user stats
+              await refreshStats();
+            }
           }
         } catch (error) {
           console.error('[GameBoard] Error submitting score:', error);

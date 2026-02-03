@@ -8,6 +8,29 @@ interface PuzzleCardProps {
   facsimilePhrase: string; // Show AI hint phrase instead of target answer
   hasPlayed: boolean;
   score?: number;
+  stars?: number;
+  playedOnOriginalDate?: boolean; // True if played when it was the daily puzzle
+}
+
+// Star display component
+function Stars({ count }: { count: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <svg
+          key={star}
+          className={star <= count ? 'text-yellow-500 dark:text-yellow-400' : 'text-gray-400 dark:text-gray-600'}
+          fill="currentColor"
+          viewBox="0 0 20 20"
+          width={14}
+          height={14}
+          style={{ width: '14px', height: '14px' }}
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </div>
+  );
 }
 
 export default function PuzzleCard({
@@ -15,14 +38,17 @@ export default function PuzzleCard({
   difficulty,
   facsimilePhrase,
   hasPlayed,
-  score
+  score,
+  stars,
+  playedOnOriginalDate = false
 }: PuzzleCardProps) {
   const puzzleDate = new Date(date + 'T00:00:00');
   const isToday = puzzleDate.toDateString() === new Date().toDateString();
 
-  // Truncate long phrases for display
-  const displayPhrase = facsimilePhrase.length > 60
-    ? facsimilePhrase.substring(0, 60) + '...'
+  // Truncate long phrases adaptively for mobile
+  // Target ~50 chars which typically fits one line on mobile
+  const displayPhrase = facsimilePhrase.length > 50
+    ? facsimilePhrase.substring(0, 50) + '...'
     : facsimilePhrase;
 
   const difficultyColors = [
@@ -40,11 +66,11 @@ export default function PuzzleCard({
       href={`/play?date=${date}&archive=true`}
       className="block bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700 overflow-hidden"
     >
-      <div className="p-4">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-3">
+      <div className="p-3">
+        {/* Header - More compact */}
+        <div className="flex items-start justify-between mb-2">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
               {puzzleDate.toLocaleDateString('en-US', {
                 weekday: 'long',
                 month: 'long',
@@ -58,27 +84,34 @@ export default function PuzzleCard({
               </span>
             )}
           </div>
-          <div className={`px-3 py-1 rounded-full text-xs font-medium ${difficultyColors[difficulty - 1] || difficultyColors[2]}`}>
+          <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${difficultyColors[difficulty - 1] || difficultyColors[2]}`}>
             {difficultyLabels[difficulty - 1] || 'Medium'}
           </div>
         </div>
 
-        {/* Hint Phrase Preview (AI-generated facsimile) */}
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 italic">
+        {/* Hint Phrase Preview (AI-generated facsimile) - More compact */}
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 italic line-clamp-1">
           "{displayPhrase}"
         </p>
 
-        {/* Status */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+        {/* Status - More compact */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
           {hasPlayed ? (
-            <div className="flex items-center gap-2">
-              <span className="text-green-600 dark:text-green-400 text-sm font-medium">
-                ✓ Completed
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`text-sm font-medium ${
+                playedOnOriginalDate
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-amber-600 dark:text-amber-400'
+              }`}>
+                ✓ {playedOnOriginalDate ? 'Completed' : 'Played'}
               </span>
               {score !== undefined && (
-                <span className="text-gray-500 dark:text-gray-400 text-sm">
-                  Score: {score.toFixed(2)}
+                <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">
+                  {score.toFixed(2)}
                 </span>
+              )}
+              {stars !== undefined && stars > 0 && (
+                <Stars count={stars} />
               )}
             </div>
           ) : (

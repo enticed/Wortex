@@ -16,12 +16,15 @@ interface PuzzleWithScore {
   difficulty: number;
   hasPlayed: boolean;
   score?: number;
+  stars?: number;
+  playedOnOriginalDate?: boolean; // True if played when it was the daily puzzle
 }
 
 export default function ArchivePage() {
   const [puzzles, setPuzzles] = useState<PuzzleWithScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'played' | 'unplayed'>('all');
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
   const router = useRouter();
   const supabase = createClient();
@@ -53,29 +56,45 @@ export default function ArchivePage() {
         return;
       }
 
-      // If user is logged in, get their scores
+      // If user is logged in, get their best scores
       if (userId) {
         const { data: scoresData, error: scoresError } = await supabase
           .from('scores')
-          .select('puzzle_id, score')
-          .eq('user_id', userId);
+          .select('puzzle_id, score, stars, first_play_of_day')
+          .eq('user_id', userId)
+          .order('score', { ascending: true }); // Lower scores are better
 
         if (scoresError) {
           console.error('Error fetching scores:', scoresError);
         }
 
-        const scoresMap = new Map<string, number>(
-          scoresData?.map((s: any) => [s.puzzle_id, s.score]) || []
-        );
+        // Get best score for each puzzle
+        const scoresMap = new Map<string, { score: number; stars: number; playedOnOriginalDate: boolean }>();
+        scoresData?.forEach((s: any) => {
+          const existing = scoresMap.get(s.puzzle_id);
+          // Keep the best (lowest) score
+          if (!existing || s.score < existing.score) {
+            scoresMap.set(s.puzzle_id, {
+              score: s.score,
+              stars: s.stars || 0,
+              playedOnOriginalDate: s.first_play_of_day || false
+            });
+          }
+        });
 
-        const puzzlesWithScores: PuzzleWithScore[] = puzzlesData.map((puzzle: any) => ({
-          id: puzzle.id,
-          date: puzzle.date,
-          facsimile_phrase: puzzle.facsimile_phrase,
-          difficulty: puzzle.difficulty,
-          hasPlayed: scoresMap.has(puzzle.id),
-          score: scoresMap.get(puzzle.id),
-        }));
+        const puzzlesWithScores: PuzzleWithScore[] = puzzlesData.map((puzzle: any) => {
+          const scoreInfo = scoresMap.get(puzzle.id);
+          return {
+            id: puzzle.id,
+            date: puzzle.date,
+            facsimile_phrase: puzzle.facsimile_phrase,
+            difficulty: puzzle.difficulty,
+            hasPlayed: scoresMap.has(puzzle.id),
+            score: scoreInfo?.score,
+            stars: scoreInfo?.stars,
+            playedOnOriginalDate: scoreInfo?.playedOnOriginalDate,
+          };
+        });
 
         setPuzzles(puzzlesWithScores);
       } else {
@@ -110,6 +129,44 @@ export default function ArchivePage() {
     if (filter === 'unplayed') return !puzzle.hasPlayed;
     return true;
   });
+
+  // Group puzzles by month
+  const puzzlesByMonth = filteredPuzzles.reduce((acc, puzzle) => {
+    const date = new Date(puzzle.date + 'T00:00:00');
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+    if (!acc[monthKey]) {
+      acc[monthKey] = {
+        label: monthLabel,
+        puzzles: []
+      };
+    }
+    acc[monthKey].puzzles.push(puzzle);
+    return acc;
+  }, {} as Record<string, { label: string; puzzles: PuzzleWithScore[] }>);
+
+  const monthKeys = Object.keys(puzzlesByMonth).sort((a, b) => b.localeCompare(a)); // Most recent first
+
+  const toggleMonth = (monthKey: string) => {
+    setExpandedMonths(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(monthKey)) {
+        newSet.delete(monthKey);
+      } else {
+        newSet.add(monthKey);
+      }
+      return newSet;
+    });
+  };
+
+  // Expand the most recent month by default
+  useEffect(() => {
+    if (monthKeys.length > 0 && expandedMonths.size === 0) {
+      setExpandedMonths(new Set([monthKeys[0]]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthKeys.length]);
 
   // Show loading state while checking tier
   if (tierLoading) {
@@ -232,11 +289,14 @@ export default function ArchivePage() {
           {/* Header */}
           <div className="mb-6 flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Puzzle Archive
-              </h1>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  Puzzle Archive
+                </h1>
+                <TierBadge tier="premium" size="sm" />
+              </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Play past puzzles and practice your skills
+                Play past puzzles and practice your skills. Scores don't count toward leaderboards or stats.
               </p>
             </div>
             <button
@@ -258,24 +318,6 @@ export default function ArchivePage() {
                 />
               </svg>
             </button>
-          </div>
-
-          {/* Premium Member Badge */}
-          <div className="mb-6 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border border-yellow-200 dark:border-amber-600 rounded-lg p-4">
-            <div className="flex items-center gap-3">
-              <TierBadge tier="premium" size="sm" />
-              <p className="text-sm text-gray-800 dark:text-gray-200">
-                You have access to the full puzzle archive! Thank you for supporting Wortex.
-              </p>
-            </div>
-          </div>
-
-          {/* Info Banner */}
-          <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <p className="text-sm text-yellow-900 dark:text-yellow-300">
-              <span className="font-semibold">Note:</span> Archive mode is for practice only.
-              Scores from past puzzles don't count toward leaderboards or stats.
-            </p>
           </div>
 
           {/* Filters */}
@@ -343,17 +385,65 @@ export default function ArchivePage() {
               <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
                 Showing {filteredPuzzles.length} {filteredPuzzles.length === 1 ? 'puzzle' : 'puzzles'}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredPuzzles.map((puzzle) => (
-                  <PuzzleCard
-                    key={puzzle.id}
-                    date={puzzle.date}
-                    difficulty={puzzle.difficulty}
-                    facsimilePhrase={puzzle.facsimile_phrase}
-                    hasPlayed={puzzle.hasPlayed}
-                    score={puzzle.score}
-                  />
-                ))}
+              <div className="space-y-4">
+                {monthKeys.map((monthKey) => {
+                  const monthData = puzzlesByMonth[monthKey];
+                  const isExpanded = expandedMonths.has(monthKey);
+
+                  return (
+                    <div key={monthKey} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                      {/* Month Header - Clickable */}
+                      <button
+                        onClick={() => toggleMonth(monthKey)}
+                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <svg
+                            className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform ${
+                              isExpanded ? 'rotate-90' : ''
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            {monthData.label}
+                          </h2>
+                        </div>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {monthData.puzzles.length} {monthData.puzzles.length === 1 ? 'puzzle' : 'puzzles'}
+                        </span>
+                      </button>
+
+                      {/* Month Content - Collapsible */}
+                      {isExpanded && (
+                        <div className="p-4 pt-0 border-t border-gray-200 dark:border-gray-700">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                            {monthData.puzzles.map((puzzle) => (
+                              <PuzzleCard
+                                key={puzzle.id}
+                                date={puzzle.date}
+                                difficulty={puzzle.difficulty}
+                                facsimilePhrase={puzzle.facsimile_phrase}
+                                hasPlayed={puzzle.hasPlayed}
+                                score={puzzle.score}
+                                stars={puzzle.stars}
+                                playedOnOriginalDate={puzzle.playedOnOriginalDate}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
