@@ -647,6 +647,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
               reorderMoves={savedResults?.reorderMoves ?? gameState.reorderMoves}
               hintsUsed={savedResults?.hintsUsed ?? gameState.hintsUsed}
               quoteWordCount={puzzle.targetPhrase.words.length}
+              puzzleDate={puzzle.date}
+              facsimilePhrase={puzzle.facsimilePhrase.text}
             />
           </div>
         )}

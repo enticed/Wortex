@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import ShareModal from '@/components/share/ShareModal';
+import { generateScoreShareText } from '@/lib/utils/shareText';
 
 interface FinalResultsProps {
   phase1Score: number;
@@ -14,6 +17,8 @@ interface FinalResultsProps {
   reorderMoves?: number;
   hintsUsed?: number;
   quoteWordCount?: number; // Number of words in target phrase
+  puzzleDate?: string;
+  facsimilePhrase?: string;
 }
 
 // Helper function to calculate Phase 1 stars
@@ -86,11 +91,27 @@ export default function FinalResults({
   reorderMoves = 0,
   hintsUsed = 0,
   quoteWordCount = 10, // Default to middle value
+  puzzleDate,
+  facsimilePhrase,
 }: FinalResultsProps) {
+  const [showShareModal, setShowShareModal] = useState(false);
+
   // Calculate star ratings
   const phase1Stars = calculatePhase1Stars(phase1Score);
   const phase2Stars = calculatePhase2Stars(phase2Score, quoteWordCount);
   const finalStars = Math.round((phase1Stars + phase2Stars) / 2);
+
+  // Generate share text
+  const shareText = puzzleDate && facsimilePhrase
+    ? generateScoreShareText({
+        finalScore,
+        stars: finalStars,
+        puzzleDate,
+        facsimilePhrase,
+        bonusEarned: bonusCorrect === true,
+      })
+    : '';
+
   return (
     <div className="final-results-container h-full w-full flex flex-col overflow-y-auto">
       {/* Header - Match Mystery Quote header style */}
@@ -169,6 +190,19 @@ export default function FinalResults({
             </div>
           </div>
 
+          {/* Share Button - Only show if not archive mode and we have data */}
+          {!isArchiveMode && shareText && (
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              Share My Score
+            </button>
+          )}
+
           {/* Buttons - Half-width side by side */}
           <div className="flex gap-2 mt-2">
             <Link
@@ -188,6 +222,13 @@ export default function FinalResults({
           </div>
         </div>
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        shareText={shareText}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
     </div>
   );
 }

@@ -1,0 +1,122 @@
+
+/* Tutorial Popover Custom Styles */
+.wortex-tutorial-popover {
+  max-width: 400px;
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+}
+
+.wortex-tutorial-popover .driver-popover-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+}
+
+.wortex-tutorial-popover .driver-popover-description {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.wortex-tutorial-popover .driver-popover-description ul,
+.wortex-tutorial-popover .driver-popover-description ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.wortex-tutorial-popover .driver-popover-description strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+.wortex-tutorial-popover .driver-popover-footer {
+  margin-top: 1rem;
+}
+
+.wortex-tutorial-popover button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.wortex-tutorial-popover .driver-popover-next-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+}
+
+.wortex-tutorial-popover .driver-popover-next-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.wortex-tutorial-popover .driver-popover-prev-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.wortex-tutorial-popover .driver-popover-prev-btn:hover {
+  background: #e5e7eb;
+}
+
+.wortex-tutorial-popover .driver-popover-close-btn {
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.wortex-tutorial-popover .driver-popover-close-btn:hover {
+  color: #374151;
+}
+
+/* Dark mode support for tutorial */
+@media (prefers-color-scheme: dark) {
+  .wortex-tutorial-popover {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .wortex-tutorial-popover .driver-popover-title {
+    color: #f9fafb;
+  }
+
+  .wortex-tutorial-popover .driver-popover-description {
+    color: #d1d5db;
+  }
+
+  .wortex-tutorial-popover .driver-popover-description strong {
+    color: #f3f4f6;
+  }
+
+  .wortex-tutorial-popover .driver-popover-prev-btn {
+    background: #374151;
+    color: #d1d5db;
+  }
+
+  .wortex-tutorial-popover .driver-popover-prev-btn:hover {
+    background: #4b5563;
+  }
+
+  .wortex-tutorial-popover .driver-popover-close-btn {
+    color: #9ca3af;
+  }
+
+  .wortex-tutorial-popover .driver-popover-close-btn:hover {
+    color: #d1d5db;
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .wortex-tutorial-popover {
+    max-width: 90vw;
+  }
+
+  .wortex-tutorial-popover .driver-popover-title {
+    font-size: 1rem;
+  }
+
+  .wortex-tutorial-popover .driver-popover-description {
+    font-size: 0.875rem;
+  }
+}

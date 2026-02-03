@@ -19,6 +19,49 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Wortex - Daily Word Puzzle Game",
   description: "Challenge yourself with daily word puzzles! Assemble famous quotes from a swirling vortex of words.",
+  metadataBase: new URL('https://wortex.live'),
+
+  // Open Graph metadata for social sharing
+  openGraph: {
+    title: "Wortex - Daily Word Puzzle Game",
+    description: "Challenge yourself with daily word puzzles! Assemble famous quotes from a swirling vortex of words.",
+    url: 'https://wortex.live',
+    siteName: 'Wortex',
+    locale: 'en_US',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png', // We'll need to create this
+        width: 1200,
+        height: 630,
+        alt: 'Wortex - Daily Word Puzzle Game',
+      },
+    ],
+  },
+
+  // Twitter Card metadata
+  twitter: {
+    card: 'summary_large_image',
+    title: "Wortex - Daily Word Puzzle Game",
+    description: "Challenge yourself with daily word puzzles! Assemble famous quotes from a swirling vortex of words.",
+    images: ['/og-image.png'],
+  },
+
+  // Additional metadata
+  keywords: ['word puzzle', 'daily puzzle', 'word game', 'quotes', 'brain teaser', 'vocabulary'],
+  authors: [{ name: 'Wortex' }],
+  creator: 'Wortex',
+  publisher: 'Wortex',
+
+  // Verification and robots
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 };
 
 export default function RootLayout({
