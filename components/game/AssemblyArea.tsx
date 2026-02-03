@@ -16,7 +16,7 @@ function DroppableWord({
   word: PlacedWord;
   colorVariant?: 'default' | 'correct' | 'incorrect';
   isHighlighted?: boolean;
-  hintType?: 'unnecessary' | 'correctString' | 'nextWord';
+  hintType?: 'unnecessary' | 'correctString' | 'nextWord' | 'phase2Complete' | 'phase2CompleteExtra';
 }) {
   const { setNodeRef, isOver } = useWordDroppable({
     id: word.id,
@@ -64,7 +64,7 @@ interface AssemblyAreaProps {
   completedText?: string;
   onReorder?: (reorderedWords: PlacedWord[]) => void;
   dropIndicatorIndex?: number | null; // Phase 2: insertion indicator position
-  activeHint?: { type: 'unnecessary' | 'correctString' | 'nextWord', wordIds: string[] } | null; // Phase 2: hint highlighting
+  activeHint?: { type: 'unnecessary' | 'correctString' | 'nextWord' | 'phase2Complete', wordIds: string[], extraWordIds?: string[] } | null; // Phase 2: hint highlighting
   onUseUnnecessaryWordHint?: () => void; // Phase 2: hint callbacks
   onUseCorrectStringHint?: () => void;
   onUseNextWordHint?: () => void;
@@ -406,9 +406,19 @@ export default function AssemblyArea({
             {sortedWords.map((word, index) => {
               // Check if this word should be highlighted
               const isHintHighlighted = activeHint?.wordIds.includes(word.id) || false;
+              const isExtraWordHighlighted = activeHint?.extraWordIds?.includes(word.id) || false;
               const isCompletionAnimating = animatingCompletion && index < expectedLength;
-              const isHighlighted = isHintHighlighted || isCompletionAnimating;
-              const hintType = isHintHighlighted ? activeHint?.type : (isCompletionAnimating ? 'correctString' : undefined);
+              const isHighlighted = isHintHighlighted || isExtraWordHighlighted || isCompletionAnimating;
+
+              // Determine hint type: if it's phase2Complete, distinguish between correct and extra words
+              let hintType: 'unnecessary' | 'correctString' | 'nextWord' | 'phase2Complete' | 'phase2CompleteExtra' | undefined;
+              if (activeHint?.type === 'phase2Complete') {
+                hintType = isExtraWordHighlighted ? 'phase2CompleteExtra' : 'phase2Complete';
+              } else if (isHintHighlighted) {
+                hintType = activeHint?.type;
+              } else if (isCompletionAnimating) {
+                hintType = 'correctString';
+              }
 
               return (
                 <div key={word.id} className="flex items-center gap-0">

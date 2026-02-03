@@ -78,9 +78,10 @@ export interface GameState {
   speed: number; // Vortex speed multiplier (0.25 - 2.0)
   minSpeed: number; // Minimum speed used during the game
   maxSpeed: number; // Maximum speed used during the game
-  activeHint: { type: 'unnecessary' | 'correctString' | 'nextWord', wordIds: string[] } | null; // Currently active hint for highlighting
+  activeHint: { type: 'unnecessary' | 'correctString' | 'nextWord' | 'phase2Complete', wordIds: string[], extraWordIds?: string[] } | null; // Currently active hint for highlighting
   showCompletionAnimation: boolean; // Brief animation when Phase 2 is completed
   showPhase1CompleteDialog: boolean; // Show confirmation dialog before transitioning to Phase 2
+  showPhase2CompleteDialog: boolean; // Show confirmation dialog after Phase 2 completion
 }
 
 export interface GameStats {

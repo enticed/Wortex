@@ -51,6 +51,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
     activeHint: null,
     showCompletionAnimation: false,
     showPhase1CompleteDialog: false,
+    showPhase2CompleteDialog: false,
   });
 
   // Initialize game when puzzle is loaded
@@ -398,9 +399,6 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
       });
 
       if (isPhase2Complete) {
-        // Remove extra words at the end (keep only correct sequence)
-        const correctWords = updatedWords.slice(0, expectedWords.length);
-
         // Calculate Phase 1 score (speed-adjusted)
         const phase1Score = calculateScore(
           prev.totalWordsSeen,
@@ -414,16 +412,25 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
         // Final score is Phase 1 + Phase 2
         const finalScore = phase1Score + phase2Score;
 
+        // Identify correct words (green) and extra words (red) for visual feedback
+        const correctWordIds = updatedWords.slice(0, expectedWords.length).map(w => w.id);
+        const extraWordIds = updatedWords.slice(expectedWords.length).map(w => w.id);
+
+        // Show visual feedback: correct words in green, extra words in red
+        // This uses a new hint type 'phase2Complete' to trigger special styling
         return {
           ...prev,
-          targetPhraseWords: correctWords,
+          targetPhraseWords: updatedWords, // Keep all words for visual feedback
           reorderMoves: newMoveCount,
-          isComplete: true,
           score: phase1Score,
           phase2Score: phase2Score,
           finalScore: finalScore,
-          activeHint: null, // Clear any active hint
-          showCompletionAnimation: true, // Trigger completion animation
+          activeHint: {
+            type: 'phase2Complete' as any, // New hint type for completion feedback
+            wordIds: correctWordIds,
+            extraWordIds: extraWordIds, // Add extra words to hint
+          },
+          // Don't set isComplete yet - wait for dialog confirmation
         };
       }
 
@@ -515,6 +522,34 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
       };
     });
   }, [isArchiveMode]);
+
+  // Show Phase 2 completion dialog (called after visual feedback delay)
+  const showPhase2Dialog = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      showPhase2CompleteDialog: true,
+      activeHint: null, // Clear visual feedback
+    }));
+  }, []);
+
+  // Confirm Phase 2 completion and transition to bonus round
+  const confirmPhase2Complete = useCallback(() => {
+    setGameState((prev) => {
+      if (!prev.puzzle) return prev;
+
+      // Remove extra words (keep only correct sequence)
+      const expectedWords = prev.puzzle.targetPhrase.words;
+      const correctWords = prev.targetPhraseWords.slice(0, expectedWords.length);
+
+      return {
+        ...prev,
+        targetPhraseWords: correctWords,
+        showPhase2CompleteDialog: false,
+        isComplete: true,
+        showCompletionAnimation: true, // Trigger completion animation
+      };
+    });
+  }, []);
 
   // Dismiss a word from vortex (drag to right edge) - skips next cycle
   const dismissWord = useCallback((wordId: string) => {
@@ -679,5 +714,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
     useCorrectStringHint,
     useNextWordHint,
     confirmPhase1Complete,
+    showPhase2Dialog,
+    confirmPhase2Complete,
   };
 }

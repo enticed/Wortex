@@ -9,7 +9,7 @@ interface WordProps {
   isPlaced?: boolean;
   colorVariant?: 'default' | 'correct' | 'incorrect'; // Color coding for placed words
   isHighlighted?: boolean; // Temporary highlighting from hints
-  hintType?: 'unnecessary' | 'correctString' | 'nextWord'; // Type of hint for different highlight colors
+  hintType?: 'unnecessary' | 'correctString' | 'nextWord' | 'phase2Complete' | 'phase2CompleteExtra'; // Type of hint for different highlight colors
   vortexHighlightType?: 'needed' | 'unnecessary' | null; // Vortex highlighting for fast speeds
   vortexHighlightOpacity?: number; // Opacity of vortex highlighting (0-1)
 }
@@ -37,6 +37,10 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
         return 'ring-4 ring-green-500 dark:ring-green-400 animate-pulse';
       case 'nextWord':
         return 'ring-4 ring-yellow-500 dark:ring-yellow-400 animate-pulse';
+      case 'phase2Complete':
+        return 'ring-4 ring-green-500 dark:ring-green-400 animate-pulse';
+      case 'phase2CompleteExtra':
+        return 'ring-4 ring-red-500 dark:ring-red-400 animate-pulse';
       default:
         return 'ring-4 ring-blue-500 dark:ring-blue-400 animate-pulse';
     }

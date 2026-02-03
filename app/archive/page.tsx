@@ -7,6 +7,7 @@ import PuzzleCard from '@/components/archive/PuzzleCard';
 import TierBadge from '@/components/admin/TierBadge';
 import { createClient } from '@/lib/supabase/client';
 import { useUserTier } from '@/lib/hooks/useUserTier';
+import { useUser } from '@/lib/contexts/UserContext';
 
 interface PuzzleWithScore {
   id: string;
@@ -21,18 +22,15 @@ export default function ArchivePage() {
   const [puzzles, setPuzzles] = useState<PuzzleWithScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'played' | 'unplayed'>('all');
-  const [authReady, setAuthReady] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
   const { isPremium, loading: tierLoading } = useUserTier();
+  const { userId } = useUser();
 
   const loadPuzzles = useCallback(async () => {
     try {
       setLoading(true);
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
 
       // Get all approved puzzles (excluding today and future)
       const today = new Date().toISOString().split('T')[0];
@@ -56,11 +54,15 @@ export default function ArchivePage() {
       }
 
       // If user is logged in, get their scores
-      if (user) {
-        const { data: scoresData } = await supabase
+      if (userId) {
+        const { data: scoresData, error: scoresError } = await supabase
           .from('scores')
           .select('puzzle_id, score')
-          .eq('user_id', user.id);
+          .eq('user_id', userId);
+
+        if (scoresError) {
+          console.error('Error fetching scores:', scoresError);
+        }
 
         const scoresMap = new Map<string, number>(
           scoresData?.map((s: any) => [s.puzzle_id, s.score]) || []
@@ -94,32 +96,14 @@ export default function ArchivePage() {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, userId]);
 
-  // Wait for auth to be ready
+  // Load puzzles once user tier is loaded
   useEffect(() => {
-    let mounted = true;
-
-    async function checkAuth() {
-      await supabase.auth.getSession();
-      if (mounted) {
-        setAuthReady(true);
-      }
-    }
-
-    checkAuth();
-
-    return () => {
-      mounted = false;
-    };
-  }, [supabase]);
-
-  // Load puzzles once auth is ready
-  useEffect(() => {
-    if (authReady && isPremium) {
+    if (!tierLoading && isPremium && userId) {
       loadPuzzles();
     }
-  }, [authReady, isPremium, loadPuzzles]);
+  }, [tierLoading, isPremium, userId, loadPuzzles]);
 
   const filteredPuzzles = puzzles.filter(puzzle => {
     if (filter === 'played') return puzzle.hasPlayed;

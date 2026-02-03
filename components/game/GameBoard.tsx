@@ -25,6 +25,7 @@ import { useTutorial } from '@/lib/contexts/TutorialContext';
 import { useTutorialSteps } from '@/lib/hooks/useTutorialSteps';
 import { phase1Steps, phase2Steps, bonusRoundSteps, finalResultsSteps } from '@/lib/tutorial/tutorialSteps';
 import { createClient } from '@/lib/supabase/client';
+import { calculatePhase1Stars, calculatePhase2Stars } from '@/lib/utils/stars';
 import type { Puzzle } from '@/types/game';
 
 interface GameBoardProps {
@@ -47,6 +48,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
     useCorrectStringHint,
     useNextWordHint,
     confirmPhase1Complete,
+    showPhase2Dialog,
+    confirmPhase2Complete,
   } = useGameState(puzzle, vortexSpeed, isArchiveMode);
   const { userId, refreshStats } = useUser();
   const { hasCompletedTutorial } = useTutorial();
@@ -454,6 +457,18 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
     }
   }, [gameState.activeHint, gameState.targetPhraseWords, reorderWords]);
 
+  // Show Phase 2 completion dialog after 4-second visual feedback
+  useEffect(() => {
+    if (gameState.activeHint?.type === 'phase2Complete' && !gameState.showPhase2CompleteDialog) {
+      const timer = setTimeout(() => {
+        // Show the dialog after visual feedback
+        showPhase2Dialog();
+      }, 4000); // 4 second delay for visual feedback
+
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.activeHint, gameState.showPhase2CompleteDialog, showPhase2Dialog]);
+
   // Delay bonus round display to allow completion animation to play
   useEffect(() => {
     if (gameState.isComplete && gameState.showCompletionAnimation) {
@@ -727,6 +742,22 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
                 <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-3">
                   {gameState.score?.toFixed(2) || '0.00'}
                 </div>
+                {/* Star Display */}
+                <div className="flex items-center justify-center gap-0.5 mb-3">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <svg
+                      key={star}
+                      className={star <= calculatePhase1Stars(gameState.score || 0) ? 'text-blue-500 dark:text-blue-400' : 'text-gray-400 dark:text-gray-600'}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      width={24}
+                      height={24}
+                      style={{ width: '24px', height: '24px' }}
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
                   <div>Words seen: {gameState.totalWordsSeen}</div>
                   <div>Total words: {puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}</div>
@@ -737,6 +768,58 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
               </div>
               <button
                 onClick={confirmPhase1Complete}
+                className="px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Phase 2 Complete Confirmation Dialog */}
+      {gameState.showPhase2CompleteDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md mx-4 border-2 border-purple-400 dark:border-purple-600">
+            <div className="text-center">
+              <div className="text-4xl mb-4">🎉</div>
+              <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+                Mystery Quote solved!<br />Great work!
+              </p>
+              {/* Phase 2 Score Breakdown */}
+              <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4 mb-6">
+                <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                  Phase 2 Score
+                </div>
+                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-3">
+                  {gameState.phase2Score?.toFixed(2) || '0.00'}
+                </div>
+                {/* Star Display */}
+                <div className="flex items-center justify-center gap-0.5 mb-3">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <svg
+                      key={star}
+                      className={star <= calculatePhase2Stars(gameState.phase2Score || 0, puzzle.targetPhrase.words.length) ? 'text-purple-500 dark:text-purple-400' : 'text-gray-400 dark:text-gray-600'}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      width={24}
+                      height={24}
+                      style={{ width: '24px', height: '24px' }}
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                  <div>Reorder moves: {gameState.reorderMoves}</div>
+                  <div>Hints used: {gameState.hintsUsed}</div>
+                  <div className="pt-1 border-t border-gray-300 dark:border-gray-600 mt-2">
+                    Score: (Moves × 0.25) + (Hints × 0.5)
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={confirmPhase2Complete}
                 className="px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105"
               >
                 OK
