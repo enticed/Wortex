@@ -247,6 +247,36 @@ export default function AssemblyArea({
 
   const ongoingScore = calculateOngoingScore();
 
+  // Calculate Phase 2 progress (percentage of consecutive correct words from start)
+  const calculatePhase2Progress = (): number => {
+    // Only calculate for Phase 2 target area (not auto-assembly, not complete)
+    if (isAutoAssembly || isComplete || phase !== 2 || !expectedWords.length) {
+      return 0;
+    }
+
+    // Count consecutive correct words from position 0
+    let correctStringLength = 0;
+    for (let i = 0; i < expectedWords.length; i++) {
+      const placedWord = sortedWords[i];
+      if (!placedWord || placedWord.word.toLowerCase() !== expectedWords[i].toLowerCase()) {
+        break;
+      }
+      correctStringLength++;
+    }
+
+    // Return progress percentage (0-100)
+    return (correctStringLength / expectedWords.length) * 100;
+  };
+
+  const phase2Progress = calculatePhase2Progress();
+
+  // Get progress bar color based on percentage
+  const getProgressColor = (progress: number): string => {
+    if (progress >= 67) return 'bg-green-500 dark:bg-green-400'; // Green for 67-100%
+    if (progress >= 34) return 'bg-yellow-500 dark:bg-yellow-400'; // Yellow for 34-66%
+    return 'bg-red-500 dark:bg-red-400'; // Red for 0-33%
+  };
+
   return (
     <div className={`assembly-area h-full flex flex-col ${id === 'target' ? 'assembly-area-target' : ''}`}>
       <div className={`assembly-area-header flex items-center justify-between mb-1 ${id === 'target' ? 'assembly-area-header-target' : ''}`}>
@@ -309,6 +339,16 @@ export default function AssemblyArea({
           </span>
         )}
       </div>
+
+      {/* Phase 2 Progress Bar - Only show for target area during Phase 2 */}
+      {phase === 2 && !isAutoAssembly && !isComplete && (
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden" style={{ height: '2px' }}>
+          <div
+            className={`h-full transition-all duration-300 ease-in-out ${getProgressColor(phase2Progress)}`}
+            style={{ width: `${phase2Progress}%` }}
+          />
+        </div>
+      )}
 
       {/*
         IMPORTANT SCROLL BEHAVIOR:
