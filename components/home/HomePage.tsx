@@ -32,24 +32,33 @@ function getStreakMessage(streak: number): string {
 }
 
 export default function HomePage() {
-  const { userData, stats, loading } = useUser();
+  const { userData, stats, loading, userId } = useUser();
   const [currentDate, setCurrentDate] = useState('');
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
+  const [averageStars, setAverageStars] = useState<number>(0);
 
-  // Calculate average stars for performance badge
-  const averageStars = useMemo(() => {
-    if (!stats || stats.total_games === 0) return 0;
+  // Fetch average stars from scores table
+  useEffect(() => {
+    if (!userId) return;
 
-    // Calculate from star distribution in stats
-    const totalStars =
-      (stats.one_star || 0) * 1 +
-      (stats.two_star || 0) * 2 +
-      (stats.three_star || 0) * 3 +
-      (stats.four_star || 0) * 4 +
-      (stats.five_star || 0) * 5;
+    async function fetchAverageStars() {
+      const supabase = createClient();
 
-    return totalStars / stats.total_games;
-  }, [stats]);
+      // Get all scores with stars
+      const { data: scores } = await supabase
+        .from('scores')
+        .select('stars')
+        .eq('user_id', userId)
+        .not('stars', 'is', null);
+
+      if (scores && scores.length > 0) {
+        const totalStars = scores.reduce((sum, score) => sum + (score.stars || 0), 0);
+        setAverageStars(totalStars / scores.length);
+      }
+    }
+
+    fetchAverageStars();
+  }, [userId]);
 
   // Get badge data
   const participationBadge = useMemo(() => {
