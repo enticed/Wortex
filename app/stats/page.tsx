@@ -127,16 +127,18 @@ export default function StatsPage() {
       if (pureError) {
         console.error('[Stats] Error loading pure games:', pureError);
       } else if (pureGames) {
-        const pureDistribution: StarDistribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        const pureDistribution: StarDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
         let todayPure: number | null = null;
 
         pureGames.forEach((game: any) => {
-          const stars = game.stars ?? 0;
-          pureDistribution[stars] = (pureDistribution[stars] || 0) + 1;
+          const stars = game.stars;
+          if (stars && stars >= 1 && stars <= 5) {
+            pureDistribution[stars] = (pureDistribution[stars] || 0) + 1;
 
-          // Check if this is today's game
-          if (game.puzzles?.date === today) {
-            todayPure = stars;
+            // Check if this is today's game
+            if (game.puzzles?.date === today) {
+              todayPure = stars;
+            }
           }
         });
 
@@ -155,16 +157,18 @@ export default function StatsPage() {
       if (boostedError) {
         console.error('[Stats] Error loading boosted games:', boostedError);
       } else if (boostedGames) {
-        const boostedDistribution: StarDistribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        const boostedDistribution: StarDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
         let todayBoosted: number | null = null;
 
         boostedGames.forEach((game: any) => {
-          const stars = game.stars ?? 0;
-          boostedDistribution[stars] = (boostedDistribution[stars] || 0) + 1;
+          const stars = game.stars;
+          if (stars && stars >= 1 && stars <= 5) {
+            boostedDistribution[stars] = (boostedDistribution[stars] || 0) + 1;
 
-          // Check if this is today's game
-          if (game.puzzles?.date === today) {
-            todayBoosted = stars;
+            // Check if this is today's game
+            if (game.puzzles?.date === today) {
+              todayBoosted = stars;
+            }
           }
         });
 

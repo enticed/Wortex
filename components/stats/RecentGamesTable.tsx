@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 interface RecentGame {
   id: string;
   puzzle_id: string;
@@ -88,7 +90,8 @@ export default function RecentGamesTable({ games, loading = false }: RecentGames
             return (
               <tr
                 key={game.id}
-                className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                className="border-b border-gray-100 dark:border-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer"
+                onClick={() => window.location.href = `/archive/${game.puzzle_date}`}
               >
                 <td className="py-2 px-2 whitespace-nowrap">
                   <div className="flex items-center gap-1">
