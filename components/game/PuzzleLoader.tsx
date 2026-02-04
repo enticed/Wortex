@@ -15,6 +15,7 @@ export default function PuzzleLoader({ fallbackPuzzle }: PuzzleLoaderProps) {
   const [puzzle, setPuzzle] = useState<Puzzle>(fallbackPuzzle);
   const [loading, setLoading] = useState(true);
   const [isArchiveMode, setIsArchiveMode] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   const searchParams = useSearchParams();
 
@@ -23,6 +24,12 @@ export default function PuzzleLoader({ fallbackPuzzle }: PuzzleLoaderProps) {
       try {
         const date = searchParams.get('date');
         const archive = searchParams.get('archive');
+        const shouldShowResults = searchParams.get('showResults');
+
+        // Check if we should show results
+        if (shouldShowResults === 'true') {
+          setShowResults(true);
+        }
 
         // Archive mode: load specific past puzzle
         if (date && archive === 'true') {
@@ -78,7 +85,7 @@ export default function PuzzleLoader({ fallbackPuzzle }: PuzzleLoaderProps) {
 
   return (
     <AppLayout showHeader={true} isArchiveMode={isArchiveMode} isGamePage={true}>
-      <GameBoard puzzle={puzzle} isArchiveMode={isArchiveMode} />
+      <GameBoard puzzle={puzzle} isArchiveMode={isArchiveMode} showResults={showResults} />
     </AppLayout>
   );
 }

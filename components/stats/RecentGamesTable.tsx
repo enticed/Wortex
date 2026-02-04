@@ -91,7 +91,7 @@ export default function RecentGamesTable({ games, loading = false }: RecentGames
               <tr
                 key={game.id}
                 className="border-b border-gray-100 dark:border-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer"
-                onClick={() => window.location.href = `/play?date=${game.puzzle_date}&archive=true`}
+                onClick={() => window.location.href = `/play?date=${game.puzzle_date}&archive=true&showResults=true`}
               >
                 <td className="py-2 px-2 whitespace-nowrap">
                   <div className="flex items-center gap-1">

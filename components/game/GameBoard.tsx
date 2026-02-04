@@ -26,14 +26,16 @@ import { useTutorialSteps } from '@/lib/hooks/useTutorialSteps';
 import { phase1Steps, phase2Steps, bonusRoundSteps, finalResultsSteps } from '@/lib/tutorial/tutorialSteps';
 import { createClient } from '@/lib/supabase/client';
 import { calculatePhase1Stars, calculatePhase2Stars } from '@/lib/utils/stars';
+import { getUserPuzzleScore } from '@/lib/supabase/scores';
 import type { Puzzle } from '@/types/game';
 
 interface GameBoardProps {
   puzzle: Puzzle;
   isArchiveMode?: boolean;
+  showResults?: boolean;
 }
 
-export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardProps) {
+export default function GameBoard({ puzzle, isArchiveMode = false, showResults = false }: GameBoardProps) {
   const [vortexSpeed, setVortexSpeed] = useState(1.0); // Speed multiplier for vortex rotation
   const {
     gameState,
@@ -113,6 +115,50 @@ export default function GameBoard({ puzzle, isArchiveMode = false }: GameBoardPr
       }
     }
   }, [puzzle.id]);
+
+  // Fetch score data from database when showResults is true
+  useEffect(() => {
+    async function loadScoreResults() {
+      if (!showResults || !userId) {
+        return;
+      }
+
+      console.log('[GameBoard] Loading score results for puzzle:', puzzle.id);
+
+      try {
+        const supabase = createClient();
+        const scoreData = await getUserPuzzleScore(supabase, userId, puzzle.id);
+
+        if (scoreData) {
+          console.log('[GameBoard] Score data loaded:', scoreData);
+
+          // Construct savedResults object
+          // Note: We don't have phase1Score and phase2Score separately in the database,
+          // so we'll set phase1Score to the final score and phase2Score to 0
+          const results = {
+            phase1Score: scoreData.score,
+            phase2Score: 0,
+            finalScore: scoreData.score,
+            bonusCorrect: scoreData.bonus_correct,
+            totalWordsSeen: 0, // Not stored in database
+            totalUniqueWords: puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length,
+            reorderMoves: 0, // Not stored in database
+            hintsUsed: 0, // Not stored in database
+            puzzleId: puzzle.id,
+            puzzleDate: puzzle.date,
+          };
+
+          setSavedResults(results);
+        } else {
+          console.warn('[GameBoard] No score data found for this puzzle');
+        }
+      } catch (error) {
+        console.error('[GameBoard] Error loading score results:', error);
+      }
+    }
+
+    loadScoreResults();
+  }, [showResults, userId, puzzle.id, puzzle.date, puzzle.targetPhrase.words.length, puzzle.facsimilePhrase.words.length]);
 
   // Tutorial: Phase 1 steps (show on game start if tutorial not completed)
   // ONLY run tutorial on the actual tutorial puzzle, not on daily puzzles
