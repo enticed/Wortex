@@ -4,9 +4,10 @@ import { useUser } from '@/lib/contexts/UserContext';
 import AppLayout from '@/components/layout/AppLayout';
 import TutorialPrompt from '@/components/tutorial/TutorialPrompt';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { getTodaysPuzzle } from '@/lib/supabase/puzzles';
+import { getParticipationBadge, getPerformanceBadge } from '@/lib/utils/badges';
 import type { Puzzle } from '@/types/game';
 
 function getStreakEmoji(streak: number): string {
@@ -34,6 +35,32 @@ export default function HomePage() {
   const { userData, stats, loading } = useUser();
   const [currentDate, setCurrentDate] = useState('');
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
+
+  // Calculate average stars for performance badge
+  const averageStars = useMemo(() => {
+    if (!stats || stats.total_games === 0) return 0;
+
+    // Calculate from star distribution in stats
+    const totalStars =
+      (stats.one_star || 0) * 1 +
+      (stats.two_star || 0) * 2 +
+      (stats.three_star || 0) * 3 +
+      (stats.four_star || 0) * 4 +
+      (stats.five_star || 0) * 5;
+
+    return totalStars / stats.total_games;
+  }, [stats]);
+
+  // Get badge data
+  const participationBadge = useMemo(() => {
+    if (!stats) return null;
+    return getParticipationBadge(stats.total_games);
+  }, [stats]);
+
+  const performanceBadge = useMemo(() => {
+    if (!stats || stats.total_games < 10) return null;
+    return getPerformanceBadge(averageStars);
+  }, [stats, averageStars]);
 
   // Note: Tutorial is now triggered only when user clicks "Yes" on the tutorial prompt
   // which navigates to /tutorial page where the tutorial actually starts
@@ -114,20 +141,51 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Streak Highlight */}
+            {/* Badges and Streak Section */}
             {stats.current_streak > 0 && (
-              <div className="bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 rounded-lg p-3 text-center border-2 border-orange-300 dark:border-orange-700">
-                <div className="text-3xl mb-1">
-                  {getStreakEmoji(stats.current_streak)}
-                </div>
-                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-0.5">
-                  {stats.current_streak}
-                </div>
-                <div className="text-sm text-gray-700 dark:text-gray-300 mb-0.5">
-                  Day Streak
-                </div>
-                <div className="text-xs font-semibold text-orange-600 dark:text-orange-400">
-                  {getStreakMessage(stats.current_streak)}
+              <div className="bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 rounded-lg p-3 border-2 border-orange-300 dark:border-orange-700">
+                <div className="grid grid-cols-3 gap-2 items-center">
+                  {/* Participation Badge (Left) */}
+                  {participationBadge && (
+                    <div className="text-center">
+                      <div className="text-2xl mb-0.5">{participationBadge.emoji}</div>
+                      <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        {stats.total_games}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                        Total Games
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Current Streak (Center) */}
+                  <div className="text-center">
+                    <div className="text-3xl mb-1">
+                      {getStreakEmoji(stats.current_streak)}
+                    </div>
+                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-0.5">
+                      {stats.current_streak}
+                    </div>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 mb-0.5">
+                      Day Streak
+                    </div>
+                    <div className="text-xs font-semibold text-orange-600 dark:text-orange-400">
+                      {getStreakMessage(stats.current_streak)}
+                    </div>
+                  </div>
+
+                  {/* Performance Badge (Right) */}
+                  {performanceBadge && (
+                    <div className="text-center">
+                      <div className="text-xl mb-0.5">{performanceBadge.emoji}</div>
+                      <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        {averageStars.toFixed(1)}
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                        Avg Stars
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
