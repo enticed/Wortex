@@ -331,7 +331,7 @@ export default function AboutPage() {
               </p>
               <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-gray-700 dark:text-gray-300">
                 <p className="mb-2"><strong>General Inquiries:</strong> hello@wortex.live</p>
-                <p className="mb-2"><strong>Educational Partnerships:</strong> education@wortex.live</p>
+                <p className="mb-2"><strong>Partnerships:</strong> partnerships@wortex.live</p>
                 <p className="mb-2"><strong>Support:</strong> support@wortex.live</p>
                 <p className="mb-2"><strong>Website:</strong> <a href="https://wortex.live" className="text-blue-600 dark:text-blue-400 hover:underline">https://wortex.live</a></p>
               </div>

@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
                 Introduction
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                Welcome to Wortex (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and game service at wortex.live.
+                Welcome to Wortex, operated by Today Smart Solutions, LLC (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and game service at wortex.live.
               </p>
               <p className="text-gray-600 dark:text-gray-400">
                 Please read this Privacy Policy carefully. By accessing or using Wortex, you acknowledge that you have read, understood, and agree to be bound by this Privacy Policy. If you do not agree with this policy, please do not use our service.
@@ -334,6 +334,7 @@ export default function PrivacyPolicyPage() {
                 If you have questions, concerns, or requests regarding this Privacy Policy or our privacy practices, please contact us:
               </p>
               <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-gray-700 dark:text-gray-300">
+                <p className="mb-2"><strong>Company:</strong> Today Smart Solutions, LLC</p>
                 <p className="mb-2"><strong>Email:</strong> privacy@wortex.live</p>
                 <p className="mb-2"><strong>Website:</strong> <a href="https://wortex.live" className="text-blue-600 dark:text-blue-400 hover:underline">https://wortex.live</a></p>
               </div>
@@ -352,7 +353,7 @@ export default function PrivacyPolicyPage() {
                 EU Residents (GDPR)
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                If you are located in the European Economic Area (EEA), the data controller of your personal information is Wortex. The legal basis for processing your information includes:
+                If you are located in the European Economic Area (EEA), the data controller of your personal information is Today Smart Solutions, LLC. The legal basis for processing your information includes:
               </p>
               <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400 ml-4 mb-3">
                 <li><strong>Contractual necessity:</strong> To provide the service you have requested</li>

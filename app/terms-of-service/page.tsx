@@ -36,7 +36,7 @@ export default function TermsOfServicePage() {
                 1. Agreement to Terms
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you and Wortex (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) concerning your access to and use of the Wortex website and game service located at wortex.live (the &quot;Service&quot;).
+                These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you and Today Smart Solutions, LLC (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), operator of the Wortex website and game service located at wortex.live (the &quot;Service&quot;).
               </p>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
                 By accessing or using the Service, you agree to be bound by these Terms and our Privacy Policy. If you do not agree to these Terms, you may not access or use the Service.
@@ -143,7 +143,7 @@ export default function TermsOfServicePage() {
                 Our Content
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                The Service and its entire contents, features, and functionality (including but not limited to all information, software, text, displays, images, video, audio, and the design, selection, and arrangement thereof) are owned by Wortex and are protected by copyright, trademark, patent, trade secret, and other intellectual property laws.
+                The Service and its entire contents, features, and functionality (including but not limited to all information, software, text, displays, images, video, audio, and the design, selection, and arrangement thereof) are owned by Today Smart Solutions, LLC and are protected by copyright, trademark, patent, trade secret, and other intellectual property laws.
               </p>
 
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2 mt-4">
@@ -170,7 +170,7 @@ export default function TermsOfServicePage() {
                 Trademarks
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                &quot;Wortex&quot; and all related logos and graphics are trademarks of Wortex. You may not use these marks without our prior written permission.
+                &quot;Wortex&quot; and all related logos and graphics are proprietary marks of Today Smart Solutions, LLC. You may not use these marks without our prior written permission.
               </p>
             </section>
 
@@ -256,10 +256,10 @@ export default function TermsOfServicePage() {
                 8. Third-Party Links and Services
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                The Service may contain links to third-party websites or services (including payment processors and advertising networks) that are not owned or controlled by Wortex. We have no control over, and assume no responsibility for, the content, privacy policies, or practices of any third-party websites or services.
+                The Service may contain links to third-party websites or services (including payment processors and advertising networks) that are not owned or controlled by Today Smart Solutions, LLC. We have no control over, and assume no responsibility for, the content, privacy policies, or practices of any third-party websites or services.
               </p>
               <p className="text-gray-600 dark:text-gray-400">
-                You acknowledge and agree that Wortex shall not be responsible or liable for any damage or loss caused by or in connection with your use of any third-party websites or services.
+                You acknowledge and agree that Today Smart Solutions, LLC shall not be responsible or liable for any damage or loss caused by or in connection with your use of any third-party websites or services.
               </p>
             </section>
 
@@ -272,7 +272,7 @@ export default function TermsOfServicePage() {
                 THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED.
               </p>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                To the fullest extent permitted by law, Wortex disclaims all warranties, express or implied, including but not limited to:
+                To the fullest extent permitted by law, Today Smart Solutions, LLC disclaims all warranties, express or implied, including but not limited to:
               </p>
               <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400 ml-4 mb-3">
                 <li>Implied warranties of merchantability, fitness for a particular purpose, and non-infringement</li>
@@ -291,7 +291,7 @@ export default function TermsOfServicePage() {
                 10. Limitation of Liability
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-3 uppercase font-semibold">
-                TO THE FULLEST EXTENT PERMITTED BY LAW, WORTEX SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES.
+                TO THE FULLEST EXTENT PERMITTED BY LAW, TODAY SMART SOLUTIONS, LLC SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES.
               </p>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
                 Our total liability to you for all claims arising out of or relating to these Terms or the Service shall not exceed the greater of:
@@ -311,7 +311,7 @@ export default function TermsOfServicePage() {
                 11. Indemnification
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                You agree to indemnify, defend, and hold harmless Wortex and its officers, directors, employees, contractors, agents, licensors, and suppliers from and against any claims, liabilities, damages, judgments, awards, losses, costs, expenses, or fees (including reasonable attorneys&apos; fees) arising out of or relating to:
+                You agree to indemnify, defend, and hold harmless Today Smart Solutions, LLC and its officers, directors, employees, contractors, agents, licensors, and suppliers from and against any claims, liabilities, damages, judgments, awards, losses, costs, expenses, or fees (including reasonable attorneys&apos; fees) arising out of or relating to:
               </p>
               <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400 ml-4">
                 <li>Your violation of these Terms</li>
@@ -360,7 +360,7 @@ export default function TermsOfServicePage() {
                 Governing Law
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which Wortex is registered, without regard to its conflict of law provisions.
+                These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which Today Smart Solutions, LLC is registered, without regard to its conflict of law provisions.
               </p>
 
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2 mt-4">
@@ -381,7 +381,7 @@ export default function TermsOfServicePage() {
                 Entire Agreement
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                These Terms, together with our Privacy Policy, constitute the entire agreement between you and Wortex regarding the Service and supersede all prior agreements and understandings.
+                These Terms, together with our Privacy Policy, constitute the entire agreement between you and Today Smart Solutions, LLC regarding the Service and supersede all prior agreements and understandings.
               </p>
 
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2 mt-4">
@@ -422,6 +422,7 @@ export default function TermsOfServicePage() {
                 If you have any questions about these Terms, please contact us:
               </p>
               <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-gray-700 dark:text-gray-300">
+                <p className="mb-2"><strong>Company:</strong> Today Smart Solutions, LLC</p>
                 <p className="mb-2"><strong>Email:</strong> legal@wortex.live</p>
                 <p className="mb-2"><strong>Support:</strong> support@wortex.live</p>
                 <p className="mb-2"><strong>Website:</strong> <a href="https://wortex.live" className="text-blue-600 dark:text-blue-400 hover:underline">https://wortex.live</a></p>
