@@ -52,7 +52,9 @@ export default function HomePage() {
         .not('stars', 'is', null);
 
       if (scores && scores.length > 0) {
-        const totalStars = scores.reduce((sum, score) => sum + (score.stars || 0), 0);
+        const totalStars = scores.reduce((sum: number, score: { stars: number | null }) => {
+          return sum + (score.stars || 0);
+        }, 0);
         setAverageStars(totalStars / scores.length);
       }
     }
