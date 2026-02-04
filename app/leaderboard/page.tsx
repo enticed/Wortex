@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
 import GlobalLeaderboardTable from '@/components/leaderboard/GlobalLeaderboardTable';
@@ -42,8 +42,10 @@ export default function LeaderboardPage() {
   const [globalEntriesBoosted, setGlobalEntriesBoosted] = useState<GlobalLeaderboardBoostedRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [puzzleDate, setPuzzleDate] = useState<string | null>(null);
+  const [isArchiveMode, setIsArchiveMode] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   const loadLeaderboards = useCallback(async () => {
@@ -52,18 +54,26 @@ export default function LeaderboardPage() {
       console.log('[Leaderboard] Using userId from UserContext:', userId?.substring(0, 12) || 'none');
       setLoading(true);
 
-      // Check if there's a saved puzzle date from a completed game (for cases where user finished after midnight)
+      // Check for date in URL parameter first (for archive mode)
       let targetPuzzleDate: string | null = null;
-      const savedResults = sessionStorage.getItem('wortex-final-results');
-      if (savedResults) {
-        try {
-          const results = JSON.parse(savedResults);
-          if (results.puzzleDate) {
-            targetPuzzleDate = results.puzzleDate;
-            console.log('[Leaderboard] Using saved puzzle date:', targetPuzzleDate);
+      const urlDate = searchParams.get('date');
+      if (urlDate) {
+        targetPuzzleDate = urlDate;
+        setIsArchiveMode(true);
+        console.log('[Leaderboard] Using URL date parameter (archive mode):', targetPuzzleDate);
+      } else {
+        // Check if there's a saved puzzle date from a completed game (for cases where user finished after midnight)
+        const savedResults = sessionStorage.getItem('wortex-final-results');
+        if (savedResults) {
+          try {
+            const results = JSON.parse(savedResults);
+            if (results.puzzleDate) {
+              targetPuzzleDate = results.puzzleDate;
+              console.log('[Leaderboard] Using saved puzzle date:', targetPuzzleDate);
+            }
+          } catch (e) {
+            console.warn('[Leaderboard] Failed to parse saved results:', e);
           }
-        } catch (e) {
-          console.warn('[Leaderboard] Failed to parse saved results:', e);
         }
       }
 
@@ -117,7 +127,7 @@ export default function LeaderboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [userId, supabase]); // Memoize function, only recreate if userId or supabase changes
+  }, [userId, supabase, searchParams]); // Memoize function, only recreate if userId, supabase, or searchParams changes
 
   // Load leaderboards once UserContext is ready
   useEffect(() => {
@@ -166,11 +176,11 @@ export default function LeaderboardPage() {
           <div className="mb-6 flex items-start justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Leaderboard
+                {isArchiveMode ? 'Past Leaderboard' : 'Leaderboard'}
               </h1>
               {puzzleDate && activeTab === 'daily' && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Today's Puzzle: {new Date(puzzleDate + 'T00:00:00').toLocaleDateString('en-US', {
+                  {isArchiveMode ? 'Puzzle from: ' : 'Today\'s Puzzle: '}{new Date(puzzleDate + 'T00:00:00').toLocaleDateString('en-US', {
                     weekday: 'long',
                     month: 'long',
                     day: 'numeric',
@@ -213,7 +223,7 @@ export default function LeaderboardPage() {
                   }
                 `}
               >
-                Today's Puzzle
+                {isArchiveMode ? 'Past Puzzle' : 'Today\'s Puzzle'}
               </button>
               <button
                 onClick={() => setActiveTab('global')}
@@ -258,7 +268,7 @@ export default function LeaderboardPage() {
                     {!loading && dailyEntriesPure.length === 0 && (
                       <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                         <p className="text-gray-600 dark:text-gray-400">
-                          No Pure scores yet for today's puzzle
+                          No Pure scores yet for {isArchiveMode ? 'this puzzle' : 'today\'s puzzle'}
                         </p>
                       </div>
                     )}
@@ -289,7 +299,7 @@ export default function LeaderboardPage() {
                     {!loading && dailyEntriesBoosted.length === 0 && (
                       <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                         <p className="text-gray-600 dark:text-gray-400">
-                          No Boosted scores yet for today's puzzle
+                          No Boosted scores yet for {isArchiveMode ? 'this puzzle' : 'today\'s puzzle'}
                         </p>
                       </div>
                     )}
@@ -298,14 +308,16 @@ export default function LeaderboardPage() {
                   {!loading && dailyEntriesPure.length === 0 && dailyEntriesBoosted.length === 0 && (
                     <div className="text-center py-12">
                       <p className="text-gray-600 dark:text-gray-400 mb-3">
-                        No one has played today's puzzle yet!
+                        {isArchiveMode ? 'No one has played this puzzle yet!' : 'No one has played today\'s puzzle yet!'}
                       </p>
-                      <a
-                        href="/"
-                        className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-                      >
-                        Play Today's Puzzle
-                      </a>
+                      {!isArchiveMode && (
+                        <a
+                          href="/"
+                          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                        >
+                          Play Today's Puzzle
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>

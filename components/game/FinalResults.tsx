@@ -203,23 +203,42 @@ export default function FinalResults({
             </button>
           )}
 
-          {/* Buttons - Half-width side by side */}
-          <div className="flex gap-2 mt-2">
-            <Link
-              id="compare-previous-button"
-              href="/stats"
-              className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm text-center"
-            >
-              Compare to Your Previous Results...
-            </Link>
-            <Link
-              id="compare-leaderboard-button"
-              href="/leaderboard"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm text-center"
-            >
-              Compare to Today's Best Scores...
-            </Link>
-          </div>
+          {/* Buttons - Archive mode shows "Past Leaderboard" and "Back to Archive", normal mode shows comparison buttons */}
+          {isArchiveMode ? (
+            <div className="flex gap-2 mt-2">
+              {puzzleDate && (
+                <Link
+                  href={`/leaderboard?date=${puzzleDate}`}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm text-center"
+                >
+                  Past Leaderboard
+                </Link>
+              )}
+              <Link
+                href="/archive"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm text-center"
+              >
+                Back to Archive
+              </Link>
+            </div>
+          ) : (
+            <div className="flex gap-2 mt-2">
+              <Link
+                id="compare-previous-button"
+                href="/stats"
+                className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm text-center"
+              >
+                Compare to Your Previous Results...
+              </Link>
+              <Link
+                id="compare-leaderboard-button"
+                href="/leaderboard"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm text-center"
+              >
+                Compare to Today's Best Scores...
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

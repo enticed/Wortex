@@ -32,7 +32,7 @@ export default function HowToPlayPage() {
                 Game Overview
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                Wortex is a daily word puzzle where you reconstruct a famous quotation from a swirling vortex of words. Each puzzle features a <span className="font-semibold text-emerald-600 dark:text-emerald-400">Mystery Quote</span> (the famous quotation you&apos;ll assemble) and a pre-assembled <span className="font-semibold text-purple-600 dark:text-purple-400">Hint Phrase</span> (a playful spoof version) that provides clues and adds extra words to the vortex to increase the challenge.
+                Wortex is a daily word puzzle where you reconstruct a famous quotation from a swirling vortex of words. Each puzzle features a <span className="font-semibold text-emerald-600 dark:text-emerald-400">Mystery Quote</span> (the famous quotation you&apos;ll assemble) and a <span className="font-semibold text-purple-600 dark:text-purple-400">Hint Phrase</span> (a rephrasing that retains the original meaning while using different words) that provides clues and adds extra words to the vortex to increase the challenge.
               </p>
             </section>
 
@@ -45,13 +45,45 @@ export default function HowToPlayPage() {
                 In the first phase, your goal is to collect all the words needed for the <span className="font-semibold text-emerald-600 dark:text-emerald-400">Mystery Quote</span>:
               </p>
               <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
-                <li>The <span className="font-semibold text-purple-600 dark:text-purple-400">Hint Phrase</span> is displayed at the top, already assembled, to give you context</li>
+                <li>The <span className="font-semibold text-purple-600 dark:text-purple-400">Hint Phrase</span> is displayed at the top to give you context</li>
                 <li>Words from both the Mystery Quote and the Hint Phrase swirl together in the central vortex</li>
-                <li>Drag words from the vortex to the <span className="font-semibold text-emerald-600 dark:text-emerald-400">green assembly area</span> in the middle</li>
+                <li>Drag words from the vortex to the <span className="font-semibold text-blue-600 dark:text-blue-400">blue collection area</span> in the middle</li>
                 <li>Don&apos;t worry about word order yet - just collect all the words you think belong in the Mystery Quote</li>
-                <li>Words you don&apos;t need can be dismissed by dragging them to the right edge</li>
+                <li>Words you don&apos;t need can be dismissed by flicking them away from the vortex</li>
                 <li>Phase 1 ends automatically when you&apos;ve collected all the required words for the Mystery Quote</li>
               </ul>
+
+              {/* Vortex Speed Control - Moved here from later section */}
+              <div className="mt-4 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Vortex Speed Control</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-3 text-sm">
+                  The speed slider on the left side allows you to adjust vortex rotation. Each speed setting has trade-offs:
+                </p>
+                <div className="space-y-2">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                    <p className="font-semibold text-blue-900 dark:text-blue-300 text-sm mb-1">Slower Speeds (0.0x - 0.75x)</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Words are easier to see and grab, but increasing <span className="font-semibold">fog</span> obscures visibility.
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-600 p-2 rounded">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">Standard Speed (1.0x)</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Balanced gameplay with no fog and no color coding. Required for Pure Rankings on leaderboards.
+                    </p>
+                  </div>
+                  <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                    <p className="font-semibold text-red-900 dark:text-red-300 text-sm mb-1">Faster Speeds (1.25x - 2.0x)</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Words are harder to catch, but <span className="font-semibold">color coding</span> appears: needed words show <span className="text-emerald-600 dark:text-emerald-400">green</span>, unnecessary words show <span className="text-red-600 dark:text-red-400">red</span>.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 mt-2 text-xs">
+                  <span className="font-semibold">Note:</span> Playing at speeds other than 1.0x moves your score to Boosted Rankings instead of Pure Rankings.
+                </p>
+              </div>
+
               <p className="text-gray-600 dark:text-gray-400 mt-3 text-sm">
                 <span className="font-semibold">Tip:</span> The Hint Phrase provides valuable clues about the meaning and theme of the Mystery Quote!
               </p>
@@ -67,61 +99,27 @@ export default function HowToPlayPage() {
               </p>
               <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
                 <li>The <span className="font-semibold text-purple-600 dark:text-purple-400">Hint Phrase</span> remains visible at the top to guide you</li>
-                <li>Your collected words appear in the <span className="font-semibold text-emerald-600 dark:text-emerald-400">green assembly area</span> in the middle</li>
+                <li>Your collected words appear in the <span className="font-semibold text-blue-600 dark:text-blue-400">blue assembly area</span> in the middle</li>
                 <li>Drag words to reorder them into the correct sequence</li>
-                <li>Arrange the quote from beginning to end, leaving any unnecessary words at the end of the phrase</li>
+                <li>Arrange the quote from beginning to end, leaving any unnecessary words at the end</li>
                 <li>Each word movement costs <span className="font-semibold">0.25 points</span></li>
                 <li>Three hint buttons appear below to assist if you get stuck (0.5 points each)</li>
-                <li>The phrase border turns <span className="text-emerald-600 dark:text-emerald-400">green</span> when correctly assembled</li>
+                <li>Correctly placed words highlight in <span className="text-emerald-600 dark:text-emerald-400">green</span>, while unnecessary words show in <span className="text-red-600 dark:text-red-400">red</span></li>
+                <li>A thin progress bar below the Mystery Quote header shows your progress (red/yellow/green based on how many consecutive words from the start are correct)</li>
               </ul>
-            </section>
 
-            {/* Hints */}
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Hints (Phase 2 Only)
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-3">
-                Three hint types are available in Phase 2. Each hint costs <span className="font-semibold">0.5 points</span>:
-              </p>
-              <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
-                <li><span className="font-semibold">Unnecessary Word Hint:</span> Identifies a word that doesn&apos;t belong in the Mystery Quote and moves it to the end</li>
-                <li><span className="font-semibold">Correct String Hint:</span> Reveals a sequence of consecutive words already in the correct order</li>
-                <li><span className="font-semibold">Next Word Hint:</span> Shows which word should come next in the phrase</li>
-              </ul>
-            </section>
-
-            {/* Vortex Speed Slider */}
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Vortex Speed Control
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-3">
-                The speed slider on the left side of the screen allows you to adjust vortex rotation. Each speed setting has trade-offs:
-              </p>
-              <div className="space-y-3 ml-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                  <p className="font-semibold text-blue-900 dark:text-blue-300 mb-1">Slower Speeds (0.5x - 0.9x)</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Words are easier to see and grab, but increasing <span className="font-semibold">fog</span> hampers visibility. Better for careful word selection.
-                  </p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                  <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Standard Speed (1.0x)</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Balanced gameplay with no fog and no color coding. Required for Pure Rankings on leaderboards.
-                  </p>
-                </div>
-                <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-                  <p className="font-semibold text-red-900 dark:text-red-300 mb-1">Faster Speeds (1.1x - 2.0x)</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Words are harder to catch, but <span className="font-semibold">color coding</span> appears: needed words show <span className="text-emerald-600 dark:text-emerald-400">green</span>, unnecessary words show <span className="text-red-600 dark:text-red-400">red</span>. Better for fast gameplay.
-                  </p>
-                </div>
+              {/* Hints - Integrated into Phase 2 */}
+              <div className="mt-4 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Phase 2 Hints</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-3 text-sm">
+                  Three hint types are available to help if you get stuck. Each hint costs <span className="font-semibold">0.5 points</span>:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4 text-sm">
+                  <li><span className="font-semibold">Unneeded Word Hint:</span> Identifies a word that doesn&apos;t belong in the Mystery Quote and <span className="font-semibold">removes it</span> from the assembly area</li>
+                  <li><span className="font-semibold">Correct String Hint:</span> Highlights consecutive words that are in correct order <span className="font-semibold">from the beginning</span> of the quote (even a long sequence won&apos;t be highlighted if it doesn&apos;t start from position 1)</li>
+                  <li><span className="font-semibold">Next Word Hint:</span> Highlights which word should come immediately after the correct string</li>
+                </ul>
               </div>
-              <p className="text-gray-600 dark:text-gray-400 mt-3 text-sm">
-                <span className="font-semibold">Note:</span> Playing at speeds other than 1.0x moves your score to Boosted Rankings instead of Pure Rankings.
-              </p>
             </section>
 
             {/* Bonus Question */}
@@ -146,51 +144,81 @@ export default function HowToPlayPage() {
               <p className="text-gray-600 dark:text-gray-400 mb-3">
                 Your score is calculated based on efficiency. <span className="font-semibold">Lower scores are better!</span>
               </p>
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-3">
-                <p className="text-gray-700 dark:text-gray-300 font-mono text-sm">
-                  Score = (Words Seen / Unique Words) + (Reorder Moves × 0.25) + (Hints Used × 0.5)
-                </p>
+
+              <div className="space-y-3">
+                {/* Phase 1 Score */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                  <p className="font-semibold text-blue-900 dark:text-blue-300 mb-1">Phase 1 Score (Word Collection)</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-mono text-sm mb-2">
+                    Phase 1 Score = Words Seen / Unique Words
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400 ml-4">
+                    <li><span className="font-semibold">Words Seen:</span> Total word instances viewed from the vortex (including repeats)</li>
+                    <li><span className="font-semibold">Unique Words:</span> Total count of all words in both the Mystery Quote and Hint Phrase combined</li>
+                  </ul>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    Perfect Phase 1 = 1.0 (saw every word exactly once)
+                  </p>
+                </div>
+
+                {/* Phase 2 Score */}
+                <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg">
+                  <p className="font-semibold text-purple-900 dark:text-purple-300 mb-1">Phase 2 Score (Word Arrangement)</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-mono text-sm mb-2">
+                    Phase 2 Score = (Reorder Moves × 0.25) + (Hints Used × 0.5)
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400 ml-4">
+                    <li><span className="font-semibold">Reorder Moves:</span> Each word movement costs 0.25 points</li>
+                    <li><span className="font-semibold">Hints Used:</span> Each hint costs 0.5 points</li>
+                  </ul>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    Perfect Phase 2 = 0.0 (no moves or hints needed)
+                  </p>
+                </div>
+
+                {/* Final Score */}
+                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                  <p className="font-semibold text-green-900 dark:text-green-300 mb-1">Final Score</p>
+                  <p className="text-gray-700 dark:text-gray-300 font-mono text-sm mb-2">
+                    Final Score = (Phase 1 + Phase 2) × Bonus Multiplier
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400 ml-4">
+                    <li><span className="font-semibold">Bonus Correct:</span> Reduces your final score by 10% (multiplier = 0.9)</li>
+                    <li><span className="font-semibold">Bonus Incorrect:</span> No reduction (multiplier = 1.0)</li>
+                  </ul>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    Perfect game = 1.0 final score. Vortex speed doesn&apos;t affect scoring, but playing at speeds other than 1.0x moves you to Boosted Rankings.
+                  </p>
+                </div>
               </div>
-              <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
-                <li><span className="font-semibold">Words Seen:</span> Total number of word instances you viewed from the vortex (including repeats)</li>
-                <li><span className="font-semibold">Unique Words:</span> Number of distinct words needed for the Mystery Quote</li>
-                <li><span className="font-semibold">Reorder Moves:</span> Each word movement in Phase 2 costs 0.25 points</li>
-                <li><span className="font-semibold">Hints Used:</span> Each hint costs 0.5 points</li>
-                <li><span className="font-semibold">Bonus Correct:</span> Reduces your final score by 10%</li>
-              </ul>
-              <p className="text-gray-600 dark:text-gray-400 mt-3">
-                The perfect score is 1.0 - achieved by seeing every word exactly once with no reordering or hints. Vortex speed does not directly affect your score, but playing at speeds other than 1.0x places you in Boosted Rankings.
-              </p>
             </section>
 
             {/* Leaderboards */}
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Leaderboards
+                Leaderboards & Stats
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                Two types of leaderboards track your progress:
+                Track your progress and compare with other players:
               </p>
-              <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
-                <li><span className="font-semibold text-emerald-600 dark:text-emerald-400">Pure Rankings:</span> First play of each puzzle at standard speed (1.0x only)</li>
-                <li><span className="font-semibold text-purple-600 dark:text-purple-400">Boosted Rankings:</span> Repeat plays or games with adjusted speed (any speed other than 1.0x)</li>
-              </ul>
-              <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm">
-                Daily and Global leaderboards are available to compare your performance with other players!
-              </p>
-            </section>
-
-            {/* Controls */}
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Game Controls
-              </h2>
-              <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
-                <li><span className="font-semibold">Vortex Speed Slider:</span> Adjust rotation speed (left side) - affects fog and color coding</li>
-                <li><span className="font-semibold">Dismiss Zone:</span> Drag unwanted words to the right edge to remove them from view</li>
-                <li><span className="font-semibold">Drag & Drop:</span> Works with both mouse and touch input for word movement</li>
-                <li><span className="font-semibold">Word Reordering:</span> In Phase 2, drag words within the assembly area to rearrange them</li>
-              </ul>
+              <div className="space-y-3">
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Today&apos;s Puzzle & All-Time Best</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400 ml-4">
+                    <li><span className="font-semibold text-emerald-600 dark:text-emerald-400">Pure Rankings:</span> First play of each puzzle at standard speed (1.0x only)</li>
+                    <li><span className="font-semibold text-purple-600 dark:text-purple-400">Boosted Rankings:</span> Repeat plays or games with adjusted speed (any speed other than 1.0x)</li>
+                  </ul>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    All-Time Best shows the top 100 players based on average score across all their games (minimum 10 games required for ranking).
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Personal Stats</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    View your performance history, streaks, and detailed statistics in the Stats page.
+                  </p>
+                </div>
+              </div>
             </section>
 
             {/* Pro Tips */}
@@ -199,13 +227,11 @@ export default function HowToPlayPage() {
                 Pro Tips
               </h2>
               <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4">
-                <li>Study the Hint Phrase carefully - it provides valuable context for the Mystery Quote</li>
-                <li>At slower speeds, use the fog strategically to focus on specific words</li>
+                <li>Study the Hint Phrase carefully - it provides valuable context for the Mystery Quote&apos;s meaning</li>
                 <li>At faster speeds, the color coding (green/red) helps you quickly identify needed words</li>
-                <li>Dismissed words can be retrieved from the right edge if you change your mind</li>
-                <li>In Phase 2, plan your word arrangement carefully to minimize moves and save points</li>
-                <li>Pay attention to grammar, punctuation, and context when ordering words</li>
-                <li>The Hint Phrase often contains a humorous twist on the original quote&apos;s theme</li>
+                <li>In Phase 2, use the progress bar to see if you&apos;re getting warmer (green) or colder (red/yellow)</li>
+                <li>Plan your word arrangement carefully to minimize moves and save points</li>
+                <li>The Correct String Hint only highlights words starting from position 1 - perfect for getting started</li>
               </ul>
             </section>
 
@@ -217,9 +243,20 @@ export default function HowToPlayPage() {
               <p className="text-gray-600 dark:text-gray-400 mb-3">
                 A new Wortex puzzle is released every day at midnight in your timezone.
               </p>
-              <p className="text-gray-600 dark:text-gray-400">
-                <span className="font-semibold">Archive Mode:</span> Missed a day? The Archive lets you play previous puzzles for practice. Note that Archive games <span className="font-semibold">do not count</span> towards leaderboards or awards - they&apos;re purely for fun and practice!
-              </p>
+              <div className="space-y-2">
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100">Puzzle Archive (Premium Feature)</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Missed a day? The Archive lets you play previous puzzles for practice. Archive scores are tracked and displayed but <span className="font-semibold">do not count</span> towards leaderboards or stats. You can view past puzzle leaderboards to see how other players performed on each puzzle&apos;s original release date.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100">Visual Distinction</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Puzzles you played on their original release date show <span className="text-green-600 dark:text-green-400 font-semibold">✓ Completed</span> in green, while archive-only plays show <span className="text-amber-600 dark:text-amber-400 font-semibold">✓ Played</span> in amber.
+                  </p>
+                </div>
+              </div>
             </section>
           </div>
 

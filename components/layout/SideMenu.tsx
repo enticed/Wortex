@@ -173,6 +173,39 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
             </li>
           </ul>
 
+          {/* About and Legal Links */}
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/about"
+                  onClick={onClose}
+                  className="block px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                >
+                  About Wortex
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/privacy-policy"
+                  onClick={onClose}
+                  className="block px-4 py-3 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors text-sm"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms-of-service"
+                  onClick={onClose}
+                  className="block px-4 py-3 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors text-sm"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           {/* Share Section */}
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <ul className="space-y-2">

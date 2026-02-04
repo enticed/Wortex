@@ -245,6 +245,7 @@ export async function getGlobalLeaderboardPure(
   const { data, error } = await supabase
     .from('global_leaderboards_pure')
     .select('*')
+    .gte('total_games', 10)
     .limit(limit);
 
   if (error) {
@@ -282,6 +283,7 @@ export async function getGlobalLeaderboardBoosted(
   const { data, error } = await supabase
     .from('global_leaderboards_boosted')
     .select('*')
+    .gte('total_games', 10)
     .limit(limit);
 
   if (error) {
