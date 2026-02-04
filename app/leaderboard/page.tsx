@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
@@ -33,7 +33,7 @@ interface GlobalLeaderboardEntry {
   total_games: number;
 }
 
-export default function LeaderboardPage() {
+function LeaderboardContent() {
   const { userId, loading: userLoading } = useUser();
   const [activeTab, setActiveTab] = useState<TabType>('daily');
   const [dailyEntriesPure, setDailyEntriesPure] = useState<LeaderboardPureRow[]>([]);
@@ -427,5 +427,23 @@ export default function LeaderboardPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function LeaderboardPage() {
+  return (
+    <Suspense fallback={
+      <AppLayout>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pb-20">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-12">
+              <p className="text-gray-600 dark:text-gray-400">Loading leaderboard...</p>
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    }>
+      <LeaderboardContent />
+    </Suspense>
   );
 }
