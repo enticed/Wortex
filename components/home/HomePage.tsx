@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { getTodaysPuzzle } from '@/lib/supabase/puzzles';
+import { getUserPuzzleScore } from '@/lib/supabase/scores';
 import { getParticipationBadge, getPerformanceBadge } from '@/lib/utils/badges';
 import type { Puzzle } from '@/types/game';
 
@@ -36,6 +37,7 @@ export default function HomePage() {
   const [currentDate, setCurrentDate] = useState('');
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [averageStars, setAverageStars] = useState<number>(0);
+  const [hasPlayedToday, setHasPlayedToday] = useState<boolean>(false);
 
   // Fetch average stars from scores table
   useEffect(() => {
@@ -76,15 +78,21 @@ export default function HomePage() {
   // Note: Tutorial is now triggered only when user clicks "Yes" on the tutorial prompt
   // which navigates to /tutorial page where the tutorial actually starts
 
-  // Fetch today's puzzle for the hint phrase
+  // Fetch today's puzzle for the hint phrase and check if user has played
   useEffect(() => {
     async function fetchPuzzle() {
       const supabase = createClient();
       const todaysPuzzle = await getTodaysPuzzle(supabase);
       setPuzzle(todaysPuzzle);
+
+      // Check if user has played today's puzzle
+      if (userId && todaysPuzzle) {
+        const score = await getUserPuzzleScore(supabase, userId, todaysPuzzle.id);
+        setHasPlayedToday(!!score);
+      }
     }
     fetchPuzzle();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     // Function to update the date
@@ -226,13 +234,23 @@ export default function HomePage() {
 
         {/* Play Button - Compact */}
         <div className="text-center">
-          <Link
-            id="play-button"
-            href="/pre-game"
-            className="inline-block px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white text-lg font-bold rounded-xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
-          >
-            Play Today&apos;s Puzzle
-          </Link>
+          {hasPlayedToday ? (
+            <Link
+              id="my-results-button"
+              href="/play"
+              className="inline-block px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-lg font-bold rounded-xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              My Results
+            </Link>
+          ) : (
+            <Link
+              id="play-button"
+              href="/pre-game"
+              className="inline-block px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-lg font-bold rounded-xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              Play Today&apos;s Puzzle
+            </Link>
+          )}
         </div>
 
         {/* Quick Links - Compact */}
