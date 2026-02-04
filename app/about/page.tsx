@@ -336,6 +336,25 @@ export default function AboutPage() {
                 <p className="mb-2"><strong>Website:</strong> <a href="https://wortex.live" className="text-blue-600 dark:text-blue-400 hover:underline">https://wortex.live</a></p>
               </div>
             </section>
+
+            {/* Legal Links */}
+            <section className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <div className="flex justify-center gap-4 text-sm">
+                <a
+                  href="/privacy-policy"
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  Privacy Policy
+                </a>
+                <span className="text-gray-400 dark:text-gray-600">•</span>
+                <a
+                  href="/terms-of-service"
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  Terms of Service
+                </a>
+              </div>
+            </section>
           </div>
         </div>
       </div>

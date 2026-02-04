@@ -166,17 +166,17 @@ export default function HomePage() {
           </Link>
           <span className="text-gray-400 dark:text-gray-600">•</span>
           <Link
-            href="/stats"
+            href="/privacy-policy"
             className="text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
           >
-            Your Stats
+            Privacy Policy
           </Link>
           <span className="text-gray-400 dark:text-gray-600">•</span>
           <Link
-            href="/leaderboard"
+            href="/terms-of-service"
             className="text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
           >
-            Leaderboard
+            Terms of Service
           </Link>
         </div>
 
