@@ -5,6 +5,9 @@ import AppLayout from '@/components/layout/AppLayout';
 import TutorialPrompt from '@/components/tutorial/TutorialPrompt';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { getTodaysPuzzle } from '@/lib/supabase/puzzles';
+import type { Puzzle } from '@/types/game';
 
 function getStreakEmoji(streak: number): string {
   if (streak >= 365) return '🏆';
@@ -30,9 +33,20 @@ function getStreakMessage(streak: number): string {
 export default function HomePage() {
   const { userData, stats, loading } = useUser();
   const [currentDate, setCurrentDate] = useState('');
+  const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
 
   // Note: Tutorial is now triggered only when user clicks "Yes" on the tutorial prompt
   // which navigates to /tutorial page where the tutorial actually starts
+
+  // Fetch today's puzzle for the hint phrase
+  useEffect(() => {
+    async function fetchPuzzle() {
+      const supabase = createClient();
+      const todaysPuzzle = await getTodaysPuzzle(supabase);
+      setPuzzle(todaysPuzzle);
+    }
+    fetchPuzzle();
+  }, []);
 
   useEffect(() => {
     // Function to update the date
@@ -78,12 +92,17 @@ export default function HomePage() {
 
       <div id="app-container" className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-950 dark:to-indigo-950 flex items-center justify-center p-3">
       <div className="max-w-2xl w-full space-y-4">
-        {/* Hero Section - Compact */}
-        <div className="text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {currentDate || 'Daily Word Puzzle Challenge'}
-          </p>
-        </div>
+        {/* Hint Phrase Section */}
+        {puzzle && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 text-center">
+            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">
+              Hint Phrase for {currentDate || 'Today'}
+            </h2>
+            <p className="text-lg font-medium text-purple-600 dark:text-purple-400 italic">
+              &quot;{puzzle.facsimilePhrase.text}&quot;
+            </p>
+          </div>
+        )}
 
         {/* User Stats Card - Compact */}
         {!loading && userData && stats && (
@@ -135,15 +154,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Anonymous User Message - Compact */}
-        {!loading && (!userData || userData.isAnonymous) && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-3 text-center space-y-2">
-            <div className="text-3xl">👋</div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Create an account to track your progress, build streaks, and compete on the leaderboard!
-            </p>
-          </div>
-        )}
 
         {/* Play Button - Compact */}
         <div className="text-center">

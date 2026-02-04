@@ -75,8 +75,15 @@ export default function TermsOfServicePage() {
                 Anonymous Use
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                You may use the Service without creating an account. However, certain features such as saving progress, viewing statistics, and appearing on leaderboards require account registration.
+                You may use the Service without creating an account. Anonymous users have access to all game features, including saving progress, viewing statistics, and appearing on leaderboards. However, creating a registered account provides important benefits:
               </p>
+              <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400 ml-4 mb-3">
+                <li>Access your account from any device</li>
+                <li>Choose a custom display name (instead of &quot;Anon-xxxxxxxx&quot;)</li>
+                <li>Better account stability and reduced risk of losing progress due to device or connectivity issues</li>
+                <li>Password recovery and account management features</li>
+                <li>Ability to subscribe to Premium features</li>
+              </ul>
 
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2 mt-4">
                 Account Creation
