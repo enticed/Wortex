@@ -44,11 +44,11 @@ export default function HomePage() {
     async function fetchAverageStars() {
       const supabase = createClient();
 
-      // Get all scores with stars
+      // Get all scores with stars (userId is guaranteed to be non-null here)
       const { data: scores } = await supabase
         .from('scores')
         .select('stars')
-        .eq('user_id', userId)
+        .eq('user_id', userId as string)
         .not('stars', 'is', null);
 
       if (scores && scores.length > 0) {
