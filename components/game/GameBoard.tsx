@@ -435,6 +435,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
               user_id: userId,
               puzzle_id: puzzle.id,
               score: gameState.finalScore,
+              phase1_score: gameState.score || 0,
+              phase2_score: gameState.phase2Score || 0,
               bonus_correct: gameState.bonusCorrect || false,
               time_taken_seconds: timeTakenSeconds,
               speed: gameState.speed,

@@ -22,12 +22,16 @@ export async function submitScore(
   puzzleId: string,
   score: number,
   bonusCorrect: boolean,
-  timeTakenSeconds: number
+  timeTakenSeconds: number,
+  phase1Score?: number,
+  phase2Score?: number
 ): Promise<boolean> {
   const scoreData: ScoreInsert = {
     user_id: userId,
     puzzle_id: puzzleId,
     score,
+    phase1_score: phase1Score,
+    phase2_score: phase2Score,
     bonus_correct: bonusCorrect,
     time_taken_seconds: timeTakenSeconds,
   };

@@ -102,6 +102,8 @@ export interface Database {
           user_id: string;
           puzzle_id: string;
           score: number;
+          phase1_score: number | null;
+          phase2_score: number | null;
           bonus_correct: boolean;
           time_taken_seconds: number;
           speed: number;
@@ -116,6 +118,8 @@ export interface Database {
           user_id: string;
           puzzle_id: string;
           score: number;
+          phase1_score?: number | null;
+          phase2_score?: number | null;
           bonus_correct?: boolean;
           time_taken_seconds: number;
           speed?: number;
@@ -130,6 +134,8 @@ export interface Database {
           user_id?: string;
           puzzle_id?: string;
           score?: number;
+          phase1_score?: number | null;
+          phase2_score?: number | null;
           bonus_correct?: boolean;
           time_taken_seconds?: number;
           speed?: number;

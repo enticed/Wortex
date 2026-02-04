@@ -74,16 +74,15 @@ export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
           return;
         }
 
-        console.log('[ResultsViewer] Score loaded:', score.score, 'stars:', score.stars);
+        console.log('[ResultsViewer] Score loaded:', score.score, 'stars:', score.stars, 'phase1:', score.phase1_score, 'phase2:', score.phase2_score);
 
-        // Since we don't store phase1/phase2 breakdown, approximate it
-        // Distribute the final score evenly between phases
-        const approximatePhase1 = score.score / 2;
-        const approximatePhase2 = score.score / 2;
+        // Use stored phase scores if available, otherwise approximate
+        const phase1Score = score.phase1_score ?? (score.score / 2);
+        const phase2Score = score.phase2_score ?? (score.score / 2);
 
         setScoreData({
-          phase1Score: approximatePhase1,
-          phase2Score: approximatePhase2,
+          phase1Score,
+          phase2Score,
           finalScore: score.score,
           bonusCorrect: score.bonus_correct,
           stars: score.stars,
