@@ -6,6 +6,29 @@ import { useDroppable } from '@dnd-kit/core';
 import Word from './Word';
 import type { WordInVortex } from '@/types/game';
 
+// Generate jagged lightning bolt path from start to end position
+function generateLightningPath(start: { x: number; y: number }, end: { x: number; y: number }): string {
+  const segments = 8;
+  let path = `M ${start.x} ${start.y}`;
+
+  for (let i = 1; i <= segments; i++) {
+    const progress = i / segments;
+    const x = start.x + (end.x - start.x) * progress;
+    const y = start.y + (end.y - start.y) * progress;
+
+    // Add random jitter for jagged lightning appearance
+    const jitterX = (Math.random() - 0.5) * 40;
+    const jitterY = (Math.random() - 0.5) * 30;
+
+    path += ` L ${x + jitterX} ${y + jitterY}`;
+  }
+
+  // Ensure we end exactly at the target
+  path += ` L ${end.x} ${end.y}`;
+
+  return path;
+}
+
 interface VortexProps {
   words: WordInVortex[];
   onWordGrab: (wordId: string) => void;
@@ -25,6 +48,9 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
   const wordRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const animationRefs = useRef<Map<string, gsap.core.Tween[]>>(new Map());
   const animatedWordIds = useRef<Set<string>>(new Set());
+  const svgRef = useRef<SVGSVGElement>(null);
+  const wordEntryCounter = useRef<number>(0);
+  const previousWordCount = useRef<number>(0);
 
   // Handle responsive sizing
   useEffect(() => {
@@ -120,6 +146,122 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
     // Still need this word
     return 'needed';
   };
+
+  // Check if lightning should be active (fast speeds 1.25x+)
+  const shouldShowLightning = () => {
+    return speed >= 1.25;
+  };
+
+  // Trigger lightning strike at word position
+  const triggerLightning = (wordPosition: { x: number; y: number }, wordId: string) => {
+    if (!svgRef.current) return;
+
+    // Random edge position for lightning origin (varies per strike)
+    const edges = [
+      { x: Math.random() * dimensions.width, y: 0 }, // Top edge
+      { x: dimensions.width, y: Math.random() * dimensions.height }, // Right edge
+      { x: Math.random() * dimensions.width, y: dimensions.height }, // Bottom edge
+      { x: 0, y: Math.random() * dimensions.height }, // Left edge
+    ];
+    const origin = edges[Math.floor(Math.random() * edges.length)];
+
+    // Generate lightning bolt path
+    const pathData = generateLightningPath(origin, wordPosition);
+
+    // Create SVG path element
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', pathData);
+    path.setAttribute('stroke', '#FCD34D'); // Yellow-gold lightning
+    path.setAttribute('stroke-width', '3');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('filter', 'url(#lightning-glow)');
+    path.style.opacity = '0';
+
+    svgRef.current.appendChild(path);
+
+    // Animate lightning flash
+    gsap.to(path, {
+      opacity: 1,
+      duration: 0.05,
+      ease: 'power2.in',
+      onComplete: () => {
+        gsap.to(path, {
+          opacity: 0,
+          duration: 0.15,
+          ease: 'power2.out',
+          onComplete: () => path.remove(),
+        });
+      },
+    });
+
+    // Brief vortex flash
+    if (containerRef.current) {
+      gsap.to(containerRef.current, {
+        backgroundColor: 'rgba(252, 211, 77, 0.2)',
+        duration: 0.05,
+        yoyo: true,
+        repeat: 1,
+        ease: 'power2.inOut',
+      });
+    }
+
+    // Fade out the word with white flash
+    const wordElement = wordRefs.current.get(wordId);
+    if (wordElement) {
+      gsap.to(wordElement, {
+        opacity: 0,
+        scale: 1.2,
+        duration: 0.2,
+        ease: 'power2.out',
+      });
+    }
+  };
+
+  // Track word entries and trigger lightning at fast speeds
+  useEffect(() => {
+    const currentWordCount = words.length;
+
+    // Detect new word entering vortex
+    if (currentWordCount > previousWordCount.current && shouldShowLightning()) {
+      wordEntryCounter.current++;
+
+      // Vary the interval: every 4-6 words (random)
+      const lightningInterval = 4 + Math.floor(Math.random() * 3); // 4, 5, or 6
+
+      if (wordEntryCounter.current >= lightningInterval) {
+        wordEntryCounter.current = 0;
+
+        // Find a word to zap (prefer one that's visible and not grabbed)
+        const availableWords = words.filter(w => !w.isGrabbed);
+        if (availableWords.length > 0) {
+          const targetWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+          const wordElement = wordRefs.current.get(targetWord.id);
+
+          if (wordElement) {
+            const rect = wordElement.getBoundingClientRect();
+            const containerRect = containerRef.current?.getBoundingClientRect();
+
+            if (containerRect) {
+              const wordPosition = {
+                x: rect.left + rect.width / 2 - containerRect.left,
+                y: rect.top + rect.height / 2 - containerRect.top,
+              };
+
+              triggerLightning(wordPosition, targetWord.id);
+
+              // Remove word after brief delay
+              setTimeout(() => {
+                onWordGrab(targetWord.id);
+              }, 200);
+            }
+          }
+        }
+      }
+    }
+
+    previousWordCount.current = currentWordCount;
+  }, [words, speed]);
 
   // Animate words in the vortex
   useEffect(() => {
@@ -258,6 +400,29 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
           strokeDasharray="8 8"
           suppressHydrationWarning
         />
+      </svg>
+
+      {/* Lightning SVG layer for fast speeds */}
+      <svg
+        ref={svgRef}
+        className="absolute inset-0 pointer-events-none z-40"
+        width={dimensions.width}
+        height={dimensions.height}
+        suppressHydrationWarning
+      >
+        <defs>
+          {/* Glow filter for lightning */}
+          <filter id="lightning-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+            <feFlood floodColor="#FCD34D" floodOpacity="0.8" result="color" />
+            <feComposite in="color" in2="blur" operator="in" result="glow" />
+            <feMerge>
+              <feMergeNode in="glow" />
+              <feMergeNode in="glow" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
       </svg>
 
       {/* Fog effect for slow speeds - base overlay + animated clouds */}
