@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import FinalResults from './FinalResults';
 import AssemblyArea from './AssemblyArea';
-import { createClient } from '@/lib/supabase/client';
-import { getUserPuzzleScore } from '@/lib/supabase/scores';
 import { useUser } from '@/lib/contexts/UserContext';
 import type { Puzzle } from '@/types/game';
 
@@ -61,45 +59,28 @@ export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
         setPuzzle(puzzleData.puzzle);
         console.log('[ResultsViewer] Puzzle loaded:', puzzleData.puzzle.id);
 
-        // Fetch score data with session verification and retry logic
-        const supabase = createClient();
-
-        // Ensure Supabase session is ready before querying
-        console.log('[ResultsViewer] Verifying Supabase session...');
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session) {
-          console.warn('[ResultsViewer] No active Supabase session, waiting for initialization...');
-          // Wait a bit for session to initialize, then retry
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-
+        // Fetch score data via server-side API route (avoids RLS session issues)
         console.log('[ResultsViewer] Fetching score for puzzle:', puzzleData.puzzle.id, 'user:', userId.substring(0, 12));
 
-        // Retry logic to handle race conditions
-        let score = null;
-        const maxRetries = 3;
-
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          try {
-            score = await getUserPuzzleScore(supabase, userId, puzzleData.puzzle.id);
-            if (score) {
-              break; // Success!
-            }
-          } catch (err: any) {
-            console.warn(`[ResultsViewer] Attempt ${attempt}/${maxRetries} failed:`, err?.message || err);
-
-            // If it's a 406 error and we have retries left, wait and try again
-            if (attempt < maxRetries) {
-              const waitTime = 500 * attempt; // Exponential backoff: 500ms, 1000ms, 1500ms
-              console.log(`[ResultsViewer] Retrying in ${waitTime}ms...`);
-              await new Promise(resolve => setTimeout(resolve, waitTime));
-            }
+        const scoreResponse = await fetch(
+          `/api/score/get?userId=${encodeURIComponent(userId)}&puzzleId=${encodeURIComponent(puzzleData.puzzle.id)}`,
+          {
+            credentials: 'include', // Include session cookies
           }
+        );
+
+        if (!scoreResponse.ok) {
+          const errorData = await scoreResponse.json();
+          console.error('[ResultsViewer] Failed to fetch score:', errorData.error);
+          setError('Unable to load your score for this puzzle. Please try again.');
+          setLoading(false);
+          return;
         }
 
+        const { score } = await scoreResponse.json();
+
         if (!score) {
-          console.error('[ResultsViewer] No score found after retries - this should not happen from Recent Games');
+          console.error('[ResultsViewer] No score found - this should not happen from Recent Games');
           setError('Unable to load your score for this puzzle. Please try again.');
           setLoading(false);
           return;
