@@ -15,11 +15,6 @@ interface WordProps {
 }
 
 export default function Word({ id, text, isPlaced = false, colorVariant = 'default', isHighlighted = false, hintType, vortexHighlightType = null, vortexHighlightOpacity = 0 }: WordProps) {
-  // Debug logging for color variant issues
-  if (colorVariant === 'partial') {
-    console.log(`[Word] "${text}" - isPlaced: ${isPlaced}, colorVariant: ${colorVariant}`);
-  }
-
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
     disabled: isPlaced,
@@ -84,6 +79,7 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
           ${getHighlightRing()}
           transition-shadow duration-200
         `}
+        style={colorVariant === 'partial' && isPlaced ? { backgroundColor: '#fb923c', color: '#ffffff' } : undefined}
       >
         {/* Vortex highlighting overlay for fast speeds - matches target area colors */}
         {vortexHighlightType && vortexHighlightOpacity > 0 && (

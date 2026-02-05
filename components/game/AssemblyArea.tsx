@@ -216,12 +216,10 @@ export default function AssemblyArea({
 
     // If this word is needed but we still need more instances, show as partial (orange)
     if (totalPlacedCount < neededCount) {
-      console.log(`[AssemblyArea] Word "${word.word}" → PARTIAL (placed: ${totalPlacedCount}, needed: ${neededCount})`);
       return 'partial';
     }
 
     // All required instances are present, show as correct (green)
-    console.log(`[AssemblyArea] Word "${word.word}" → CORRECT (placed: ${totalPlacedCount}, needed: ${neededCount})`);
     return 'correct';
   };
 
