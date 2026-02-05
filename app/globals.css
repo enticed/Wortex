@@ -67,105 +67,118 @@ html:has(#game-root) {
 }
 
 /* Fog animations for vortex slow speeds */
-@keyframes fog-drift {
+@keyframes fog-drift-1 {
   0% {
-    background-position: 0% 0;
+    transform: translateX(-50%);
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.8;
   }
   100% {
-    background-position: 200% 0;
+    transform: translateX(50%);
+    opacity: 0.6;
   }
 }
 
-@keyframes fog-drift-reverse {
+@keyframes fog-drift-2 {
   0% {
-    background-position: 200% 0;
+    transform: translateX(50%) translateY(-10%);
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.7;
   }
   100% {
-    background-position: 0% 0;
+    transform: translateX(-50%) translateY(10%);
+    opacity: 0.5;
+  }
+}
+
+@keyframes fog-drift-3 {
+  0% {
+    transform: translateX(-30%) translateY(5%);
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(30%) translateY(-5%);
+    opacity: 0.4;
   }
 }
 
 .fog-layer {
   position: absolute;
-  inset: 0;
+  inset: -20%;
   pointer-events: none;
-  background-size: 200% 100%;
+  will-change: transform, opacity;
 }
 
 .fog-layer-1 {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(200, 200, 200, 0.35) 20%,
-    rgba(180, 180, 180, 0.5) 40%,
-    rgba(200, 200, 200, 0.35) 60%,
-    transparent 80%,
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 50%,
+    rgba(200, 200, 200, 0.7) 0%,
+    rgba(180, 180, 180, 0.5) 30%,
+    rgba(160, 160, 160, 0.3) 60%,
     transparent 100%
   );
-  animation: fog-drift 25s linear infinite;
+  animation: fog-drift-1 20s ease-in-out infinite;
+  filter: blur(30px);
 }
 
 .fog-layer-2 {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(190, 190, 190, 0.3) 25%,
-    rgba(170, 170, 170, 0.45) 50%,
-    rgba(190, 190, 190, 0.3) 75%,
+  background: radial-gradient(
+    ellipse 70% 50% at 30% 60%,
+    rgba(190, 190, 190, 0.6) 0%,
+    rgba(170, 170, 170, 0.4) 40%,
     transparent 100%
   );
-  animation: fog-drift 35s linear infinite;
-  animation-delay: -12s;
+  animation: fog-drift-2 30s ease-in-out infinite;
+  animation-delay: -10s;
+  filter: blur(40px);
 }
 
 .fog-layer-3 {
-  background: linear-gradient(
-    90deg,
-    rgba(210, 210, 210, 0.25) 0%,
-    transparent 20%,
-    transparent 40%,
-    rgba(185, 185, 185, 0.4) 60%,
-    transparent 80%,
-    rgba(210, 210, 210, 0.25) 100%
+  background: radial-gradient(
+    ellipse 75% 55% at 70% 40%,
+    rgba(210, 210, 210, 0.5) 0%,
+    rgba(185, 185, 185, 0.35) 50%,
+    transparent 100%
   );
-  animation: fog-drift-reverse 45s linear infinite;
-  animation-delay: -20s;
+  animation: fog-drift-3 25s ease-in-out infinite;
+  animation-delay: -15s;
+  filter: blur(35px);
 }
 
-/* Dark mode fog adjustments - darker, more subtle */
+/* Dark mode fog adjustments - darker, more visible */
 @media (prefers-color-scheme: dark) {
   .fog-layer-1 {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(100, 100, 100, 0.4) 20%,
-      rgba(80, 80, 80, 0.55) 40%,
-      rgba(100, 100, 100, 0.4) 60%,
-      transparent 80%,
+    background: radial-gradient(
+      ellipse 80% 60% at 50% 50%,
+      rgba(100, 100, 100, 0.8) 0%,
+      rgba(80, 80, 80, 0.6) 30%,
+      rgba(60, 60, 60, 0.4) 60%,
       transparent 100%
     );
   }
 
   .fog-layer-2 {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(90, 90, 90, 0.35) 25%,
-      rgba(70, 70, 70, 0.5) 50%,
-      rgba(90, 90, 90, 0.35) 75%,
+    background: radial-gradient(
+      ellipse 70% 50% at 30% 60%,
+      rgba(90, 90, 90, 0.7) 0%,
+      rgba(70, 70, 70, 0.5) 40%,
       transparent 100%
     );
   }
 
   .fog-layer-3 {
-    background: linear-gradient(
-      90deg,
-      rgba(110, 110, 110, 0.3) 0%,
-      transparent 20%,
-      transparent 40%,
-      rgba(85, 85, 85, 0.45) 60%,
-      transparent 80%,
-      rgba(110, 110, 110, 0.3) 100%
+    background: radial-gradient(
+      ellipse 75% 55% at 70% 40%,
+      rgba(110, 110, 110, 0.6) 0%,
+      rgba(85, 85, 85, 0.4) 50%,
+      transparent 100%
     );
   }
 }
