@@ -260,12 +260,13 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
         />
       </svg>
 
-      {/* Fog overlay for slow speeds - light gray for fog-like appearance */}
+      {/* Animated fog layers for slow speeds - wispy clouds with movement */}
       {getFogOpacity() > 0 && (
-        <div
-          className="absolute top-0 bottom-0 left-0 right-0 pointer-events-none z-30 bg-gray-300 dark:bg-gray-600 transition-opacity duration-500"
-          style={{ opacity: getFogOpacity() }}
-        />
+        <div className="absolute inset-0 pointer-events-none z-30 transition-opacity duration-500" style={{ opacity: getFogOpacity() }}>
+          <div className="fog-layer fog-layer-1" />
+          <div className="fog-layer fog-layer-2" />
+          <div className="fog-layer fog-layer-3" />
+        </div>
       )}
 
       {/* Center vortex visual with word count */}
