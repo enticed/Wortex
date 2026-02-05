@@ -14,7 +14,7 @@ function DroppableWord({
   hintType
 }: {
   word: PlacedWord;
-  colorVariant?: 'default' | 'correct' | 'incorrect';
+  colorVariant?: 'default' | 'correct' | 'incorrect' | 'partial';
   isHighlighted?: boolean;
   hintType?: 'unnecessary' | 'correctString' | 'nextWord' | 'phase2Complete' | 'phase2CompleteExtra';
 }) {
@@ -184,7 +184,7 @@ export default function AssemblyArea({
   const phase1Stats = calculatePhase1Stats();
 
   // Helper function to determine if a word is correct (needed) or incorrect (unnecessary)
-  const getWordColorVariant = (word: PlacedWord): 'default' | 'correct' | 'incorrect' => {
+  const getWordColorVariant = (word: PlacedWord): 'default' | 'correct' | 'incorrect' | 'partial' => {
     // Only apply color coding in Phase 1 target area (not auto-assembly, not Phase 2)
     if (isAutoAssembly || !expectedWords.length) return 'default';
 
@@ -211,6 +211,15 @@ export default function AssemblyArea({
       return 'incorrect';
     }
 
+    // Count total instances of this word that are currently placed
+    const totalPlacedCount = placedWords.filter(w => w.word.toLowerCase() === wordLower).length;
+
+    // If this word is needed but we still need more instances, show as partial (yellow)
+    if (totalPlacedCount < neededCount) {
+      return 'partial';
+    }
+
+    // All required instances are present, show as correct (green)
     return 'correct';
   };
 

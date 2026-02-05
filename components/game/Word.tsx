@@ -7,7 +7,7 @@ interface WordProps {
   id: string;
   text: string;
   isPlaced?: boolean;
-  colorVariant?: 'default' | 'correct' | 'incorrect'; // Color coding for placed words
+  colorVariant?: 'default' | 'correct' | 'incorrect' | 'partial'; // Color coding for placed words
   isHighlighted?: boolean; // Temporary highlighting from hints
   hintType?: 'unnecessary' | 'correctString' | 'nextWord' | 'phase2Complete' | 'phase2CompleteExtra'; // Type of hint for different highlight colors
   vortexHighlightType?: 'needed' | 'unnecessary' | null; // Vortex highlighting for fast speeds
@@ -71,6 +71,8 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
                 ? 'bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100'
                 : colorVariant === 'incorrect'
                 ? 'bg-red-200 dark:bg-red-800 text-red-900 dark:text-red-100'
+                : colorVariant === 'partial'
+                ? 'bg-amber-300 dark:bg-amber-600 text-amber-900 dark:text-amber-100'
                 : 'bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100'
               : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-md hover:shadow-lg'
           }
