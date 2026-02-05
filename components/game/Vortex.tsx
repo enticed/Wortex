@@ -260,9 +260,13 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
         />
       </svg>
 
-      {/* Animated fog layers for slow speeds - wispy clouds with movement */}
+      {/* Fog effect for slow speeds - base overlay + animated clouds */}
       {getFogOpacity() > 0 && (
         <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden transition-opacity duration-500" style={{ opacity: getFogOpacity() }}>
+          {/* Base fog overlay - consistent coverage for handicapping */}
+          <div className="fog-base-overlay" />
+
+          {/* Animated fog layers - lighter wispy clouds for visual interest */}
           <div className="fog-layer fog-layer-1" />
           <div className="fog-layer fog-layer-2" />
           <div className="fog-layer fog-layer-3" />
