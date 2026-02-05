@@ -570,6 +570,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
               completedText={puzzle.facsimilePhrase.text}
               phase={gameState.phase}
               showCompletedHeader={false}
+              draggedWord={gameState.phase === 2 && draggedWordText ? draggedWordText : undefined}
             />
           </div>
         )}

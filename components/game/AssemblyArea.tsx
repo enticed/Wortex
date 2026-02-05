@@ -308,7 +308,7 @@ export default function AssemblyArea({
           ) : !isComplete && phase === 2 && !isAutoAssembly ? (
             // Phase 2 target area: Show dragged word in bright gold box if dragging, otherwise show nothing
             draggedWord ? (
-              <span className="inline-block px-2 py-0.5 rounded-md font-semibold text-base" style={{ backgroundColor: '#f97316', color: '#ffffff' }}>
+              <span className="inline-block px-2 rounded-md font-semibold text-base leading-tight" style={{ backgroundColor: '#f97316', color: '#ffffff', paddingTop: '1px', paddingBottom: '1px' }}>
                 {draggedWord}
               </span>
             ) : null
@@ -420,7 +420,20 @@ export default function AssemblyArea({
                     'text-sm'
                   )
                 }`}>
-                  &ldquo;{completedText}&rdquo;
+                  &ldquo;{
+                    // Highlight matching words in hint phrase when dragging in Phase 2
+                    draggedWord && id === 'facsimile' && phase === 2 ? (
+                      completedText.split(/\b/).map((segment, idx) => {
+                        // Check if this segment matches the dragged word (case-insensitive)
+                        const isMatch = segment.toLowerCase() === draggedWord.toLowerCase();
+                        return isMatch ? (
+                          <span key={idx} style={{ color: '#f97316' }}>
+                            {segment}
+                          </span>
+                        ) : segment;
+                      })
+                    ) : completedText
+                  }&rdquo;
                 </p>
                 {/* Show bonus answer (author/year) in final results mode */}
                 {showFinalResults && bonusAnswer && (
