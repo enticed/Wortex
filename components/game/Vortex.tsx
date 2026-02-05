@@ -108,8 +108,11 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
     if (speed >= 0.75) return 0.50; // Moderate fog (moved from 0.50x)
     if (speed >= 0.50) return 0.75; // Heavy fog (moved from 0.25x)
     if (speed >= 0.25) return 1.0; // Fully opaque (moved from 0.00x)
-    return 1.2; // Extra dense at 0x (paused) - scales overall effect up 20%
+    return 1.0; // Max opacity (CSS clamps at 1.0)
   };
+
+  // Check if paused (0.00x) for extra dense fog
+  const isPaused = () => speed === 0;
 
   // Calculate highlighting opacity for fast speeds
   const getHighlightOpacity = () => {
@@ -220,48 +223,61 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
 
   // Track word entries and trigger lightning at fast speeds
   useEffect(() => {
+    // Only process if lightning should be active
+    if (!shouldShowLightning() || !isActive) {
+      previousWordCount.current = words.length;
+      return;
+    }
+
     const currentWordCount = words.length;
 
-    // Detect new word entering vortex
-    if (currentWordCount > previousWordCount.current && shouldShowLightning()) {
+    // Detect new word entering vortex (word count increased)
+    if (currentWordCount > previousWordCount.current) {
       wordEntryCounter.current++;
+
+      console.log('[Lightning] Word entered, counter:', wordEntryCounter.current);
 
       // Vary the interval: every 4-6 words (random)
       const lightningInterval = 4 + Math.floor(Math.random() * 3); // 4, 5, or 6
 
       if (wordEntryCounter.current >= lightningInterval) {
+        console.log('[Lightning] Triggering strike at interval:', lightningInterval);
         wordEntryCounter.current = 0;
 
         // Find a word to zap (prefer one that's visible and not grabbed)
-        const availableWords = words.filter(w => !w.isGrabbed);
-        if (availableWords.length > 0) {
-          const targetWord = availableWords[Math.floor(Math.random() * availableWords.length)];
-          const wordElement = wordRefs.current.get(targetWord.id);
+        // Wait a bit for word to be in position
+        setTimeout(() => {
+          const availableWords = words.filter(w => !w.isGrabbed);
+          if (availableWords.length > 0) {
+            const targetWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+            const wordElement = wordRefs.current.get(targetWord.id);
 
-          if (wordElement) {
-            const rect = wordElement.getBoundingClientRect();
-            const containerRect = containerRef.current?.getBoundingClientRect();
+            if (wordElement) {
+              const rect = wordElement.getBoundingClientRect();
+              const containerRect = containerRef.current?.getBoundingClientRect();
 
-            if (containerRect) {
-              const wordPosition = {
-                x: rect.left + rect.width / 2 - containerRect.left,
-                y: rect.top + rect.height / 2 - containerRect.top,
-              };
+              if (containerRect) {
+                const wordPosition = {
+                  x: rect.left + rect.width / 2 - containerRect.left,
+                  y: rect.top + rect.height / 2 - containerRect.top,
+                };
 
-              triggerLightning(wordPosition, targetWord.id);
+                console.log('[Lightning] Striking word:', targetWord.word, 'at position:', wordPosition);
+                triggerLightning(wordPosition, targetWord.id);
 
-              // Remove word after brief delay
-              setTimeout(() => {
-                onWordGrab(targetWord.id);
-              }, 200);
+                // Remove word after brief delay
+                setTimeout(() => {
+                  onWordGrab(targetWord.id);
+                }, 200);
+              }
             }
           }
-        }
+        }, 500); // Give word time to animate into position
       }
     }
 
     previousWordCount.current = currentWordCount;
-  }, [words, speed]);
+  }, [words, speed, isActive, shouldShowLightning, onWordGrab]);
 
   // Animate words in the vortex
   useEffect(() => {
@@ -428,8 +444,8 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
       {/* Fog effect for slow speeds - base overlay + animated clouds */}
       {getFogOpacity() > 0 && (
         <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden transition-opacity duration-500" style={{ opacity: getFogOpacity() }}>
-          {/* Base fog overlay - consistent coverage for handicapping */}
-          <div className="fog-base-overlay" />
+          {/* Base fog overlay - consistent coverage for handicapping (extra dense when paused) */}
+          <div className={isPaused() ? 'fog-base-overlay-paused' : 'fog-base-overlay'} />
 
           {/* Animated fog layers - lighter wispy clouds for visual interest */}
           <div className="fog-layer fog-layer-1" />

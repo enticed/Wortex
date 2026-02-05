@@ -114,9 +114,21 @@ html:has(#game-root) {
   background-color: rgba(200, 200, 200, 0.35);
 }
 
+/* Extra dense base overlay for 0.00x speed */
+.fog-base-overlay-paused {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-color: rgba(180, 180, 180, 0.5);
+}
+
 @media (prefers-color-scheme: dark) {
   .fog-base-overlay {
     background-color: rgba(80, 80, 80, 0.45);
+  }
+
+  .fog-base-overlay-paused {
+    background-color: rgba(60, 60, 60, 0.6);
   }
 }
 
