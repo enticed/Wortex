@@ -79,7 +79,7 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
           ${getHighlightRing()}
           transition-shadow duration-200
         `}
-        style={colorVariant === 'partial' && isPlaced ? { backgroundColor: '#fb923c', color: '#ffffff' } : undefined}
+        style={colorVariant === 'partial' && isPlaced ? { backgroundColor: '#84cc16', color: '#ffffff' } : undefined}
       >
         {/* Vortex highlighting overlay for fast speeds - matches target area colors */}
         {vortexHighlightType && vortexHighlightOpacity > 0 && (

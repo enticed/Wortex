@@ -132,7 +132,7 @@ export default function FinalResults({
                   Phase 1
                 </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight" style={{ maxWidth: '60px' }}>
-                  Word Collection
+                  Collection
                 </div>
               </div>
               <div className="justify-self-center">
@@ -157,7 +157,7 @@ export default function FinalResults({
                   Phase 2
                 </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400 leading-tight" style={{ maxWidth: '60px' }}>
-                  Word Arrangement
+                  Arrangement
                 </div>
               </div>
               <div className="justify-self-center">

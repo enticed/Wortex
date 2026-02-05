@@ -92,20 +92,31 @@ export default function Header({ onMenuToggle, isArchiveMode = false }: HeaderPr
     <>
       <header className="fixed top-0 left-0 right-0 h-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-50 flex items-center justify-between px-4">
         {/* Logo/Title */}
-        <Link id="home-link" href="/" className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-          </svg>
-          <span>Wortex{isArchiveMode && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">Archive</span>}</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link id="home-link" href="/" className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span>Wortex{isArchiveMode && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">Archive</span>}</span>
+          </Link>
+          {/* Admin Link - only shown for admin users */}
+          {userData?.isAdmin && (
+            <Link
+              href="/admin"
+              className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+            >
+              Admin
+            </Link>
+          )}
+        </div>
 
         <div className="flex items-center gap-2">
           {/* Account Menu Button */}
