@@ -214,12 +214,14 @@ export default function AssemblyArea({
     // Count total instances of this word that are currently placed
     const totalPlacedCount = placedWords.filter(w => w.word.toLowerCase() === wordLower).length;
 
-    // If this word is needed but we still need more instances, show as partial (yellow)
+    // If this word is needed but we still need more instances, show as partial (orange)
     if (totalPlacedCount < neededCount) {
+      console.log(`[AssemblyArea] Word "${word.word}" → PARTIAL (placed: ${totalPlacedCount}, needed: ${neededCount})`);
       return 'partial';
     }
 
     // All required instances are present, show as correct (green)
+    console.log(`[AssemblyArea] Word "${word.word}" → CORRECT (placed: ${totalPlacedCount}, needed: ${neededCount})`);
     return 'correct';
   };
 
