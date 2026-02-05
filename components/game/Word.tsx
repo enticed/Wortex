@@ -77,7 +77,7 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
                 : colorVariant === 'incorrect'
                 ? 'bg-red-200 dark:bg-red-800 text-red-900 dark:text-red-100'
                 : colorVariant === 'partial'
-                ? 'bg-orange-300 dark:bg-orange-600 text-orange-950 dark:text-orange-50'
+                ? 'bg-yellow-200 dark:bg-yellow-700 text-yellow-900 dark:text-yellow-100'
                 : 'bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100'
               : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-md hover:shadow-lg'
           }
