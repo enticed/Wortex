@@ -15,6 +15,11 @@ interface WordProps {
 }
 
 export default function Word({ id, text, isPlaced = false, colorVariant = 'default', isHighlighted = false, hintType, vortexHighlightType = null, vortexHighlightOpacity = 0 }: WordProps) {
+  // Debug logging for color variant issues
+  if (colorVariant === 'partial') {
+    console.log(`[Word] "${text}" - isPlaced: ${isPlaced}, colorVariant: ${colorVariant}`);
+  }
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
     disabled: isPlaced,
