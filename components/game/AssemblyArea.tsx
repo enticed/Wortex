@@ -389,11 +389,37 @@ export default function AssemblyArea({
             <div className="text-center animate-fade-in w-full h-full flex items-center justify-center overflow-hidden p-2">
               <div className="animate-scroll-horizontal whitespace-nowrap">
                 <p className="font-serif italic text-lg text-purple-900 dark:text-purple-100 inline-block px-4">
-                  &ldquo;{completedText}&rdquo;
+                  &ldquo;{
+                    // Highlight matching words in hint phrase when dragging in Phase 1
+                    draggedWord ? (
+                      completedText.split(/\b/).map((segment, idx) => {
+                        // Check if this segment matches the dragged word (case-insensitive)
+                        const isMatch = segment.toLowerCase() === draggedWord.toLowerCase();
+                        return isMatch ? (
+                          <span key={idx} style={{ color: '#f97316' }}>
+                            {segment}
+                          </span>
+                        ) : segment;
+                      })
+                    ) : completedText
+                  }&rdquo;
                 </p>
                 {/* Duplicate for seamless loop */}
                 <p className="font-serif italic text-lg text-purple-900 dark:text-purple-100 inline-block px-4">
-                  &ldquo;{completedText}&rdquo;
+                  &ldquo;{
+                    // Highlight matching words in hint phrase when dragging in Phase 1
+                    draggedWord ? (
+                      completedText.split(/\b/).map((segment, idx) => {
+                        // Check if this segment matches the dragged word (case-insensitive)
+                        const isMatch = segment.toLowerCase() === draggedWord.toLowerCase();
+                        return isMatch ? (
+                          <span key={`dup-${idx}`} style={{ color: '#f97316' }}>
+                            {segment}
+                          </span>
+                        ) : segment;
+                      })
+                    ) : completedText
+                  }&rdquo;
                 </p>
               </div>
             </div>

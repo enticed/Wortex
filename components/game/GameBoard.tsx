@@ -570,7 +570,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
               completedText={puzzle.facsimilePhrase.text}
               phase={gameState.phase}
               showCompletedHeader={false}
-              draggedWord={gameState.phase === 2 && draggedWordText ? draggedWordText : undefined}
+              draggedWord={draggedWordText ? draggedWordText : undefined}
             />
           </div>
         )}
@@ -735,42 +735,42 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
             return (
               <>
                 {/* All words: Display in ALL FOUR corners for maximum visibility */}
-                {/* Top left */}
+                {/* Top left - raised by 15px from original 3rem */}
                 <div
                   className="absolute left-4"
-                  style={{ top: `calc(${vortexTop}% + 3rem)` }}
+                  style={{ top: `calc(${vortexTop}% + 3rem - 15px)` }}
                 >
-                  <div className="font-bold text-xl text-white dark:text-gray-200">
+                  <div className="font-bold text-xl" style={{ color: '#f97316' }}>
                     {draggedWordText}
                   </div>
                 </div>
 
-                {/* Top right */}
+                {/* Top right - raised by 15px from original 3rem */}
                 <div
                   className="absolute right-4"
-                  style={{ top: `calc(${vortexTop}% + 3rem)` }}
+                  style={{ top: `calc(${vortexTop}% + 3rem - 15px)` }}
                 >
-                  <div className="font-bold text-xl text-white dark:text-gray-200">
+                  <div className="font-bold text-xl" style={{ color: '#f97316' }}>
                     {draggedWordText}
                   </div>
                 </div>
 
-                {/* Bottom left */}
+                {/* Bottom left - keep original position */}
                 <div
                   className="absolute left-4"
                   style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 0.8125rem)` }}
                 >
-                  <div className="font-bold text-xl text-white dark:text-gray-200">
+                  <div className="font-bold text-xl" style={{ color: '#f97316' }}>
                     {draggedWordText}
                   </div>
                 </div>
 
-                {/* Bottom right */}
+                {/* Bottom right - keep original position */}
                 <div
                   className="absolute right-4"
                   style={{ bottom: `calc(${100 - vortexTop - vortexHeight}% + 0.8125rem)` }}
                 >
-                  <div className="font-bold text-xl text-white dark:text-gray-200">
+                  <div className="font-bold text-xl" style={{ color: '#f97316' }}>
                     {draggedWordText}
                   </div>
                 </div>
