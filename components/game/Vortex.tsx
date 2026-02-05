@@ -50,7 +50,7 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
   const animatedWordIds = useRef<Set<string>>(new Set());
   const svgRef = useRef<SVGSVGElement>(null);
   const wordEntryCounter = useRef<number>(0);
-  const previousWordCount = useRef<number>(0);
+  const seenWordIds = useRef<Set<string>>(new Set());
 
   // Handle responsive sizing
   useEffect(() => {
@@ -225,17 +225,33 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
   useEffect(() => {
     // Only process if lightning should be active
     if (!shouldShowLightning() || !isActive) {
-      previousWordCount.current = words.length;
+      // Reset tracking when lightning becomes inactive
+      seenWordIds.current.clear();
+      wordEntryCounter.current = 0;
       return;
     }
 
-    const currentWordCount = words.length;
+    // Detect new words by tracking IDs we haven't seen before
+    const currentWordIds = new Set(words.map(w => w.id));
+    const newWords = words.filter(w => !seenWordIds.current.has(w.id));
 
-    // Detect new word entering vortex (word count increased)
-    if (currentWordCount > previousWordCount.current) {
+    // Add all current word IDs to seen set
+    currentWordIds.forEach(id => seenWordIds.current.add(id));
+
+    // Remove IDs that are no longer in vortex (grabbed/removed)
+    const idsToRemove: string[] = [];
+    seenWordIds.current.forEach(id => {
+      if (!currentWordIds.has(id)) {
+        idsToRemove.push(id);
+      }
+    });
+    idsToRemove.forEach(id => seenWordIds.current.delete(id));
+
+    // Process each new word
+    newWords.forEach(newWord => {
       wordEntryCounter.current++;
 
-      console.log('[Lightning] Word entered, counter:', wordEntryCounter.current);
+      console.log('[Lightning] New word entered:', newWord.word, 'counter:', wordEntryCounter.current);
 
       // Vary the interval: every 4-6 words (random)
       const lightningInterval = 4 + Math.floor(Math.random() * 3); // 4, 5, or 6
@@ -274,9 +290,7 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
           }
         }, 500); // Give word time to animate into position
       }
-    }
-
-    previousWordCount.current = currentWordCount;
+    });
   }, [words, speed, isActive, shouldShowLightning, onWordGrab]);
 
   // Animate words in the vortex
