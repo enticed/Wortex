@@ -34,7 +34,18 @@ export default function BonusRound({ bonusQuestion, onAnswer, onSkip }: BonusRou
     if (bonusQuestion.type === 'literature') {
       return `${option.author} - ${option.book}`;
     } else if (bonusQuestion.type === 'quote') {
-      return `${option.person} (${option.year})`;
+      // Format year: negative = BCE, positive = CE, undefined/null = "?"
+      let yearDisplay: string;
+      if (option.year === undefined || option.year === null) {
+        yearDisplay = '?';
+      } else if (option.year < 0) {
+        yearDisplay = `${Math.abs(option.year)} BCE`;
+      } else if (option.year > 0) {
+        yearDisplay = `${option.year}`;
+      } else {
+        yearDisplay = '?'; // year === 0
+      }
+      return `${option.person} (${yearDisplay})`;
     }
     return '';
   };

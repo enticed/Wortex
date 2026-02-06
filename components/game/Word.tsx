@@ -12,9 +12,10 @@ interface WordProps {
   hintType?: 'unnecessary' | 'correctString' | 'nextWord' | 'phase2Complete' | 'phase2CompleteExtra'; // Type of hint for different highlight colors
   vortexHighlightType?: 'needed' | 'unnecessary' | null; // Vortex highlighting for fast speeds
   vortexHighlightOpacity?: number; // Opacity of vortex highlighting (0-1)
+  draggedWord?: string; // Currently dragged word for orange text highlighting
 }
 
-export default function Word({ id, text, isPlaced = false, colorVariant = 'default', isHighlighted = false, hintType, vortexHighlightType = null, vortexHighlightOpacity = 0 }: WordProps) {
+export default function Word({ id, text, isPlaced = false, colorVariant = 'default', isHighlighted = false, hintType, vortexHighlightType = null, vortexHighlightOpacity = 0, draggedWord }: WordProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
     disabled: isPlaced,
@@ -25,6 +26,9 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
     opacity: isDragging ? 0.5 : 1,
     cursor: isPlaced ? 'default' : 'grab',
   };
+
+  // Check if this word matches the currently dragged word
+  const isMatchingDraggedWord = draggedWord && text.toLowerCase() === draggedWord.toLowerCase();
 
   // Determine highlight ring color based on hint type
   const getHighlightRing = () => {
@@ -68,18 +72,22 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
           ${
             isPlaced
               ? colorVariant === 'correct'
-                ? 'bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100'
+                ? `bg-green-200 dark:bg-green-800 ${!isMatchingDraggedWord ? 'text-green-900 dark:text-green-100' : ''}`
                 : colorVariant === 'incorrect'
-                ? 'bg-red-200 dark:bg-red-800 text-red-900 dark:text-red-100'
+                ? `bg-red-200 dark:bg-red-800 ${!isMatchingDraggedWord ? 'text-red-900 dark:text-red-100' : ''}`
                 : colorVariant === 'partial'
-                ? 'bg-yellow-200 dark:bg-yellow-700 text-yellow-900 dark:text-yellow-100'
-                : 'bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100'
-              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-md hover:shadow-lg'
+                ? `bg-yellow-200 dark:bg-yellow-700 ${!isMatchingDraggedWord ? 'text-yellow-900 dark:text-yellow-100' : ''}`
+                : `bg-blue-200 dark:bg-blue-800 ${!isMatchingDraggedWord ? 'text-blue-900 dark:text-blue-100' : ''}`
+              : `bg-white dark:bg-gray-800 ${!isMatchingDraggedWord ? 'text-gray-900 dark:text-gray-100' : ''} shadow-md hover:shadow-lg`
           }
           ${getHighlightRing()}
           transition-shadow duration-200
         `}
-        style={colorVariant === 'partial' && isPlaced ? { backgroundColor: '#84cc16', color: '#ffffff' } : undefined}
+        style={
+          colorVariant === 'partial' && isPlaced
+            ? { backgroundColor: '#84cc16', color: isMatchingDraggedWord ? '#f97316' : '#ffffff' }
+            : undefined
+        }
       >
         {/* Vortex highlighting overlay for fast speeds - matches target area colors */}
         {vortexHighlightType && vortexHighlightOpacity > 0 && (
@@ -92,7 +100,16 @@ export default function Word({ id, text, isPlaced = false, colorVariant = 'defau
             style={{ opacity: vortexHighlightOpacity }} // Full opacity at max speed
           />
         )}
-        <span className="relative z-10">{text}</span>
+        <span
+          className="relative z-10"
+          style={
+            isMatchingDraggedWord
+              ? { color: '#f97316' }
+              : undefined
+          }
+        >
+          {text}
+        </span>
       </div>
     </div>
   );

@@ -49,6 +49,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
     useUnnecessaryWordHint,
     useCorrectStringHint,
     useNextWordHint,
+    showPhase1Dialog,
     confirmPhase1Complete,
     showPhase2Dialog,
     confirmPhase2Complete,
@@ -516,6 +517,18 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
     }
   }, [gameState.activeHint, gameState.targetPhraseWords, reorderWords]);
 
+  // Show Phase 1 completion dialog after 4-second visual feedback
+  useEffect(() => {
+    if (gameState.phase1Complete && !gameState.showPhase1CompleteDialog) {
+      const timer = setTimeout(() => {
+        // Show the dialog after visual feedback
+        showPhase1Dialog();
+      }, 4000); // 4 second delay for visual feedback
+
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.phase1Complete, gameState.showPhase1CompleteDialog, showPhase1Dialog]);
+
   // Show Phase 2 completion dialog after 4-second visual feedback
   useEffect(() => {
     if (gameState.activeHint?.type === 'phase2Complete' && !gameState.showPhase2CompleteDialog) {
@@ -617,7 +630,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
             speed={gameState.speed}
             showFinalResults={(gameState.phase === 2 && gameState.bonusAnswered) || !!savedResults}
             bonusAnswer={(gameState.bonusAnswered || savedResults) ? puzzle.bonusQuestion.options.find(opt => opt.id === puzzle.bonusQuestion.correctAnswerId) : undefined}
-            draggedWord={gameState.phase === 2 && draggedWordText ? draggedWordText : undefined}
+            draggedWord={draggedWordText ? draggedWordText : undefined}
           />
         </div>
 
@@ -640,7 +653,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
               <Vortex
                 words={gameState.vortexWords}
                 onWordGrab={grabWord}
-                isActive={!gameState.isComplete && !gameState.isPaused && !gameState.showPhase1CompleteDialog}
+                isActive={!gameState.isComplete && !gameState.isPaused && !gameState.phase1Complete && !gameState.showPhase1CompleteDialog}
                 speed={vortexSpeed}
                 totalWordsSeen={gameState.totalWordsSeen}
                 expectedWords={puzzle.targetPhrase.words}

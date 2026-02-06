@@ -474,7 +474,16 @@ export default function AssemblyArea({
                     completedText.length <= 150 ? 'text-sm' :
                     'text-xs'
                   }`}>
-                    - {bonusAnswer.author || bonusAnswer.person}{', '}{bonusAnswer.book || bonusAnswer.year}
+                    - {bonusAnswer.author || bonusAnswer.person}{', '}
+                    {bonusAnswer.book || (
+                      bonusAnswer.year === undefined || bonusAnswer.year === null
+                        ? '?'
+                        : bonusAnswer.year < 0
+                        ? `${Math.abs(bonusAnswer.year)} BCE`
+                        : bonusAnswer.year > 0
+                        ? bonusAnswer.year
+                        : '?'
+                    )}
                   </p>
                 )}
               </div>
@@ -551,7 +560,14 @@ export default function AssemblyArea({
           // Phase 1 or auto-assembly: Words just display in position
           <div className={`flex ${id === 'facsimile' ? 'flex-nowrap' : 'flex-wrap'} ${getGapSize()} items-start content-start ${id === 'facsimile' ? '' : 'w-full'} ${getWordScale()}`}>
             {sortedWords.map((word) => (
-              <Word key={word.id} id={word.id} text={word.word} isPlaced={true} colorVariant={getWordColorVariant(word)} />
+              <Word
+                key={word.id}
+                id={word.id}
+                text={word.word}
+                isPlaced={true}
+                colorVariant={getWordColorVariant(word)}
+                draggedWord={draggedWord}
+              />
             ))}
           </div>
         )}

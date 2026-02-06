@@ -80,6 +80,7 @@ export interface GameState {
   maxSpeed: number; // Maximum speed used during the game
   activeHint: { type: 'unnecessary' | 'correctString' | 'nextWord' | 'phase2Complete', wordIds: string[], extraWordIds?: string[] } | null; // Currently active hint for highlighting
   showCompletionAnimation: boolean; // Brief animation when Phase 2 is completed
+  phase1Complete: boolean; // Phase 1 is complete, waiting to show dialog
   showPhase1CompleteDialog: boolean; // Show confirmation dialog before transitioning to Phase 2
   showPhase2CompleteDialog: boolean; // Show confirmation dialog after Phase 2 completion
 }

@@ -50,6 +50,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
     maxSpeed: speed,
     activeHint: null,
     showCompletionAnimation: false,
+    phase1Complete: false,
     showPhase1CompleteDialog: false,
     showPhase2CompleteDialog: false,
   });
@@ -80,7 +81,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
   // Add new words to vortex periodically - fair distribution with smart filtering
   // Only runs during Phase 1
   useEffect(() => {
-    if (!puzzle || gameState.isComplete || gameState.isPaused || gameState.phase === 2 || gameState.showPhase1CompleteDialog || speed === 0) return;
+    if (!puzzle || gameState.isComplete || gameState.isPaused || gameState.phase === 2 || gameState.phase1Complete || gameState.showPhase1CompleteDialog || speed === 0) return;
 
     const interval = setInterval(() => {
       const now = Date.now();
@@ -167,7 +168,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
     }, 1500 / speed); // Scale interval inversely with speed to maintain vortex density
 
     return () => clearInterval(interval);
-  }, [puzzle, gameState.isComplete, gameState.isPaused, gameState.phase, gameState.showPhase1CompleteDialog, speed]);
+  }, [puzzle, gameState.isComplete, gameState.isPaused, gameState.phase, gameState.phase1Complete, gameState.showPhase1CompleteDialog, speed]);
 
   // Grab a word from the vortex
   const grabWord = useCallback((wordId: string) => {
@@ -251,7 +252,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
               ...prev,
               targetPhraseWords: newTargetWords,
               vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
-              showPhase1CompleteDialog: phase1Complete,
+              phase1Complete: phase1Complete,
               score: phase1Score,
             };
           } else {
@@ -320,7 +321,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
               ...prev,
               facsimilePhraseWords: newFacsimileWords,
               vortexWords: prev.vortexWords.filter((w) => w.id !== wordId),
-              showPhase1CompleteDialog: phase1Complete,
+              phase1Complete: phase1Complete,
               score: phase1Score,
             };
           }
@@ -517,11 +518,20 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
       return {
         ...prev,
         phase: 2,
+        phase1Complete: false,
         showPhase1CompleteDialog: false,
         targetPhraseWords: targetWords,
       };
     });
   }, [isArchiveMode]);
+
+  // Show Phase 1 completion dialog (called after visual feedback delay)
+  const showPhase1Dialog = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      showPhase1CompleteDialog: true,
+    }));
+  }, []);
 
   // Show Phase 2 completion dialog (called after visual feedback delay)
   const showPhase2Dialog = useCallback(() => {
@@ -713,6 +723,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
     useUnnecessaryWordHint,
     useCorrectStringHint,
     useNextWordHint,
+    showPhase1Dialog,
     confirmPhase1Complete,
     showPhase2Dialog,
     confirmPhase2Complete,

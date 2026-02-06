@@ -613,19 +613,19 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
     });
   }, [words, isActive]); // Only re-run when words or isActive changes, not speed
 
-  // Update animation speed/pause state when speed changes
+  // Update animation speed/pause state when speed or isActive changes
   useEffect(() => {
     animationRefs.current.forEach((anims) => {
       anims.forEach((anim) => {
-        if (speed === 0) {
-          anim.pause(); // Pause animation at 0x
+        if (speed === 0 || !isActive) {
+          anim.pause(); // Pause animation at 0x or when inactive
         } else {
           anim.timeScale(speed); // Update playback speed
           anim.resume(); // Resume if paused
         }
       });
     });
-  }, [speed]);
+  }, [speed, isActive]);
 
   // Clean up animations for removed words
   useEffect(() => {
