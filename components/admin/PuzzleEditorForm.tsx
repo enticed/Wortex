@@ -433,30 +433,51 @@ export default function PuzzleEditorForm({ puzzle, mode }: PuzzleEditorFormProps
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Metadata (Optional)
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Source
-              </label>
-              <input
-                type="text"
-                value={formData.metadata.source || ''}
-                onChange={(e) => updateField('metadata', { ...formData.metadata, source: e.target.value })}
-                placeholder="e.g., Poor Richard's Almanack"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Source
+                </label>
+                <input
+                  type="text"
+                  value={formData.metadata.source || ''}
+                  onChange={(e) => updateField('metadata', { ...formData.metadata, source: e.target.value })}
+                  placeholder="e.g., Poor Richard's Almanack"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Theme
+                </label>
+                <input
+                  type="text"
+                  value={formData.metadata.theme || ''}
+                  onChange={(e) => updateField('metadata', { ...formData.metadata, theme: e.target.value })}
+                  placeholder="e.g., Intellectual humility and the limits of human knowledge"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Theme
+                Tags
               </label>
               <input
                 type="text"
-                value={formData.metadata.theme || ''}
-                onChange={(e) => updateField('metadata', { ...formData.metadata, theme: e.target.value })}
-                placeholder="e.g., wisdom, health"
+                value={formData.metadata.tags?.join(', ') || ''}
+                onChange={(e) => {
+                  const tagsString = e.target.value;
+                  const tagsArray = tagsString ? tagsString.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+                  updateField('metadata', { ...formData.metadata, tags: tagsArray });
+                }}
+                placeholder="e.g., wisdom, knowledge, philosophy (comma-separated)"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Enter tags separated by commas. Tags are searchable from the archive page.
+              </p>
             </div>
           </div>
         </div>
