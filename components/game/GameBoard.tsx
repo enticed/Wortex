@@ -385,6 +385,13 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
     async function submitScore() {
       // CRITICAL: Check if user is loaded before submitting
       if (gameState.bonusAnswered && !scoreSubmitted && gameState.finalScore !== null) {
+        // Skip score submission for tutorial puzzles - they don't affect stats, streaks, or leaderboards
+        if (isTutorialPuzzle) {
+          console.log('[GameBoard] Skipping score submission for tutorial puzzle');
+          setScoreSubmitted(true);
+          return;
+        }
+
         if (!userId) {
           console.error('[GameBoard] CRITICAL: Cannot submit score - userId is null!');
           console.error('[GameBoard] This indicates UserContext failed to initialize properly');
@@ -471,7 +478,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
     }
 
     submitScore();
-  }, [gameState.bonusAnswered, scoreSubmitted, userId, gameState.finalScore, gameState.bonusCorrect, puzzle.id, refreshStats, isArchiveMode]);
+  }, [gameState.bonusAnswered, scoreSubmitted, userId, gameState.finalScore, gameState.bonusCorrect, puzzle.id, refreshStats, isArchiveMode, isTutorialPuzzle]);
 
   // Save results to sessionStorage when bonus is answered (for both archive and normal mode)
   // This allows leaderboard to show the correct puzzle even after midnight or in archive mode

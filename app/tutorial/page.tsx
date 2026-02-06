@@ -53,7 +53,7 @@ export default function TutorialPage() {
     return (
       <AppLayout>
         <div className="h-[calc(100vh-5rem)] w-full">
-          <GameBoard puzzle={tutorialPuzzle} isArchiveMode={true} />
+          <GameBoard puzzle={tutorialPuzzle} isArchiveMode={false} />
         </div>
       </AppLayout>
     );

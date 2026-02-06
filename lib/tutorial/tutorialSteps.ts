@@ -228,10 +228,10 @@ export const phase1Steps: DriveStep[] = [
       title: "Phase 1 Limitations",
       description: `
         <div class="space-y-2">
-          <p><strong>Once in the Mystery Quote area, you cannot:</strong></p>
+          <p><strong>Words in the Mystery Quote area cannot be:</strong></p>
           <ul class="list-disc pl-5 space-y-1">
-            <li>❌ Remove words</li>
-            <li>❌ Reorder words</li>
+            <li>❌ Removed</li>
+            <li>❌ Reordered</li>
           </ul>
           <p class="text-sm">You'll work around this in Phase 2. Just focus on collecting all the words you think belong to the quote!</p>        </div>
           

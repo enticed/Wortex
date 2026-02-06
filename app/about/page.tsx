@@ -35,7 +35,7 @@ export default function AboutPage() {
                 Wortex combines the joy of word puzzles with the timeless wisdom of famous quotations. Our mission is to create an engaging daily challenge that exercises your mind, expands your vocabulary, and introduces you to remarkable thoughts from history&apos;s greatest thinkers, writers, and leaders.
               </p>
               <p className="text-gray-600 dark:text-gray-400">
-                Every puzzle is carefully curated to provide not just entertainment, but also educational value—exposing players to culturally significant quotes that have shaped human thought and expression.
+                Every puzzle is chosen to provide not just entertainment, but also educational value by exposing players to culturally significant quotes that have shaped human thought and expression.
               </p>
             </section>
 
@@ -66,7 +66,7 @@ export default function AboutPage() {
                 3. Reading Comprehension
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                The Hint Phrase in each puzzle is a rephrasing of the Mystery Quote using different words while retaining the original meaning. This parallel structure teaches an essential reading comprehension skill: recognizing that the same idea can be expressed in multiple ways. Learning to identify semantic equivalence—how different words and phrases can convey the same concept—is crucial for understanding complex texts.
+                The Hint Phrase in each puzzle is a rephrasing of the Mystery Quote using different words while retaining the original meaning. This parallel structure teaches an essential reading comprehension skill: recognizing that the same idea can be expressed in multiple ways. Learning to identify semantic equivalence (how different words and phrases can convey the same concept) is crucial for understanding complex texts.
               </p>
 
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2 mt-4">
@@ -97,7 +97,7 @@ export default function AboutPage() {
                 How We Select Quotes
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                Our puzzle content is carefully curated according to these principles:
+                Our puzzle content is curated according to these principles:
               </p>
               <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400 ml-4 mb-3">
                 <li><strong>Historical Significance:</strong> We prioritize quotes from influential figures in history, literature, science, philosophy, and politics</li>
@@ -145,7 +145,7 @@ export default function AboutPage() {
                 Immediate Feedback
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-3">
-                Wortex provides instant feedback on your progress—words slot into place when correctly positioned, and you immediately see the complete quote upon solving the puzzle. This immediate reinforcement helps you learn from mistakes and solidifies correct patterns in your memory.
+                Wortex provides various forms of feedback on your progress and you instantly see the complete quote upon solving the puzzle. This immediate reinforcement helps you learn from mistakes and solidifies correct patterns in your memory.
               </p>
 
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2 mt-4">
