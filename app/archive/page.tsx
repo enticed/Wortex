@@ -88,15 +88,35 @@ export default function ArchivePage() {
         }
 
         // Get best score for each puzzle
+        // IMPORTANT: Prioritize original-day plays (first_play_of_day: true) over replays
         const scoresMap = new Map<string, { score: number; stars: number; playedOnOriginalDate: boolean }>();
         scoresData?.forEach((s: any) => {
           const existing = scoresMap.get(s.puzzle_id);
-          // Keep the best (lowest) score
-          if (!existing || s.score < existing.score) {
+          const isOriginalDay = s.first_play_of_day || false;
+
+          if (!existing) {
+            // First score entry for this puzzle
             scoresMap.set(s.puzzle_id, {
               score: s.score,
               stars: s.stars || 0,
-              playedOnOriginalDate: s.first_play_of_day || false
+              playedOnOriginalDate: isOriginalDay
+            });
+          } else if (existing.playedOnOriginalDate) {
+            // Already have an original-day score - keep it, don't replace with replays
+            // This ensures "Completed" status is never replaced by "Played"
+          } else if (isOriginalDay) {
+            // Found an original-day score - prioritize it over any replay
+            scoresMap.set(s.puzzle_id, {
+              score: s.score,
+              stars: s.stars || 0,
+              playedOnOriginalDate: true
+            });
+          } else if (s.score < existing.score) {
+            // Both are replays - keep the better score
+            scoresMap.set(s.puzzle_id, {
+              score: s.score,
+              stars: s.stars || 0,
+              playedOnOriginalDate: false
             });
           }
         });
