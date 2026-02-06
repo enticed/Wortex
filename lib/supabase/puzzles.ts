@@ -13,7 +13,8 @@ type PuzzleRow = Database['public']['Tables']['puzzles']['Row'];
  */
 export function dbPuzzleToPuzzle(dbPuzzle: PuzzleRow): Puzzle {
   const bonusQuestion = dbPuzzle.bonus_question as BonusQuestion;
-  const metadata = dbPuzzle.metadata as any;
+  const metadata = (dbPuzzle as any).metadata as any;
+  const theme = (dbPuzzle as any).theme;
 
   return {
     id: dbPuzzle.id,
@@ -23,7 +24,7 @@ export function dbPuzzleToPuzzle(dbPuzzle: PuzzleRow): Puzzle {
     difficulty: dbPuzzle.difficulty,
     bonusQuestion,
     allWords: [],
-    theme: metadata?.theme || dbPuzzle.theme || undefined,
+    theme: metadata?.theme || theme || undefined,
   };
 }
 

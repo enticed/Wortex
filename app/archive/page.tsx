@@ -13,6 +13,7 @@ interface PuzzleWithScore {
   id: string;
   date: string;
   facsimile_phrase: string; // Show AI hint phrase instead of target
+  target_phrase: string; // Mystery quote (for search purposes)
   difficulty: number;
   hasPlayed: boolean;
   score?: number;
@@ -33,6 +34,16 @@ export default function ArchivePage() {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<number>>(new Set());
+  const [difficultyDropdownOpen, setDifficultyDropdownOpen] = useState(false);
+
+  // Difficulty mapping
+  const difficultyLabels: Record<number, string> = {
+    1: 'Easy',
+    2: 'Medium',
+    3: 'Hard',
+    4: 'Very Hard',
+    5: 'Expert',
+  };
 
   const router = useRouter();
   const supabase = createClient();
@@ -47,7 +58,7 @@ export default function ArchivePage() {
       const today = new Date().toISOString().split('T')[0];
       const { data: puzzlesData, error: puzzlesError } = await supabase
         .from('puzzles')
-        .select('id, date, facsimile_phrase, difficulty, theme, metadata')
+        .select('id, date, facsimile_phrase, target_phrase, difficulty, theme, metadata')
         .eq('approved', true)
         .lt('date', today)
         .order('date', { ascending: false });
@@ -96,6 +107,7 @@ export default function ArchivePage() {
             id: puzzle.id,
             date: puzzle.date,
             facsimile_phrase: puzzle.facsimile_phrase,
+            target_phrase: puzzle.target_phrase,
             difficulty: puzzle.difficulty,
             hasPlayed: scoresMap.has(puzzle.id),
             score: scoreInfo?.score,
@@ -113,6 +125,7 @@ export default function ArchivePage() {
           id: puzzle.id,
           date: puzzle.date,
           facsimile_phrase: puzzle.facsimile_phrase,
+          target_phrase: puzzle.target_phrase,
           difficulty: puzzle.difficulty,
           hasPlayed: false,
           theme: puzzle.theme,
@@ -149,12 +162,13 @@ export default function ArchivePage() {
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      const facsimileMatch = puzzle.facsimile_phrase.toLowerCase().includes(query);
+      const mysteryQuoteMatch = puzzle.target_phrase.toLowerCase().includes(query);
+      const hintPhraseMatch = puzzle.facsimile_phrase.toLowerCase().includes(query);
       const themeMatch = puzzle.theme?.toLowerCase().includes(query) || puzzle.metadata?.theme?.toLowerCase().includes(query);
       const sourceMatch = puzzle.metadata?.source?.toLowerCase().includes(query);
       const tagsMatch = puzzle.metadata?.tags?.some(tag => tag.toLowerCase().includes(query));
 
-      if (!facsimileMatch && !themeMatch && !sourceMatch && !tagsMatch) {
+      if (!mysteryQuoteMatch && !hintPhraseMatch && !themeMatch && !sourceMatch && !tagsMatch) {
         return false;
       }
     }
@@ -219,6 +233,21 @@ export default function ArchivePage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monthKeys.length]);
+
+  // Close difficulty dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.relative')) {
+        setDifficultyDropdownOpen(false);
+      }
+    };
+
+    if (difficultyDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [difficultyDropdownOpen]);
 
   // Show loading state while checking tier
   if (tierLoading) {
@@ -444,21 +473,51 @@ export default function ArchivePage() {
 
               <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1" />
 
-              {/* Difficulty Filters */}
-              {[1, 2, 3, 4, 5].map((diff) => (
+              {/* Difficulty Dropdown */}
+              <div className="relative">
                 <button
-                  key={diff}
-                  onClick={() => toggleDifficulty(diff)}
-                  className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                    selectedDifficulties.has(diff)
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                  title={`Difficulty ${diff}`}
+                  onClick={() => setDifficultyDropdownOpen(!difficultyDropdownOpen)}
+                  className="px-3 py-1.5 text-sm rounded-lg font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
                 >
-                  {'⭐'.repeat(diff)}
+                  Difficulty
+                  {selectedDifficulties.size > 0 && (
+                    <span className="px-1.5 py-0.5 bg-purple-600 text-white text-xs rounded-full">
+                      {selectedDifficulties.size}
+                    </span>
+                  )}
+                  <svg
+                    className={`w-4 h-4 transition-transform ${difficultyDropdownOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
-              ))}
+
+                {difficultyDropdownOpen && (
+                  <div className="absolute top-full mt-1 left-0 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10 min-w-[140px]">
+                    {[1, 2, 3, 4, 5].map((diff) => (
+                      <button
+                        key={diff}
+                        onClick={() => {
+                          toggleDifficulty(diff);
+                        }}
+                        className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between"
+                      >
+                        <span className={selectedDifficulties.has(diff) ? 'font-semibold' : ''}>
+                          {difficultyLabels[diff]}
+                        </span>
+                        {selectedDifficulties.has(diff) && (
+                          <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Clear Filters */}
               {hasActiveFilters && (
