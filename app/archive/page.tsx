@@ -18,6 +18,12 @@ interface PuzzleWithScore {
   score?: number;
   stars?: number;
   playedOnOriginalDate?: boolean; // True if played when it was the daily puzzle
+  theme?: string;
+  metadata?: {
+    tags?: string[];
+    source?: string;
+    theme?: string;
+  };
 }
 
 export default function ArchivePage() {
@@ -25,6 +31,8 @@ export default function ArchivePage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'played' | 'unplayed'>('all');
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDifficulties, setSelectedDifficulties] = useState<Set<number>>(new Set());
 
   const router = useRouter();
   const supabase = createClient();
@@ -39,7 +47,7 @@ export default function ArchivePage() {
       const today = new Date().toISOString().split('T')[0];
       const { data: puzzlesData, error: puzzlesError } = await supabase
         .from('puzzles')
-        .select('id, date, facsimile_phrase, difficulty')
+        .select('id, date, facsimile_phrase, difficulty, theme, metadata')
         .eq('approved', true)
         .lt('date', today)
         .order('date', { ascending: false });
@@ -93,6 +101,8 @@ export default function ArchivePage() {
             score: scoreInfo?.score,
             stars: scoreInfo?.stars,
             playedOnOriginalDate: scoreInfo?.playedOnOriginalDate,
+            theme: puzzle.theme,
+            metadata: puzzle.metadata,
           };
         });
 
@@ -105,6 +115,8 @@ export default function ArchivePage() {
           facsimile_phrase: puzzle.facsimile_phrase,
           difficulty: puzzle.difficulty,
           hasPlayed: false,
+          theme: puzzle.theme,
+          metadata: puzzle.metadata,
         }));
 
         setPuzzles(puzzlesWithScores);
@@ -125,8 +137,28 @@ export default function ArchivePage() {
   }, [tierLoading, isPremium, userId, loadPuzzles]);
 
   const filteredPuzzles = puzzles.filter(puzzle => {
-    if (filter === 'played') return puzzle.hasPlayed;
-    if (filter === 'unplayed') return !puzzle.hasPlayed;
+    // Filter by played/unplayed status
+    if (filter === 'played' && !puzzle.hasPlayed) return false;
+    if (filter === 'unplayed' && puzzle.hasPlayed) return false;
+
+    // Filter by difficulty
+    if (selectedDifficulties.size > 0 && !selectedDifficulties.has(puzzle.difficulty)) {
+      return false;
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const facsimileMatch = puzzle.facsimile_phrase.toLowerCase().includes(query);
+      const themeMatch = puzzle.theme?.toLowerCase().includes(query) || puzzle.metadata?.theme?.toLowerCase().includes(query);
+      const sourceMatch = puzzle.metadata?.source?.toLowerCase().includes(query);
+      const tagsMatch = puzzle.metadata?.tags?.some(tag => tag.toLowerCase().includes(query));
+
+      if (!facsimileMatch && !themeMatch && !sourceMatch && !tagsMatch) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -159,6 +191,26 @@ export default function ArchivePage() {
       return newSet;
     });
   };
+
+  const toggleDifficulty = (difficulty: number) => {
+    setSelectedDifficulties(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(difficulty)) {
+        newSet.delete(difficulty);
+      } else {
+        newSet.add(difficulty);
+      }
+      return newSet;
+    });
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setSelectedDifficulties(new Set());
+    setFilter('all');
+  };
+
+  const hasActiveFilters = searchQuery.trim() !== '' || selectedDifficulties.size > 0 || filter !== 'all';
 
   // Expand the most recent month by default
   useEffect(() => {
@@ -320,38 +372,107 @@ export default function ArchivePage() {
             </button>
           </div>
 
-          {/* Filters */}
-          <div className="mb-6 flex gap-2">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              All Puzzles
-            </button>
-            <button
-              onClick={() => setFilter('played')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === 'played'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              Completed
-            </button>
-            <button
-              onClick={() => setFilter('unplayed')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === 'unplayed'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              Not Played
-            </button>
+          {/* Search and Filters */}
+          <div className="mb-4 space-y-3">
+            {/* Search Bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by quote, theme, tags, or source..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pl-10 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Filters Row */}
+            <div className="flex flex-wrap gap-2 items-center">
+              {/* Status Filters */}
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                  filter === 'all'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter('played')}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                  filter === 'played'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                Completed
+              </button>
+              <button
+                onClick={() => setFilter('unplayed')}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                  filter === 'unplayed'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                Not Played
+              </button>
+
+              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1" />
+
+              {/* Difficulty Filters */}
+              {[1, 2, 3, 4, 5].map((diff) => (
+                <button
+                  key={diff}
+                  onClick={() => toggleDifficulty(diff)}
+                  className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                    selectedDifficulties.has(diff)
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                  title={`Difficulty ${diff}`}
+                >
+                  {'⭐'.repeat(diff)}
+                </button>
+              ))}
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <>
+                  <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1" />
+                  <button
+                    onClick={clearAllFilters}
+                    className="px-3 py-1.5 text-sm rounded-lg font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                  >
+                    Clear All
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Puzzle Grid */}
