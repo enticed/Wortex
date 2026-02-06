@@ -31,6 +31,7 @@ export async function getDailyPuzzle(timezone: string = 'UTC'): Promise<Puzzle |
   const capMap = normalizeCapitalizationAcrossTexts([targetText, facsimileText]);
 
   // Transform database row to Puzzle type
+  const metadata = (data as any).metadata;
   const puzzle: Puzzle = {
     id: (data as any).id,
     date: (data as any).date,
@@ -39,6 +40,7 @@ export async function getDailyPuzzle(timezone: string = 'UTC'): Promise<Puzzle |
     difficulty: (data as any).difficulty,
     bonusQuestion: (data as any).bonus_question as BonusQuestion,
     allWords: [],
+    theme: metadata?.theme || (data as any).theme || undefined,
   };
 
   return puzzle;
@@ -67,6 +69,7 @@ export async function getPuzzleByDate(date: string): Promise<Puzzle | null> {
   const facsimileText = (data as any).facsimile_phrase;
   const capMap = normalizeCapitalizationAcrossTexts([targetText, facsimileText]);
 
+  const metadata = (data as any).metadata;
   const puzzle: Puzzle = {
     id: (data as any).id,
     date: (data as any).date,
@@ -75,6 +78,7 @@ export async function getPuzzleByDate(date: string): Promise<Puzzle | null> {
     difficulty: (data as any).difficulty,
     bonusQuestion: (data as any).bonus_question as BonusQuestion,
     allWords: [],
+    theme: metadata?.theme || (data as any).theme || undefined,
   };
 
   return puzzle;

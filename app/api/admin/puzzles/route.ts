@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
         bonus_question,
         status,
         metadata,
+        theme: metadata?.theme || null,
         created_by: adminUser.id,
         created_by_ai: false,
         approved: status === 'published',

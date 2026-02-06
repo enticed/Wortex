@@ -17,6 +17,7 @@ export interface Puzzle {
   difficulty: number;
   bonusQuestion: BonusQuestion;
   allWords: string[];
+  theme?: string;
 }
 
 export interface BonusQuestion {

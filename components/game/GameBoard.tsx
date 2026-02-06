@@ -631,6 +631,8 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
             showFinalResults={(gameState.phase === 2 && gameState.bonusAnswered) || !!savedResults}
             bonusAnswer={(gameState.bonusAnswered || savedResults) ? puzzle.bonusQuestion.options.find(opt => opt.id === puzzle.bonusQuestion.correctAnswerId) : undefined}
             draggedWord={draggedWordText ? draggedWordText : undefined}
+            theme={puzzle.theme}
+            showBonusRound={gameState.isComplete && !gameState.bonusAnswered && !savedResults}
           />
         </div>
 

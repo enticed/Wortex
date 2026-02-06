@@ -82,6 +82,8 @@ interface AssemblyAreaProps {
   showFinalResults?: boolean; // Whether showing final results (hide header stats)
   bonusAnswer?: BonusOption; // Bonus question answer to display with completed quote
   draggedWord?: string; // Phase 2: Currently dragged word to display in header
+  theme?: string; // Theme description to display during Bonus Round
+  showBonusRound?: boolean; // Whether currently showing Bonus Round
 }
 
 export default function AssemblyArea({
@@ -115,6 +117,8 @@ export default function AssemblyArea({
   showFinalResults = false,
   bonusAnswer,
   draggedWord,
+  theme,
+  showBonusRound = false,
 }: AssemblyAreaProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
@@ -424,66 +428,82 @@ export default function AssemblyArea({
               </div>
             </div>
           ) : (
-            <div className={`text-center animate-fade-in w-full h-full flex items-center justify-center ${
+            <div className={`text-center animate-fade-in w-full h-full flex ${
               id === 'facsimile' && phase === 2 ? 'p-1' : 'p-2'
             }`}>
-              <div className="flex flex-col items-center justify-center gap-2">
-                <p className={`font-serif italic leading-relaxed ${
-                  id === 'target'
-                    ? 'text-blue-900 dark:text-blue-100'
-                    : 'text-purple-900 dark:text-purple-100'
-                } ${
-                  // Dynamic sizing based on text length - larger for facsimile in Phase 2
-                  id === 'facsimile' && phase === 2 ? (
-                    completedText.length <= 50 ? 'text-lg' :
-                    completedText.length <= 100 ? 'text-base' :
-                    'text-sm'
-                  ) : (
-                    completedText.length <= 50 ? 'text-2xl' :
-                    completedText.length <= 100 ? 'text-xl' :
-                    completedText.length <= 150 ? 'text-lg' :
-                    completedText.length <= 200 ? 'text-base' :
-                    'text-sm'
-                  )
-                }`}>
-                  &ldquo;{
-                    // Highlight matching words in hint phrase when dragging in Phase 2
-                    draggedWord && id === 'facsimile' && phase === 2 ? (
-                      completedText.split(/\b/).map((segment, idx) => {
-                        // Check if this segment matches the dragged word (case-insensitive)
-                        const isMatch = segment.toLowerCase() === draggedWord.toLowerCase();
-                        return isMatch ? (
-                          <span key={idx} style={{ color: '#f97316' }}>
-                            {segment}
-                          </span>
-                        ) : segment;
-                      })
-                    ) : completedText
-                  }&rdquo;
-                </p>
-                {/* Show bonus answer (author/year) in final results mode */}
-                {showFinalResults && bonusAnswer && (
-                  <p className={`font-serif ${
+              <div className="flex flex-col items-center justify-between w-full h-full">
+                {/* Spacer to push content to center */}
+                <div className="flex-1" />
+
+                {/* Main content centered */}
+                <div className="flex flex-col items-center gap-2">
+                  <p className={`font-serif italic leading-relaxed ${
                     id === 'target'
-                      ? 'text-blue-800 dark:text-blue-200'
-                      : 'text-purple-800 dark:text-purple-200'
+                      ? 'text-blue-900 dark:text-blue-100'
+                      : 'text-purple-900 dark:text-purple-100'
                   } ${
-                    // Dynamic sizing based on text length (slightly smaller than quote)
-                    completedText.length <= 50 ? 'text-lg' :
-                    completedText.length <= 100 ? 'text-base' :
-                    completedText.length <= 150 ? 'text-sm' :
-                    'text-xs'
+                    // Dynamic sizing based on text length - larger for facsimile in Phase 2
+                    id === 'facsimile' && phase === 2 ? (
+                      completedText.length <= 50 ? 'text-lg' :
+                      completedText.length <= 100 ? 'text-base' :
+                      'text-sm'
+                    ) : (
+                      completedText.length <= 50 ? 'text-2xl' :
+                      completedText.length <= 100 ? 'text-xl' :
+                      completedText.length <= 150 ? 'text-lg' :
+                      completedText.length <= 200 ? 'text-base' :
+                      'text-sm'
+                    )
                   }`}>
-                    - {bonusAnswer.author || bonusAnswer.person}{', '}
-                    {bonusAnswer.book || (
-                      bonusAnswer.year === undefined || bonusAnswer.year === null
-                        ? '?'
-                        : bonusAnswer.year < 0
-                        ? `${Math.abs(bonusAnswer.year)} BCE`
-                        : bonusAnswer.year > 0
-                        ? bonusAnswer.year
-                        : '?'
-                    )}
+                    &ldquo;{
+                      // Highlight matching words in hint phrase when dragging in Phase 2
+                      draggedWord && id === 'facsimile' && phase === 2 ? (
+                        completedText.split(/\b/).map((segment, idx) => {
+                          // Check if this segment matches the dragged word (case-insensitive)
+                          const isMatch = segment.toLowerCase() === draggedWord.toLowerCase();
+                          return isMatch ? (
+                            <span key={idx} style={{ color: '#f97316' }}>
+                              {segment}
+                            </span>
+                          ) : segment;
+                        })
+                      ) : completedText
+                    }&rdquo;
+                  </p>
+                  {/* Show bonus answer (author/year) in final results mode */}
+                  {showFinalResults && bonusAnswer && (
+                    <p className={`font-serif ${
+                      id === 'target'
+                        ? 'text-blue-800 dark:text-blue-200'
+                        : 'text-purple-800 dark:text-purple-200'
+                    } ${
+                      // Dynamic sizing based on text length (slightly smaller than quote)
+                      completedText.length <= 50 ? 'text-lg' :
+                      completedText.length <= 100 ? 'text-base' :
+                      completedText.length <= 150 ? 'text-sm' :
+                      'text-xs'
+                    }`}>
+                      - {bonusAnswer.author || bonusAnswer.person}{', '}
+                      {bonusAnswer.book || (
+                        bonusAnswer.year === undefined || bonusAnswer.year === null
+                          ? '?'
+                          : bonusAnswer.year < 0
+                          ? `${Math.abs(bonusAnswer.year)} BCE`
+                          : bonusAnswer.year > 0
+                          ? bonusAnswer.year
+                          : '?'
+                      )}
+                    </p>
+                  )}
+                </div>
+
+                {/* Spacer to push content to center */}
+                <div className="flex-1" />
+
+                {/* Theme at bottom during Bonus Round */}
+                {showBonusRound && !showFinalResults && theme && id === 'target' && (
+                  <p className="text-xs text-blue-700 dark:text-blue-300 px-2 pb-1 w-full text-center">
+                    ({theme})
                   </p>
                 )}
               </div>

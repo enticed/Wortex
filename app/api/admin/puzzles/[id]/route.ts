@@ -46,6 +46,7 @@ export async function PUT(
         difficulty: body.difficulty,
         bonus_question: body.bonus_question,
         approved: approved,
+        theme: body.metadata?.theme || null,
       })
       .eq('id', id);
 

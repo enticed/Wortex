@@ -72,6 +72,8 @@ export interface Database {
           created_at: string;
           created_by_ai: boolean;
           approved: boolean;
+          theme: string | null;
+          metadata: any; // JSON
         };
         Insert: {
           id?: string;
@@ -83,6 +85,8 @@ export interface Database {
           created_at?: string;
           created_by_ai?: boolean;
           approved?: boolean;
+          theme?: string | null;
+          metadata?: any;
         };
         Update: {
           id?: string;
@@ -94,6 +98,8 @@ export interface Database {
           created_at?: string;
           created_by_ai?: boolean;
           approved?: boolean;
+          theme?: string | null;
+          metadata?: any;
         };
       };
       scores: {
