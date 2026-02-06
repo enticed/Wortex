@@ -258,6 +258,7 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
 
         // Add branch paths
         branches.forEach(branchPath => {
+          if (!svgRef.current) return;
           const branch = document.createElementNS('http://www.w3.org/2000/svg', 'path');
           branch.setAttribute('d', branchPath);
           branch.setAttribute('stroke', lightningColor);
@@ -300,6 +301,7 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
       pathsToAnimate.push(finalPath);
 
       branches.forEach(branchPath => {
+        if (!svgRef.current) return;
         const branch = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         branch.setAttribute('d', branchPath);
         branch.setAttribute('stroke', lightningColor);
@@ -329,6 +331,7 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
 
       // Create branch paths
       branches.forEach(branchPath => {
+        if (!svgRef.current) return;
         const branch = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         branch.setAttribute('d', branchPath);
         branch.setAttribute('stroke', lightningColor);
