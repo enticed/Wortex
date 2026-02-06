@@ -6,10 +6,12 @@ import { useDroppable } from '@dnd-kit/core';
 import Word from './Word';
 import type { WordInVortex } from '@/types/game';
 
-// Generate jagged lightning bolt path from start to end position
-function generateLightningPath(start: { x: number; y: number }, end: { x: number; y: number }): string {
+// Generate jagged lightning bolt path from start to end position with optional branching
+function generateLightningPath(start: { x: number; y: number }, end: { x: number; y: number }, withBranches: boolean = false): { mainPath: string; branches: string[] } {
   const segments = 8;
-  let path = `M ${start.x} ${start.y}`;
+  let mainPath = `M ${start.x} ${start.y}`;
+  const branches: string[] = [];
+  const branchPoints: { x: number; y: number }[] = [];
 
   for (let i = 1; i <= segments; i++) {
     const progress = i / segments;
@@ -20,13 +22,50 @@ function generateLightningPath(start: { x: number; y: number }, end: { x: number
     const jitterX = (Math.random() - 0.5) * 40;
     const jitterY = (Math.random() - 0.5) * 30;
 
-    path += ` L ${x + jitterX} ${y + jitterY}`;
+    const pointX = x + jitterX;
+    const pointY = y + jitterY;
+
+    mainPath += ` L ${pointX} ${pointY}`;
+
+    // Store potential branch points (middle segments only)
+    if (withBranches && i >= 2 && i <= segments - 2) {
+      branchPoints.push({ x: pointX, y: pointY });
+    }
   }
 
   // Ensure we end exactly at the target
-  path += ` L ${end.x} ${end.y}`;
+  mainPath += ` L ${end.x} ${end.y}`;
 
-  return path;
+  // Generate 1-2 branch bolts from random points
+  if (withBranches && branchPoints.length > 0) {
+    const numBranches = 1 + Math.floor(Math.random() * 2); // 1 or 2 branches
+    for (let i = 0; i < numBranches && i < branchPoints.length; i++) {
+      const branchStart = branchPoints[Math.floor(Math.random() * branchPoints.length)];
+
+      // Branch extends outward at random angle, shorter than main bolt
+      const angle = Math.random() * Math.PI * 2;
+      const length = 40 + Math.random() * 60; // 40-100px branch length
+      const branchEnd = {
+        x: branchStart.x + Math.cos(angle) * length,
+        y: branchStart.y + Math.sin(angle) * length
+      };
+
+      // Generate mini jagged path for branch
+      let branchPath = `M ${branchStart.x} ${branchStart.y}`;
+      const branchSegments = 3;
+      for (let j = 1; j <= branchSegments; j++) {
+        const bProgress = j / branchSegments;
+        const bx = branchStart.x + (branchEnd.x - branchStart.x) * bProgress;
+        const by = branchStart.y + (branchEnd.y - branchStart.y) * bProgress;
+        const bjitterX = (Math.random() - 0.5) * 20;
+        const bjitterY = (Math.random() - 0.5) * 20;
+        branchPath += ` L ${bx + bjitterX} ${by + bjitterY}`;
+      }
+      branches.push(branchPath);
+    }
+  }
+
+  return { mainPath, branches };
 }
 
 interface VortexProps {
@@ -155,9 +194,34 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
     return speed >= 1.25;
   };
 
+  // Get lightning color based on speed (yellow-gold at 1.25x, transitioning to blue-white at 2.00x)
+  const getLightningColor = () => {
+    if (speed >= 2.0) return '#E0F2FE'; // Blue-white at max speed
+    if (speed >= 1.75) return '#BAE6FD'; // Light blue
+    if (speed >= 1.50) return '#FEF3C7'; // Pale yellow
+    return '#FCD34D'; // Yellow-gold default
+  };
+
+  // Get lightning glow color for SVG filter
+  const getLightningGlowColor = () => {
+    if (speed >= 2.0) return '#7DD3FC'; // Bright blue glow
+    if (speed >= 1.75) return '#93C5FD'; // Medium blue glow
+    if (speed >= 1.50) return '#FDE68A'; // Pale yellow glow
+    return '#FCD34D'; // Yellow-gold glow default
+  };
+
   // Trigger lightning strike at word position
-  const triggerLightning = (wordPosition: { x: number; y: number }, wordId: string) => {
+  const triggerLightning = (wordPosition: { x: number; y: number }, wordId: string, arcWords?: Array<{ x: number; y: number; id: string }>) => {
     if (!svgRef.current) return;
+
+    const lightningColor = getLightningColor();
+    const glowColor = getLightningGlowColor();
+
+    // Update the glow filter color dynamically
+    const glowFilter = svgRef.current.querySelector('#lightning-glow feFlood');
+    if (glowFilter) {
+      glowFilter.setAttribute('flood-color', glowColor);
+    }
 
     // Random edge position for lightning origin (varies per strike)
     const edges = [
@@ -168,40 +232,156 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
     ];
     const origin = edges[Math.floor(Math.random() * edges.length)];
 
-    // Generate lightning bolt path
-    const pathData = generateLightningPath(origin, wordPosition);
+    // Determine if this strike should have branches (50% chance)
+    const withBranches = Math.random() < 0.5;
 
-    // Create SVG path element
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', pathData);
-    path.setAttribute('stroke', '#FCD34D'); // Yellow-gold lightning
-    path.setAttribute('stroke-width', '3');
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke-linecap', 'round');
-    path.setAttribute('filter', 'url(#lightning-glow)');
-    path.style.opacity = '0';
+    // If arc lightning, connect multiple words first
+    const pathsToAnimate: SVGPathElement[] = [];
+    if (arcWords && arcWords.length > 1) {
+      // Create arc connecting words
+      for (let i = 0; i < arcWords.length - 1; i++) {
+        const arcStart = i === 0 ? origin : arcWords[i];
+        const arcEnd = arcWords[i + 1];
+        const { mainPath, branches } = generateLightningPath(arcStart, arcEnd, withBranches);
 
-    svgRef.current.appendChild(path);
+        // Create main arc segment
+        const arcPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        arcPath.setAttribute('d', mainPath);
+        arcPath.setAttribute('stroke', lightningColor);
+        arcPath.setAttribute('stroke-width', '3');
+        arcPath.setAttribute('fill', 'none');
+        arcPath.setAttribute('stroke-linecap', 'round');
+        arcPath.setAttribute('filter', 'url(#lightning-glow)');
+        arcPath.style.opacity = '0';
+        svgRef.current.appendChild(arcPath);
+        pathsToAnimate.push(arcPath);
 
-    // Animate lightning flash
-    gsap.to(path, {
-      opacity: 1,
-      duration: 0.05,
-      ease: 'power2.in',
-      onComplete: () => {
-        gsap.to(path, {
-          opacity: 0,
-          duration: 0.15,
-          ease: 'power2.out',
-          onComplete: () => path.remove(),
+        // Add branch paths
+        branches.forEach(branchPath => {
+          const branch = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          branch.setAttribute('d', branchPath);
+          branch.setAttribute('stroke', lightningColor);
+          branch.setAttribute('stroke-width', '2');
+          branch.setAttribute('fill', 'none');
+          branch.setAttribute('stroke-linecap', 'round');
+          branch.setAttribute('filter', 'url(#lightning-glow)');
+          branch.style.opacity = '0';
+          svgRef.current.appendChild(branch);
+          pathsToAnimate.push(branch);
         });
-      },
+
+        // Fade out intermediate words
+        if (i < arcWords.length - 2) {
+          const wordElement = wordRefs.current.get(arcWords[i + 1].id);
+          if (wordElement) {
+            gsap.to(wordElement, {
+              opacity: 0,
+              scale: 1.2,
+              duration: 0.2,
+              delay: 0.1,
+              ease: 'power2.out',
+            });
+          }
+        }
+      }
+      // Final segment to target word
+      const finalStart = arcWords[arcWords.length - 1];
+      const { mainPath, branches } = generateLightningPath(finalStart, wordPosition, withBranches);
+
+      const finalPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      finalPath.setAttribute('d', mainPath);
+      finalPath.setAttribute('stroke', lightningColor);
+      finalPath.setAttribute('stroke-width', '3');
+      finalPath.setAttribute('fill', 'none');
+      finalPath.setAttribute('stroke-linecap', 'round');
+      finalPath.setAttribute('filter', 'url(#lightning-glow)');
+      finalPath.style.opacity = '0';
+      svgRef.current.appendChild(finalPath);
+      pathsToAnimate.push(finalPath);
+
+      branches.forEach(branchPath => {
+        const branch = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        branch.setAttribute('d', branchPath);
+        branch.setAttribute('stroke', lightningColor);
+        branch.setAttribute('stroke-width', '2');
+        branch.setAttribute('fill', 'none');
+        branch.setAttribute('stroke-linecap', 'round');
+        branch.setAttribute('filter', 'url(#lightning-glow)');
+        branch.style.opacity = '0';
+        svgRef.current.appendChild(branch);
+        pathsToAnimate.push(branch);
+      });
+    } else {
+      // Standard single-target lightning
+      const { mainPath, branches } = generateLightningPath(origin, wordPosition, withBranches);
+
+      // Create main path element
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', mainPath);
+      path.setAttribute('stroke', lightningColor);
+      path.setAttribute('stroke-width', '3');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('filter', 'url(#lightning-glow)');
+      path.style.opacity = '0';
+      svgRef.current.appendChild(path);
+      pathsToAnimate.push(path);
+
+      // Create branch paths
+      branches.forEach(branchPath => {
+        const branch = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        branch.setAttribute('d', branchPath);
+        branch.setAttribute('stroke', lightningColor);
+        branch.setAttribute('stroke-width', '2'); // Thinner branches
+        branch.setAttribute('fill', 'none');
+        branch.setAttribute('stroke-linecap', 'round');
+        branch.setAttribute('filter', 'url(#lightning-glow)');
+        branch.style.opacity = '0';
+        svgRef.current.appendChild(branch);
+        pathsToAnimate.push(branch);
+      });
+    }
+
+    // Animate all lightning paths together
+    pathsToAnimate.forEach(path => {
+      gsap.to(path, {
+        opacity: 1,
+        duration: 0.05,
+        ease: 'power2.in',
+        onComplete: () => {
+          gsap.to(path, {
+            opacity: 0,
+            duration: 0.15,
+            ease: 'power2.out',
+            onComplete: () => path.remove(),
+          });
+        },
+      });
     });
 
-    // Brief vortex flash
+    // Screen shake effect (thunder)
     if (containerRef.current) {
+      const shakeAmount = 5; // pixels
+      gsap.fromTo(
+        containerRef.current,
+        { x: 0, y: 0 },
+        {
+          x: `+=${Math.random() * shakeAmount * 2 - shakeAmount}`,
+          y: `+=${Math.random() * shakeAmount * 2 - shakeAmount}`,
+          duration: 0.05,
+          repeat: 3,
+          yoyo: true,
+          ease: 'power2.inOut',
+          onComplete: () => {
+            gsap.set(containerRef.current, { x: 0, y: 0 });
+          },
+        }
+      );
+
+      // Brief vortex flash with color-appropriate tint
+      const flashColor = speed >= 2.0 ? 'rgba(147, 197, 253, 0.2)' : 'rgba(252, 211, 77, 0.2)';
       gsap.to(containerRef.current, {
-        backgroundColor: 'rgba(252, 211, 77, 0.2)',
+        backgroundColor: flashColor,
         duration: 0.05,
         yoyo: true,
         repeat: 1,
@@ -209,13 +389,55 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
       });
     }
 
-    // Fade out the word with white flash
+    // Create explosion effect on target word
     const wordElement = wordRefs.current.get(wordId);
-    if (wordElement) {
+    if (wordElement && containerRef.current) {
+      const rect = wordElement.getBoundingClientRect();
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2 - containerRect.left;
+      const centerY = rect.top + rect.height / 2 - containerRect.top;
+
+      // Create 8-12 explosion particles
+      const particleCount = 8 + Math.floor(Math.random() * 5);
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.style.position = 'absolute';
+        particle.style.left = `${centerX}px`;
+        particle.style.top = `${centerY}px`;
+        particle.style.width = '6px';
+        particle.style.height = '6px';
+        particle.style.borderRadius = '50%';
+        particle.style.backgroundColor = lightningColor;
+        particle.style.boxShadow = `0 0 8px ${glowColor}`;
+        particle.style.pointerEvents = 'none';
+        particle.style.zIndex = '50';
+
+        containerRef.current.appendChild(particle);
+
+        // Random explosion angle and distance
+        const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
+        const distance = 40 + Math.random() * 40; // 40-80px
+        const endX = centerX + Math.cos(angle) * distance;
+        const endY = centerY + Math.sin(angle) * distance;
+
+        // Animate particle outward with fade
+        gsap.to(particle, {
+          left: endX,
+          top: endY,
+          opacity: 0,
+          scale: 0.3,
+          duration: 0.4 + Math.random() * 0.2,
+          ease: 'power2.out',
+          onComplete: () => particle.remove(),
+        });
+      }
+
+      // Fade out the word with bright flash and scale up
       gsap.to(wordElement, {
         opacity: 0,
-        scale: 1.2,
-        duration: 0.2,
+        scale: 1.5,
+        filter: `brightness(2) blur(4px)`,
+        duration: 0.15,
         ease: 'power2.out',
       });
     }
@@ -278,10 +500,45 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
                   y: rect.top + rect.height / 2 - containerRect.top,
                 };
 
-                console.log('[Lightning] Striking word:', targetWord.word, 'at position:', wordPosition);
-                triggerLightning(wordPosition, targetWord.id);
+                // 30% chance of arc lightning connecting multiple words (if enough words available)
+                const useArcLightning = Math.random() < 0.3 && availableWords.length >= 3;
 
-                // Remove word after brief delay
+                if (useArcLightning) {
+                  // Select 2-3 intermediate words to arc through before final target
+                  const arcWordCount = 2 + Math.floor(Math.random() * 2); // 2 or 3 words
+                  const arcWordCandidates = availableWords.filter(w => w.id !== targetWord.id);
+                  const selectedArcWords: Array<{ x: number; y: number; id: string }> = [];
+
+                  for (let i = 0; i < Math.min(arcWordCount, arcWordCandidates.length); i++) {
+                    const arcWord = arcWordCandidates[Math.floor(Math.random() * arcWordCandidates.length)];
+                    const arcElement = wordRefs.current.get(arcWord.id);
+                    if (arcElement) {
+                      const arcRect = arcElement.getBoundingClientRect();
+                      selectedArcWords.push({
+                        x: arcRect.left + arcRect.width / 2 - containerRect.left,
+                        y: arcRect.top + arcRect.height / 2 - containerRect.top,
+                        id: arcWord.id,
+                      });
+                    }
+                    // Remove from candidates to avoid duplicates
+                    arcWordCandidates.splice(arcWordCandidates.indexOf(arcWord), 1);
+                  }
+
+                  console.log('[Lightning] Arc lightning through', selectedArcWords.length, 'words');
+                  triggerLightning(wordPosition, targetWord.id, selectedArcWords);
+
+                  // Remove intermediate arc words after delay
+                  selectedArcWords.forEach(arcWord => {
+                    setTimeout(() => {
+                      onWordGrab(arcWord.id);
+                    }, 250);
+                  });
+                } else {
+                  console.log('[Lightning] Standard strike on word:', targetWord.word, 'at position:', wordPosition);
+                  triggerLightning(wordPosition, targetWord.id);
+                }
+
+                // Remove target word after brief delay
                 setTimeout(() => {
                   onWordGrab(targetWord.id);
                 }, 200);
