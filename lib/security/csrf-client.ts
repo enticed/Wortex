@@ -12,13 +12,14 @@ const CSRF_HEADER_NAME = 'x-csrf-token';
  */
 export async function fetchCsrfToken(): Promise<string | null> {
   try {
+    console.log('[CSRF Client] Fetching CSRF token from /api/csrf-token');
     const response = await fetch('/api/csrf-token', {
       method: 'GET',
       credentials: 'include', // Include cookies
     });
 
     if (!response.ok) {
-      console.error('Failed to fetch CSRF token:', response.status);
+      console.error('[CSRF Client] Failed to fetch CSRF token:', response.status);
       return null;
     }
 
@@ -28,12 +29,14 @@ export async function fetchCsrfToken(): Promise<string | null> {
     if (token) {
       // Store token in memory for this session
       sessionStorage.setItem(CSRF_TOKEN_STORAGE_KEY, token);
+      console.log('[CSRF Client] Token stored in sessionStorage, length:', token.length);
       return token;
     }
 
+    console.warn('[CSRF Client] No token in response');
     return null;
   } catch (error) {
-    console.error('Error fetching CSRF token:', error);
+    console.error('[CSRF Client] Error fetching CSRF token:', error);
     return null;
   }
 }
@@ -81,12 +84,16 @@ export async function fetchWithCsrf(
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
     // Get or fetch CSRF token if not available
     let token = getCsrfToken();
+    console.log('[CSRF Client] Current token in sessionStorage:', token ? `${token.substring(0, 10)}...` : 'null');
+
     if (!token) {
+      console.log('[CSRF Client] No token found, fetching new one...');
       token = await fetchCsrfToken();
     }
 
     // Add CSRF token to headers
     options.headers = addCsrfHeader(options.headers);
+    console.log('[CSRF Client] Headers after addCsrfHeader:', options.headers);
   }
 
   // Always include credentials (cookies)
