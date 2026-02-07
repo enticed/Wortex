@@ -92,20 +92,21 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Get puzzle data for sanitization
-    const { data: puzzle, error: puzzleError } = await supabase
+    const { data: puzzleData, error: puzzleError } = await supabase
       .from('puzzles')
       .select('target')
       .eq('id', puzzleId)
       .single();
 
-    if (puzzleError || !puzzle) {
+    if (puzzleError || !puzzleData) {
       return NextResponse.json(
         { error: 'Puzzle not found' },
         { status: 404 }
       );
     }
 
-    const targetWords = (puzzle.target as string).split(/[\s—–]+/).filter((w: string) => w.length > 0);
+    const puzzle = puzzleData as { target: string };
+    const targetWords = puzzle.target.split(/[\s—–]+/).filter((w: string) => w.length > 0);
     const quoteWordCount = targetWords.length;
 
     // Sanitize the score submission (recalculate derived values)
@@ -169,18 +170,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Get puzzle date for streak calculation
-    const { data: puzzleData } = await supabase
+    const { data: puzzleDateData } = await supabase
       .from('puzzles')
       .select('date')
       .eq('id', puzzleId)
       .single();
 
     // Update streak
-    if (puzzleData && 'date' in puzzleData) {
+    if (puzzleDateData && 'date' in puzzleDateData) {
       // @ts-expect-error - RPC function types not properly inferred
       await supabase.rpc('update_user_streak', {
         p_user_id: userId,
-        p_puzzle_date: (puzzleData as any).date,
+        p_puzzle_date: (puzzleDateData as any).date,
       });
     }
 

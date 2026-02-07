@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const supabase = createClient();
 
     // Fetch user profile (only safe fields, NOT email or password_hash)
-    const { data: user, error } = await supabase
+    const { data: userData, error } = await supabase
       .from('users')
       .select('id, display_name, user_tier, is_admin, is_anonymous, created_at')
       .eq('id', session.userId)
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!user) {
+    if (!userData) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -58,14 +58,22 @@ export async function GET(request: NextRequest) {
     }
 
     // Return sanitized profile data
-    const userData = user as any;
+    type UserProfile = {
+      id: string;
+      display_name: string | null;
+      user_tier: string | null;
+      is_admin: boolean | null;
+      is_anonymous: boolean | null;
+      created_at: string;
+    };
+    const user = userData as UserProfile;
     return NextResponse.json({
-      id: userData.id,
-      displayName: userData.display_name,
-      userTier: userData.user_tier || 'free',
-      isAdmin: userData.is_admin || false,
-      isAnonymous: userData.is_anonymous || false,
-      createdAt: userData.created_at,
+      id: user.id,
+      displayName: user.display_name,
+      userTier: user.user_tier || 'free',
+      isAdmin: user.is_admin || false,
+      isAnonymous: user.is_anonymous || false,
+      createdAt: user.created_at,
     });
 
   } catch (error: any) {
@@ -136,13 +144,15 @@ export async function PUT(request: NextRequest) {
     const supabase = createClient();
 
     // Update user profile
-    const updateData: any = {};
+    type UpdateData = {
+      display_name?: string | null;
+    };
+    const updateData: UpdateData = {};
     if (displayName !== undefined) {
       updateData.display_name = displayName.trim() || null;
     }
 
-    const { error } = await supabase
-      .from('users')
+    const { error } = await (supabase.from('users') as any)
       .update(updateData)
       .eq('id', session.userId);
 
@@ -155,13 +165,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // Fetch updated profile
-    const { data: updatedUser, error: fetchError } = await supabase
+    const { data: updatedUserData, error: fetchError } = await supabase
       .from('users')
       .select('id, display_name, user_tier, is_admin, is_anonymous, created_at')
       .eq('id', session.userId)
       .single();
 
-    if (fetchError || !updatedUser) {
+    if (fetchError || !updatedUserData) {
       console.error('[API /user/profile] Error fetching updated profile:', fetchError);
       return NextResponse.json(
         { error: 'Profile updated but failed to fetch new data' },
@@ -170,14 +180,22 @@ export async function PUT(request: NextRequest) {
     }
 
     // Return updated profile
-    const updatedUserData = updatedUser as any;
+    type UserProfile = {
+      id: string;
+      display_name: string | null;
+      user_tier: string | null;
+      is_admin: boolean | null;
+      is_anonymous: boolean | null;
+      created_at: string;
+    };
+    const updatedUser = updatedUserData as UserProfile;
     return NextResponse.json({
-      id: updatedUserData.id,
-      displayName: updatedUserData.display_name,
-      userTier: updatedUserData.user_tier || 'free',
-      isAdmin: updatedUserData.is_admin || false,
-      isAnonymous: updatedUserData.is_anonymous || false,
-      createdAt: updatedUserData.created_at,
+      id: updatedUser.id,
+      displayName: updatedUser.display_name,
+      userTier: updatedUser.user_tier || 'free',
+      isAdmin: updatedUser.is_admin || false,
+      isAnonymous: updatedUser.is_anonymous || false,
+      createdAt: updatedUser.created_at,
       message: 'Profile updated successfully',
     });
 

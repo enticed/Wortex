@@ -73,25 +73,30 @@ export async function validateScoreSubmission(
 
   // 3. Fetch puzzle data to validate against
   const supabase = await createClient();
-  const { data: puzzle, error: puzzleError } = await supabase
+  const { data: puzzleData, error: puzzleError } = await supabase
     .from('puzzles')
     .select('target, facsimile, speed')
     .eq('id', submission.puzzleId)
     .single();
 
-  if (puzzleError || !puzzle) {
+  if (puzzleError || !puzzleData) {
     return { valid: false, error: 'Puzzle not found' };
   }
 
   // 4. Validate puzzle structure
-  const puzzleData = puzzle as any;
-  if (!puzzleData.target || !puzzleData.facsimile) {
+  type PuzzleData = {
+    target: string;
+    facsimile: string;
+    speed: number | null;
+  };
+  const puzzle = puzzleData as PuzzleData;
+  if (!puzzle.target || !puzzle.facsimile) {
     return { valid: false, error: 'Invalid puzzle data' };
   }
 
   // Parse puzzle words
-  const targetWords = puzzleData.target.split(/[\s—–]+/).filter((w: string) => w.length > 0);
-  const facsimileWords = puzzleData.facsimile.split(/[\s—–]+/).filter((w: string) => w.length > 0);
+  const targetWords = puzzle.target.split(/[\s—–]+/).filter((w: string) => w.length > 0);
+  const facsimileWords = puzzle.facsimile.split(/[\s—–]+/).filter((w: string) => w.length > 0);
   const uniqueWords = new Set([...targetWords, ...facsimileWords]).size;
   const quoteWordCount = targetWords.length;
 
