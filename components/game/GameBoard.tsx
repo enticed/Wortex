@@ -24,7 +24,6 @@ import { useUser } from '@/lib/contexts/UserContext';
 import { useTutorial } from '@/lib/contexts/TutorialContext';
 import { useTutorialSteps } from '@/lib/hooks/useTutorialSteps';
 import { phase1Steps, phase2Steps, bonusRoundSteps, finalResultsSteps } from '@/lib/tutorial/tutorialSteps';
-import { createClient } from '@/lib/supabase/client';
 import { calculatePhase1Stars, calculatePhase2Stars } from '@/lib/utils/stars';
 import type { Puzzle } from '@/types/game';
 
@@ -410,82 +409,55 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
         setScoreSubmitted(true);
 
         const timeTakenSeconds = Math.floor((Date.now() - gameStartTime.current) / 1000);
-        const supabase = createClient();
 
         try {
-          console.log('[GameBoard] Submitting score for user:', userId.substring(0, 12), isArchiveMode ? '(archive mode)' : '');
+          console.log('[GameBoard] Submitting score via API for user:', userId.substring(0, 12), isArchiveMode ? '(archive mode)' : '');
 
-          // Check if this is the user's first play of this puzzle
-          const { data: existingScore } = await supabase
-            .from('scores')
-            .select('id')
-            .eq('user_id', userId)
-            .eq('puzzle_id', puzzle.id)
-            .maybeSingle();
-
-          // Only the very first play gets first_play_of_day = true
-          // All subsequent plays should be false (for Boosted Rankings)
-          // Archive plays are never first_play_of_day
-          const firstPlayOfDay = !existingScore && !isArchiveMode;
-
-          console.log('[GameBoard] First play of day:', firstPlayOfDay);
-
-          // Calculate stars for this game
-          const { calculateFinalStars } = await import('@/lib/utils/stars');
-          const quoteWordCount = puzzle.targetPhrase.words.length;
-          const stars = calculateFinalStars(
-            gameState.score || 0,
-            gameState.phase2Score || 0,
-            quoteWordCount
-          );
-
-          console.log('[GameBoard] Calculated stars:', stars);
-
-          // Submit score (insert new record for each play to allow multiple scores per puzzle)
-          const { error: scoreError } = await supabase
-            .from('scores')
-            // @ts-expect-error - Supabase client types not properly inferred in client context
-            .insert({
-              user_id: userId,
-              puzzle_id: puzzle.id,
+          // Submit score via secure API endpoint
+          const response = await fetch('/api/score/submit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              userId,
+              puzzleId: puzzle.id,
               score: gameState.finalScore,
-              phase1_score: gameState.score || 0,
-              phase2_score: gameState.phase2Score || 0,
-              bonus_correct: gameState.bonusCorrect || false,
-              time_taken_seconds: timeTakenSeconds,
+              phase1Score: gameState.score || 0,
+              phase2Score: gameState.phase2Score || 0,
+              bonusCorrect: gameState.bonusCorrect || false,
+              timeTakenSeconds,
               speed: gameState.speed,
-              min_speed: gameState.minSpeed,
-              max_speed: gameState.maxSpeed,
-              first_play_of_day: firstPlayOfDay,
-              stars: stars,
-            });
+              minSpeed: gameState.minSpeed,
+              maxSpeed: gameState.maxSpeed,
+              stars: null, // Let server calculate
+              isArchiveMode, // Server will set first_play_of_day based on this
+            }),
+          });
 
-          if (scoreError) {
-            console.error('[GameBoard] Error submitting score:', scoreError);
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('[GameBoard] Score submission failed:', response.status, errorData);
+
+            // Show user-friendly error message
+            alert(`Failed to save your score: ${errorData.error || 'Please try again'}. Your game data has been saved locally.`);
           } else {
-            console.log('[GameBoard] Score submitted successfully');
+            const result = await response.json();
+            console.log('[GameBoard] Score submitted successfully:', result);
 
-            // Only update streak and stats for non-archive plays
-            if (!isArchiveMode) {
-              // Update streak
-              // @ts-expect-error - RPC function types not properly inferred in client context
-              await supabase.rpc('update_user_streak', {
-                p_user_id: userId,
-                p_puzzle_date: puzzle.date,
-              });
-
-              // Refresh user stats
-              await refreshStats();
-            }
+            // Refresh user stats to reflect the new score
+            await refreshStats();
           }
         } catch (error) {
           console.error('[GameBoard] Error submitting score:', error);
+          alert('Network error: Unable to save your score. Please check your connection and try refreshing the page.');
         }
       }
     }
 
     submitScore();
-  }, [gameState.bonusAnswered, scoreSubmitted, userId, gameState.finalScore, gameState.bonusCorrect, puzzle.id, refreshStats, isArchiveMode, isTutorialPuzzle]);
+  }, [gameState.bonusAnswered, scoreSubmitted, userId, gameState.finalScore, gameState.bonusCorrect, gameState.score, gameState.phase2Score, gameState.speed, gameState.minSpeed, gameState.maxSpeed, puzzle.id, puzzle.date, refreshStats, isArchiveMode, isTutorialPuzzle]);
 
   // Save results to sessionStorage when bonus is answered (for both archive and normal mode)
   // This allows leaderboard to show the correct puzzle even after midnight or in archive mode
