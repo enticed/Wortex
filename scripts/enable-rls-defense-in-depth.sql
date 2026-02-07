@@ -67,7 +67,8 @@ DROP POLICY IF EXISTS "Deny direct access" ON admin_activity_log;
 -- All access must go through authenticated API routes
 CREATE POLICY "Deny direct access" ON users
   FOR ALL
-  USING (false);
+  USING (false)
+  WITH CHECK (false);
 
 COMMENT ON POLICY "Deny direct access" ON users IS
   'Denies all direct database access. All user data access must go through authenticated API endpoints.';
@@ -77,7 +78,8 @@ COMMENT ON POLICY "Deny direct access" ON users IS
 -- All access must go through authenticated API routes
 CREATE POLICY "Deny direct access" ON scores
   FOR ALL
-  USING (false);
+  USING (false)
+  WITH CHECK (false);
 
 COMMENT ON POLICY "Deny direct access" ON scores IS
   'Denies all direct database access. All score operations must go through validated API endpoints.';
@@ -87,7 +89,8 @@ COMMENT ON POLICY "Deny direct access" ON scores IS
 -- All access must go through authenticated API routes
 CREATE POLICY "Deny direct access" ON stats
   FOR ALL
-  USING (false);
+  USING (false)
+  WITH CHECK (false);
 
 COMMENT ON POLICY "Deny direct access" ON stats IS
   'Denies all direct database access. All stats operations must go through authenticated API endpoints.';
@@ -101,11 +104,12 @@ CREATE POLICY "Allow public read" ON puzzles
 
 CREATE POLICY "Deny direct write" ON puzzles
   FOR INSERT
-  USING (false);
+  WITH CHECK (false);
 
 CREATE POLICY "Deny direct update" ON puzzles
   FOR UPDATE
-  USING (false);
+  USING (false)
+  WITH CHECK (false);
 
 CREATE POLICY "Deny direct delete" ON puzzles
   FOR DELETE
