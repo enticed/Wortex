@@ -5,6 +5,7 @@ import "driver.js/dist/driver.css";
 import { UserProvider } from "@/lib/contexts/UserContext";
 import { TutorialProvider } from "@/lib/contexts/TutorialContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { CsrfInitializer } from "@/components/CsrfInitializer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -81,6 +82,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ErrorBoundary>
+          <CsrfInitializer />
           <UserProvider>
             <TutorialProvider>
               {children}

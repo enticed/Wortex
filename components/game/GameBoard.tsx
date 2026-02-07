@@ -25,6 +25,7 @@ import { useTutorial } from '@/lib/contexts/TutorialContext';
 import { useTutorialSteps } from '@/lib/hooks/useTutorialSteps';
 import { phase1Steps, phase2Steps, bonusRoundSteps, finalResultsSteps } from '@/lib/tutorial/tutorialSteps';
 import { calculatePhase1Stars, calculatePhase2Stars } from '@/lib/utils/stars';
+import { fetchWithCsrf } from '@/lib/security/csrf-client';
 import type { Puzzle } from '@/types/game';
 
 interface GameBoardProps {
@@ -413,13 +414,12 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
         try {
           console.log('[GameBoard] Submitting score via API for user:', userId.substring(0, 12), isArchiveMode ? '(archive mode)' : '');
 
-          // Submit score via secure API endpoint
-          const response = await fetch('/api/score/submit', {
+          // Submit score via secure API endpoint with CSRF protection
+          const response = await fetchWithCsrf('/api/score/submit', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            credentials: 'include',
             body: JSON.stringify({
               userId,
               puzzleId: puzzle.id,
