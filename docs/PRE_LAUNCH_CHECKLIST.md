@@ -85,16 +85,17 @@ Total: 204 tests passing
 - **Issue:** Client can submit arbitrary scores without validation
 - **Fix Applied:**
   - Created `lib/validation/scoreValidator.ts` with comprehensive validation
-  - Validates Phase 1 scores (1.0 - 20.0 range based on game logic)
+  - Validates Phase 1 scores (0.0 - 100.0 range, allows super-efficient and idle gameplay)
   - Validates Phase 2 scores (must be multiple of 0.25, max based on word count)
   - Validates final score calculation (phase1 + phase2 + bonus)
   - Validates time taken is reasonable (5s minimum, 24h maximum)
-  - Validates speed values (0.5 - 3.0 range)
+  - Validates speed values (0.0 - 2.0 range, matches actual slider control)
   - Recalculates and sanitizes all derived values (stars, final score)
   - Detects duplicate submissions within 5 minutes
   - Fetches puzzle data to validate against actual word counts
 - **Tests:** `__tests__/unit/scoreValidator.test.ts` (30 tests passing)
 - **Security:** Server now trusts nothing from client, recalculates all scores
+- **Latest Update (2026-02-06):** Fixed validation limits to match actual gameplay scenarios
 
 ### 5. No CSRF Protection ✅ FIXED
 - **Scope:** All state-changing endpoints
@@ -134,12 +135,21 @@ Total: 204 tests passing
 
 ## High Priority Issues (P1) - SHOULD FIX BEFORE LAUNCH
 
-### 7. Score Submission Silent Failures
+### 7. Score Submission Silent Failures ✅ FIXED
 - **File:** `components/game/GameBoard.tsx:409`
-- **Status:** ⏳ TODO
+- **Status:** ✅ COMPLETE
 - **Issue:** Errors logged but user not notified
-- **Fix:** Show toast notification, offer retry
-- **Tests:** Component tests for error handling
+- **Fix Applied:**
+  - Migrated score submission from direct Supabase insert to `/api/score/submit` POST endpoint
+  - Added user-friendly error alerts when score submission fails
+  - Added network error handling with specific error messages
+  - Server-side validation now catches all invalid scores before database insert
+- **Security Benefits:**
+  - All score validation enforced (phase1, phase2, speed, time, stars)
+  - CSRF protection applied via API middleware
+  - Rate limiting applied (10 submissions per minute)
+  - Duplicate submission detection (within 5 minutes)
+- **Commit:** `62053f7` (2026-02-07)
 
 ### 8. UserContext Race Condition
 - **File:** `components/game/GameBoard.tsx:396`
@@ -155,12 +165,15 @@ Total: 204 tests passing
 - **Fix:** Add ErrorBoundary around GameBoard
 - **Tests:** Component tests for error recovery
 
-### 10. Database Constraint Violation on Replay
+### 10. Database Constraint Violation on Replay ✅ FIXED
 - **File:** `components/game/GameBoard.tsx:442`
-- **Status:** ⏳ TODO
+- **Status:** ✅ COMPLETE (Fixed as part of #7)
 - **Issue:** Uses `.insert()` instead of `.upsert()`
-- **Fix:** Change to upsert with conflict resolution
-- **Tests:** Integration test for replay scenarios
+- **Fix Applied:**
+  - Migrated to `/api/score/submit` which uses `.upsert()` with conflict resolution
+  - API handles both first plays and replays correctly
+  - No more unique constraint violations on replay
+- **Commit:** `62053f7` (2026-02-07)
 
 ### 11. Stats Update Race Condition
 - **File:** `lib/supabase/schema.sql:145`
@@ -228,23 +241,29 @@ For each fix above:
 
 ## Progress Tracking
 
-**Overall Progress:** 0/17 critical and high priority issues fixed
+**Overall Progress:** 8/17 critical and high priority issues fixed
 
 ### By Priority:
-- **P0 (Critical):** 0/6 fixed ⏳
-- **P1 (High):** 0/6 fixed ⏳
+- **P0 (Critical):** 6/6 fixed ✅ **COMPLETE**
+- **P1 (High):** 2/6 fixed ⏳
 - **P2 (Medium):** 0/5 fixed ⏳
 
 ## Next Steps
 
 1. ✅ Testing infrastructure established
-2. ⏳ Fix P0 security vulnerabilities (6 issues)
-3. ⏳ Fix P1 stability issues (6 issues)
+2. ✅ Fix P0 security vulnerabilities (6/6 complete)
+3. ⏳ Fix P1 stability issues (2/6 complete, 4 remaining)
 4. ⏳ Run full regression test suite
 5. ⏳ Manual testing of critical flows
 6. ⏳ Deploy to staging environment
 7. ⏳ Final security review
 8. ⏳ Launch! 🚀
+
+### Remaining P1 Issues:
+- #8: UserContext Race Condition
+- #9: Missing Error Boundaries
+- #11: Stats Update Race Condition
+- #12: Missing Input Sanitization
 
 ## Resources
 
@@ -255,5 +274,5 @@ For each fix above:
 
 ---
 
-**Last Updated:** 2026-02-06
-**Status:** Testing foundation complete, ready to begin fixes
+**Last Updated:** 2026-02-07
+**Status:** P0 complete (6/6), P1 in progress (2/6)
