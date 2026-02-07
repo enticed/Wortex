@@ -26,7 +26,6 @@ import { useTutorialSteps } from '@/lib/hooks/useTutorialSteps';
 import { phase1Steps, phase2Steps, bonusRoundSteps, finalResultsSteps } from '@/lib/tutorial/tutorialSteps';
 import { createClient } from '@/lib/supabase/client';
 import { calculatePhase1Stars, calculatePhase2Stars } from '@/lib/utils/stars';
-import { getUserPuzzleScore } from '@/lib/supabase/scores';
 import type { Puzzle } from '@/types/game';
 
 interface GameBoardProps {
@@ -127,11 +126,15 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
       console.log('[GameBoard] Loading score results for puzzle:', puzzle.id);
 
       try {
-        const supabase = createClient();
-        const scoreData = await getUserPuzzleScore(supabase, userId, puzzle.id);
+        const response = await fetch(`/api/user/puzzle-score?puzzleId=${puzzle.id}`, {
+          credentials: 'include',
+        });
 
-        if (scoreData) {
-          console.log('[GameBoard] Score data loaded:', scoreData);
+        if (response.ok) {
+          const scoreData = await response.json();
+
+          if (scoreData) {
+            console.log('[GameBoard] Score data loaded:', scoreData);
 
           // Construct savedResults object
           // Note: We don't have phase1Score and phase2Score separately in the database,
@@ -149,9 +152,12 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
             puzzleDate: puzzle.date,
           };
 
-          setSavedResults(results);
+            setSavedResults(results);
+          } else {
+            console.warn('[GameBoard] No score data found for this puzzle');
+          }
         } else {
-          console.warn('[GameBoard] No score data found for this puzzle');
+          console.error('[GameBoard] Error response:', response.status);
         }
       } catch (error) {
         console.error('[GameBoard] Error loading score results:', error);

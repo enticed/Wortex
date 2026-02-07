@@ -7,9 +7,23 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 const SESSION_COOKIE_NAME = 'wortex-session';
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'fallback-secret-change-in-production'
-);
+
+// Validate SESSION_SECRET is configured and meets security requirements
+if (!process.env.SESSION_SECRET) {
+  throw new Error(
+    'SESSION_SECRET environment variable is required for session management. ' +
+    'Please set a strong, random secret of at least 32 characters.'
+  );
+}
+
+if (process.env.SESSION_SECRET.length < 32) {
+  throw new Error(
+    'SESSION_SECRET must be at least 32 characters long for security. ' +
+    `Current length: ${process.env.SESSION_SECRET.length}`
+  );
+}
+
+const SESSION_SECRET = new TextEncoder().encode(process.env.SESSION_SECRET);
 
 export interface SessionData {
   userId: string;

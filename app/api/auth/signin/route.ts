@@ -3,12 +3,25 @@
  * POST /api/auth/signin
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/client-server';
 import { verifyPassword } from '@/lib/auth/password';
-import { createSession, setSessionCookie } from '@/lib/auth/session';
+import { createSession } from '@/lib/auth/session';
+import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/middleware/rateLimit';
+import { checkCsrfProtection, refreshCsrfToken } from '@/lib/security/csrf';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Check CSRF protection
+  const csrfResponse = await checkCsrfProtection(request);
+  if (csrfResponse) {
+    return csrfResponse;
+  }
+
+  // Apply rate limiting (5 attempts per 15 minutes)
+  const rateLimitResponse = checkRateLimit(request, RATE_LIMIT_CONFIGS.auth);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
   try {
     const { email, password } = await request.json();
 
@@ -79,6 +92,9 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24 * 30, // 30 days
       path: '/',
     });
+
+    // Refresh CSRF token after successful authentication
+    refreshCsrfToken(response);
 
     return response;
 

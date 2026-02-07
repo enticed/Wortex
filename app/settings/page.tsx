@@ -3,14 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/lib/contexts/UserContext';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database';
 
 export default function SettingsPage() {
   const { user, userData, userId } = useUser();
   const router = useRouter();
-  const supabase = createClient() as SupabaseClient<Database>;
 
   const [displayName, setDisplayName] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -44,20 +40,27 @@ export default function SettingsPage() {
     setLoading(true);
 
     try {
-      // Type assertion needed due to Supabase type inference issue
-      const { error: updateError } = await (supabase.from('users') as any)
-        .update({
-          display_name: displayName.trim() || null
-        })
-        .eq('id', userId);
+      // Use API endpoint instead of direct database update
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          displayName: displayName.trim() || null
+        }),
+        credentials: 'include', // Include session cookie
+      });
 
-      if (updateError) {
-        setError('Failed to update profile');
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to update profile');
         setLoading(false);
         return;
       }
 
-      setSaveMessage('Profile updated successfully');
+      setSaveMessage(data.message || 'Profile updated successfully');
       setLoading(false);
 
       // No need to reload - UserContext will pick up the change on next fetch

@@ -3,7 +3,6 @@
  */
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/contexts/UserContext';
 
 export type UserTier = 'free' | 'premium' | 'admin';
@@ -12,7 +11,6 @@ export function useUserTier() {
   const [tier, setTier] = useState<UserTier>('free');
   const [loading, setLoading] = useState(true);
   const { userId } = useUser();
-  const supabase = createClient();
 
   useEffect(() => {
     let mounted = true;
@@ -30,15 +28,13 @@ export function useUserTier() {
 
         console.log('[useUserTier] Fetching tier for user:', userId.substring(0, 12));
 
-        // Fetch user tier from users table
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('user_tier, is_admin')
-          .eq('id', userId)
-          .single();
+        // Use API endpoint instead of direct database query
+        const response = await fetch('/api/user/profile', {
+          credentials: 'include', // Include session cookie
+        });
 
-        if (error) {
-          console.error('[useUserTier] Error fetching user tier:', error);
+        if (!response.ok) {
+          console.error('[useUserTier] Error fetching user tier:', response.status);
           if (mounted) {
             setTier('free');
             setLoading(false);
@@ -46,10 +42,11 @@ export function useUserTier() {
           return;
         }
 
+        const userData = await response.json();
         console.log('[useUserTier] Fetched data:', userData);
 
         if (mounted) {
-          const userTier = (userData as any)?.user_tier || 'free';
+          const userTier = userData.userTier || 'free';
           setTier(userTier);
           setLoading(false);
           console.log('[useUserTier] Set tier to:', userTier);
@@ -68,7 +65,7 @@ export function useUserTier() {
     return () => {
       mounted = false;
     };
-  }, [userId, supabase]);
+  }, [userId]);
 
   return {
     tier,

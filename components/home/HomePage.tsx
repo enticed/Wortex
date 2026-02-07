@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { getTodaysPuzzle } from '@/lib/supabase/puzzles';
-import { getUserPuzzleScore } from '@/lib/supabase/scores';
 import { getParticipationBadge, getPerformanceBadge } from '@/lib/utils/badges';
 import type { Puzzle } from '@/types/game';
 
@@ -39,25 +38,26 @@ export default function HomePage() {
   const [averageStars, setAverageStars] = useState<number>(0);
   const [hasPlayedToday, setHasPlayedToday] = useState<boolean>(false);
 
-  // Fetch average stars from scores table
+  // Fetch average stars from API
   useEffect(() => {
     if (!userId) return;
 
     async function fetchAverageStars() {
-      const supabase = createClient();
+      // Get all scores with stars from API
+      const response = await fetch('/api/user/scores?type=average-stars', {
+        credentials: 'include',
+      });
 
-      // Get all scores with stars (userId is guaranteed to be non-null here)
-      const { data: scores } = await supabase
-        .from('scores')
-        .select('stars')
-        .eq('user_id', userId as string)
-        .not('stars', 'is', null);
-
-      if (scores && scores.length > 0) {
-        const totalStars = scores.reduce((sum: number, score: { stars: number | null }) => {
-          return sum + (score.stars || 0);
-        }, 0);
-        setAverageStars(totalStars / scores.length);
+      if (response.ok) {
+        const scores = await response.json();
+        if (scores && scores.length > 0) {
+          const totalStars = scores.reduce((sum: number, score: { stars: number | null }) => {
+            return sum + (score.stars || 0);
+          }, 0);
+          setAverageStars(totalStars / scores.length);
+        }
+      } else {
+        console.error('[HomePage] Error fetching average stars:', response.status);
       }
     }
 
@@ -87,8 +87,13 @@ export default function HomePage() {
 
       // Check if user has played today's puzzle
       if (userId && todaysPuzzle) {
-        const score = await getUserPuzzleScore(supabase, userId, todaysPuzzle.id);
-        setHasPlayedToday(!!score);
+        const response = await fetch(`/api/user/puzzle-score?puzzleId=${todaysPuzzle.id}`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const score = await response.json();
+          setHasPlayedToday(!!score);
+        }
       }
     }
     fetchPuzzle();

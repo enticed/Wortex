@@ -6,9 +6,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import StatsCard from '@/components/stats/StatsCard';
 import RecentGamesTable from '@/components/stats/RecentGamesTable';
 import StarsHistogram from '@/components/stats/StarsHistogram';
-import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/contexts/UserContext';
-import { getUserStats } from '@/lib/supabase/scores';
 import type { Database } from '@/types/database';
 
 type StatsRow = Database['public']['Tables']['stats']['Row'];
@@ -43,7 +41,6 @@ export default function StatsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
-  const supabase = createClient();
 
   const loadStats = useCallback(async () => {
     if (!userId) {
@@ -58,35 +55,24 @@ export default function StatsPage() {
 
       console.log('[Stats] Loading stats for user:', userId.substring(0, 12));
 
-      // Get user stats
-      const userStats = await getUserStats(supabase, userId);
-      setStats(userStats);
+      // Get user stats from API
+      const statsResponse = await fetch('/api/user/stats', {
+        credentials: 'include',
+      });
+      if (statsResponse.ok) {
+        const userStats = await statsResponse.json();
+        setStats(userStats);
+      } else {
+        console.error('[Stats] Error loading user stats:', statsResponse.status);
+      }
 
-      // Get recent games (last 30)
-      const { data: games, error: gamesError } = await supabase
-        .from('scores')
-        .select(`
-          id,
-          puzzle_id,
-          score,
-          bonus_correct,
-          time_taken_seconds,
-          speed,
-          min_speed,
-          max_speed,
-          stars,
-          created_at,
-          puzzles!inner (
-            date
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(30);
+      // Get recent games (last 30) from API
+      const recentResponse = await fetch('/api/user/scores?type=recent&limit=30', {
+        credentials: 'include',
+      });
 
-      if (gamesError) {
-        console.error('[Stats] Error loading recent games:', gamesError);
-      } else if (games) {
+      if (recentResponse.ok) {
+        const games = await recentResponse.json();
         const formattedGames = games.map((game: any) => ({
           id: game.id,
           puzzle_id: game.puzzle_id,
@@ -101,6 +87,8 @@ export default function StatsPage() {
           created_at: game.created_at,
         }));
         setRecentGames(formattedGames);
+      } else {
+        console.error('[Stats] Error loading recent games:', recentResponse.status);
       }
 
       // Get today's date in user's timezone
@@ -114,19 +102,13 @@ export default function StatsPage() {
         day: '2-digit'
       });
 
-      // Get star distribution for Pure games (first play, 1.0x speed only)
-      const { data: pureGames, error: pureError } = await supabase
-        .from('scores')
-        .select('stars, puzzles!inner(date)')
-        .eq('user_id', userId)
-        .eq('first_play_of_day', true)
-        .eq('min_speed', 1.0)
-        .eq('max_speed', 1.0)
-        .not('stars', 'is', null);
+      // Get star distribution for Pure games (first play, 1.0x speed only) from API
+      const pureResponse = await fetch('/api/user/scores?type=pure', {
+        credentials: 'include',
+      });
 
-      if (pureError) {
-        console.error('[Stats] Error loading pure games:', pureError);
-      } else if (pureGames) {
+      if (pureResponse.ok) {
+        const pureGames = await pureResponse.json();
         const pureDistribution: StarDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
         let todayPure: number | null = null;
 
@@ -144,19 +126,17 @@ export default function StatsPage() {
 
         setPureStarDistribution(pureDistribution);
         setTodayPureStars(todayPure);
+      } else {
+        console.error('[Stats] Error loading pure games:', pureResponse.status);
       }
 
-      // Get star distribution for Boosted games (repeat plays or speed adjustments)
-      const { data: boostedGames, error: boostedError } = await supabase
-        .from('scores')
-        .select('stars, puzzles!inner(date)')
-        .eq('user_id', userId)
-        .or('first_play_of_day.eq.false,min_speed.neq.1.0,max_speed.neq.1.0')
-        .not('stars', 'is', null);
+      // Get star distribution for Boosted games (repeat plays or speed adjustments) from API
+      const boostedResponse = await fetch('/api/user/scores?type=boosted', {
+        credentials: 'include',
+      });
 
-      if (boostedError) {
-        console.error('[Stats] Error loading boosted games:', boostedError);
-      } else if (boostedGames) {
+      if (boostedResponse.ok) {
+        const boostedGames = await boostedResponse.json();
         const boostedDistribution: StarDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
         let todayBoosted: number | null = null;
 
@@ -174,6 +154,8 @@ export default function StatsPage() {
 
         setBoostedStarDistribution(boostedDistribution);
         setTodayBoostedStars(todayBoosted);
+      } else {
+        console.error('[Stats] Error loading boosted games:', boostedResponse.status);
       }
 
     } catch (error) {
@@ -182,7 +164,7 @@ export default function StatsPage() {
     } finally {
       setLoading(false);
     }
-  }, [userId, supabase]);
+  }, [userId]);
 
   // Load stats once UserContext is ready
   useEffect(() => {

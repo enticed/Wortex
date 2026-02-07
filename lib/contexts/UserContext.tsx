@@ -6,7 +6,6 @@
  */
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/types/database';
 
 type UserRow = Database['public']['Tables']['users']['Row'];
@@ -40,7 +39,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [stats, setStats] = useState<StatsRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoadingSession, setIsLoadingSession] = useState(false); // Prevent race conditions
-  const supabase = createClient();
 
   // Load user data from session API
   async function loadUserFromSession() {
@@ -124,15 +122,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }
 
   async function refreshStatsInternal(uid: string) {
-    const { data: statsData, error } = await supabase
-      .from('stats')
-      .select('*')
-      .eq('user_id', uid)
-      .maybeSingle();
+    try {
+      // Use API endpoint instead of direct database query
+      const response = await fetch('/api/user/stats', {
+        credentials: 'include', // Include session cookie
+      });
 
-    if (statsData) {
-      setStats(statsData as StatsRow);
-    } else if (error) {
+      if (!response.ok) {
+        console.error('[UserContext] Error fetching stats:', response.status);
+        return;
+      }
+
+      const statsData = await response.json();
+
+      if (statsData) {
+        setStats(statsData as StatsRow);
+      }
+    } catch (error) {
       console.error('[UserContext] Error fetching stats:', error);
     }
   }

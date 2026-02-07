@@ -3,11 +3,24 @@
  * POST /api/auth/reset-password
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { resetPassword } from '@/lib/supabase/auth';
+import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/middleware/rateLimit';
+import { checkCsrfProtection } from '@/lib/security/csrf';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Check CSRF protection
+  const csrfResponse = await checkCsrfProtection(request);
+  if (csrfResponse) {
+    return csrfResponse;
+  }
+
+  // Apply very strict rate limiting (3 attempts per hour)
+  const rateLimitResponse = checkRateLimit(request, RATE_LIMIT_CONFIGS.passwordReset);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
   try {
     const { email } = await request.json();
 
