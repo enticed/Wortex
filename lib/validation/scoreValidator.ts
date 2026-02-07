@@ -54,17 +54,17 @@ export async function validateScoreSubmission(
     return { valid: false, error: 'Time taken exceeds reasonable limit' };
   }
 
-  // 2. Validate speed values
-  if (submission.speed < 0.5 || submission.speed > 3.0) {
-    return { valid: false, error: 'Speed must be between 0.5 and 3.0' };
+  // 2. Validate speed values (slider range is 0.0 - 2.0)
+  if (submission.speed < 0.0 || submission.speed > 2.0) {
+    return { valid: false, error: 'Speed must be between 0.0 and 2.0' };
   }
 
-  if (submission.minSpeed !== undefined && (submission.minSpeed < 0.5 || submission.minSpeed > 3.0)) {
-    return { valid: false, error: 'Min speed must be between 0.5 and 3.0' };
+  if (submission.minSpeed !== undefined && (submission.minSpeed < 0.0 || submission.minSpeed > 2.0)) {
+    return { valid: false, error: 'Min speed must be between 0.0 and 2.0' };
   }
 
-  if (submission.maxSpeed !== undefined && (submission.maxSpeed < 0.5 || submission.maxSpeed > 3.0)) {
-    return { valid: false, error: 'Max speed must be between 0.5 and 3.0' };
+  if (submission.maxSpeed !== undefined && (submission.maxSpeed < 0.0 || submission.maxSpeed > 2.0)) {
+    return { valid: false, error: 'Max speed must be between 0.0 and 2.0' };
   }
 
   if (submission.minSpeed && submission.maxSpeed && submission.minSpeed > submission.maxSpeed) {
@@ -103,23 +103,23 @@ export async function validateScoreSubmission(
   // 5. Validate Phase 1 score (word finding efficiency)
   // Phase 1 score = totalWordsSeen / uniqueWords
   // Perfect score = 1.0 (saw exactly the unique words)
-  // Worst reasonable score = 10.0 (saw each word 10 times on average)
+  // Can be < 1.0 if player collects words faster than vortex delivers them
+  // Can be > 20.0 if player gets distracted and vortex keeps delivering words
 
-  const MIN_PHASE1_SCORE = 1.0; // Perfect play
-  const MAX_PHASE1_SCORE = 20.0; // Very inefficient but possible
+  const MIN_PHASE1_SCORE = 0.0; // Theoretical minimum (no words seen)
+  const MAX_PHASE1_SCORE = 100.0; // Very high but possible if left idle
 
   if (submission.phase1Score < MIN_PHASE1_SCORE) {
     return {
       valid: false,
-      error: `Phase 1 score too low (${submission.phase1Score}). Minimum is ${MIN_PHASE1_SCORE}`,
+      error: `Phase 1 score cannot be negative (${submission.phase1Score})`,
     };
   }
 
   if (submission.phase1Score > MAX_PHASE1_SCORE) {
-    return {
-      valid: false,
-      error: `Phase 1 score too high (${submission.phase1Score}). Maximum is ${MAX_PHASE1_SCORE}`,
-    };
+    warnings.push(
+      `Phase 1 score is very high (${submission.phase1Score}). User may have left game idle.`
+    );
   }
 
   // 6. Validate Phase 2 score (reordering efficiency)
