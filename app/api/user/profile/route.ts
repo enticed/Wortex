@@ -58,13 +58,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Return sanitized profile data
+    const userData = user as any;
     return NextResponse.json({
-      id: user.id,
-      displayName: user.display_name,
-      userTier: user.user_tier || 'free',
-      isAdmin: user.is_admin || false,
-      isAnonymous: user.is_anonymous || false,
-      createdAt: user.created_at,
+      id: userData.id,
+      displayName: userData.display_name,
+      userTier: userData.user_tier || 'free',
+      isAdmin: userData.is_admin || false,
+      isAnonymous: userData.is_anonymous || false,
+      createdAt: userData.created_at,
     });
 
   } catch (error: any) {
@@ -169,13 +170,14 @@ export async function PUT(request: NextRequest) {
     }
 
     // Return updated profile
+    const updatedUserData = updatedUser as any;
     return NextResponse.json({
-      id: updatedUser.id,
-      displayName: updatedUser.display_name,
-      userTier: updatedUser.user_tier || 'free',
-      isAdmin: updatedUser.is_admin || false,
-      isAnonymous: updatedUser.is_anonymous || false,
-      createdAt: updatedUser.created_at,
+      id: updatedUserData.id,
+      displayName: updatedUserData.display_name,
+      userTier: updatedUserData.user_tier || 'free',
+      isAdmin: updatedUserData.is_admin || false,
+      isAnonymous: updatedUserData.is_anonymous || false,
+      createdAt: updatedUserData.created_at,
       message: 'Profile updated successfully',
     });
 

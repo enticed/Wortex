@@ -96,7 +96,7 @@ function getClientIdentifier(request: NextRequest): string {
   }
 
   // Fallback to connection IP
-  const ip = request.ip;
+  const ip = (request as any).ip;
   if (ip) {
     return ip;
   }

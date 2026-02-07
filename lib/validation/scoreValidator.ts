@@ -84,13 +84,14 @@ export async function validateScoreSubmission(
   }
 
   // 4. Validate puzzle structure
-  if (!puzzle.target || !puzzle.facsimile) {
+  const puzzleData = puzzle as any;
+  if (!puzzleData.target || !puzzleData.facsimile) {
     return { valid: false, error: 'Invalid puzzle data' };
   }
 
   // Parse puzzle words
-  const targetWords = puzzle.target.split(/[\s—–]+/).filter((w: string) => w.length > 0);
-  const facsimileWords = puzzle.facsimile.split(/[\s—–]+/).filter((w: string) => w.length > 0);
+  const targetWords = puzzleData.target.split(/[\s—–]+/).filter((w: string) => w.length > 0);
+  const facsimileWords = puzzleData.facsimile.split(/[\s—–]+/).filter((w: string) => w.length > 0);
   const uniqueWords = new Set([...targetWords, ...facsimileWords]).size;
   const quoteWordCount = targetWords.length;
 

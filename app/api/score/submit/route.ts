@@ -92,20 +92,20 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Get puzzle data for sanitization
-    const { data: puzzle } = await supabase
+    const { data: puzzle, error: puzzleError } = await supabase
       .from('puzzles')
       .select('target')
       .eq('id', puzzleId)
       .single();
 
-    if (!puzzle || !puzzle.target) {
+    if (puzzleError || !puzzle) {
       return NextResponse.json(
         { error: 'Puzzle not found' },
         { status: 404 }
       );
     }
 
-    const targetWords = puzzle.target.split(/[\s—–]+/).filter((w: string) => w.length > 0);
+    const targetWords = (puzzle.target as string).split(/[\s—–]+/).filter((w: string) => w.length > 0);
     const quoteWordCount = targetWords.length;
 
     // Sanitize the score submission (recalculate derived values)
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     const isFirstPlay = !existingScore;
 
     // Preserve the first_play_of_day flag if this is a replay
-    const firstPlayOfDay = isFirstPlay ? true : (existingScore?.first_play_of_day ?? false);
+    const firstPlayOfDay = isFirstPlay ? true : ((existingScore as any)?.first_play_of_day ?? false);
 
     // Prepare score data with sanitized values
     const scoreData: ScoreInsert = {
