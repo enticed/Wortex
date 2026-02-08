@@ -180,8 +180,8 @@ export async function POST(request: NextRequest) {
     };
 
     // Submit score (insert to allow multiple plays per puzzle)
-    const { error: scoreError } = await supabase
-      .from('scores')
+    const { error: scoreError } = await (supabase
+      .from('scores') as any)
       .insert(scoreData);
 
     if (scoreError) {
