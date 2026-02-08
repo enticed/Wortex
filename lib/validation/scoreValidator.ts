@@ -3,7 +3,7 @@
  * Prevents clients from submitting fake or manipulated scores
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client-server';
 import { calculateScore } from '@/lib/utils/game';
 import { calculateFinalStars, calculatePhase1Stars, calculatePhase2Stars } from '@/lib/utils/stars';
 
@@ -72,31 +72,41 @@ export async function validateScoreSubmission(
   }
 
   // 3. Fetch puzzle data to validate against
-  const supabase = await createClient();
+  console.log('[Score Validator] Fetching puzzle data for ID:', submission.puzzleId);
+  const supabase = createClient();
   const { data: puzzleData, error: puzzleError } = await supabase
     .from('puzzles')
-    .select('target, facsimile, speed')
+    .select('target_phrase, facsimile_phrase')
     .eq('id', submission.puzzleId)
     .single();
 
+  console.log('[Score Validator] Puzzle query result:', {
+    puzzleId: submission.puzzleId,
+    hasData: !!puzzleData,
+    hasError: !!puzzleError,
+    errorDetails: puzzleError ? { message: puzzleError.message, code: puzzleError.code, details: puzzleError.details, hint: puzzleError.hint } : null
+  });
+
   if (puzzleError || !puzzleData) {
+    console.error('[Score Validator] Puzzle not found:', puzzleError);
     return { valid: false, error: 'Puzzle not found' };
   }
 
+  console.log('[Score Validator] Successfully fetched puzzle data');
+
   // 4. Validate puzzle structure
   type PuzzleData = {
-    target: string;
-    facsimile: string;
-    speed: number | null;
+    target_phrase: string;
+    facsimile_phrase: string;
   };
   const puzzle = puzzleData as PuzzleData;
-  if (!puzzle.target || !puzzle.facsimile) {
+  if (!puzzle.target_phrase || !puzzle.facsimile_phrase) {
     return { valid: false, error: 'Invalid puzzle data' };
   }
 
   // Parse puzzle words
-  const targetWords = puzzle.target.split(/[\s—–]+/).filter((w: string) => w.length > 0);
-  const facsimileWords = puzzle.facsimile.split(/[\s—–]+/).filter((w: string) => w.length > 0);
+  const targetWords = puzzle.target_phrase.split(/[\s—–]+/).filter((w: string) => w.length > 0);
+  const facsimileWords = puzzle.facsimile_phrase.split(/[\s—–]+/).filter((w: string) => w.length > 0);
   const uniqueWords = new Set([...targetWords, ...facsimileWords]).size;
   const quoteWordCount = targetWords.length;
 
@@ -150,9 +160,13 @@ export async function validateScoreSubmission(
   }
 
   // 7. Validate final score calculation
-  // finalScore should equal phase1Score + phase2Score + bonus
-  const bonusPoints = submission.bonusCorrect ? 1 : 0;
-  const expectedFinalScore = submission.phase1Score + submission.phase2Score + bonusPoints;
+  // In this game, lower score is better
+  // - If bonus correct: finalScore = (phase1 + phase2) * 0.9 (10% discount)
+  // - If bonus wrong/skip: finalScore = phase1 + phase2 (no change)
+  const totalScore = submission.phase1Score + submission.phase2Score;
+  const expectedFinalScore = submission.bonusCorrect
+    ? Math.round((totalScore * 0.9) * 100) / 100
+    : totalScore;
 
   // Allow small floating point differences
   const scoreDifference = Math.abs(submission.finalScore - expectedFinalScore);
@@ -164,7 +178,7 @@ export async function validateScoreSubmission(
   }
 
   // 8. Validate star calculation if provided
-  if (submission.stars !== undefined) {
+  if (submission.stars !== undefined && submission.stars !== null) {
     const expectedStars = calculateFinalStars(
       submission.phase1Score,
       submission.phase2Score,
@@ -221,8 +235,13 @@ export function sanitizeScoreSubmission(
   quoteWordCount: number
 ): ScoreSubmission {
   // Recalculate final score from components
-  const bonusPoints = submission.bonusCorrect ? 1 : 0;
-  const sanitizedFinalScore = submission.phase1Score + submission.phase2Score + bonusPoints;
+  // In this game, lower score is better
+  // - If bonus correct: finalScore = (phase1 + phase2) * 0.9 (10% discount)
+  // - If bonus wrong/skip: finalScore = phase1 + phase2 (no change)
+  const totalScore = submission.phase1Score + submission.phase2Score;
+  const sanitizedFinalScore = submission.bonusCorrect
+    ? Math.round((totalScore * 0.9) * 100) / 100
+    : totalScore;
 
   // Recalculate stars from phase scores
   const sanitizedStars = calculateFinalStars(
