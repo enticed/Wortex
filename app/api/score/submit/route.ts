@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@/lib/supabase/client-server';
+import { getSession } from '@/lib/auth/session';
 import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/middleware/rateLimit';
 import { checkCsrfProtection } from '@/lib/security/csrf';
 import { validateScoreSubmission, sanitizeScoreSubmission, checkDuplicateSubmission } from '@/lib/validation/scoreValidator';
@@ -90,12 +91,35 @@ export async function POST(request: NextRequest) {
       console.warn('[ScoreSubmit] Validation warnings:', validationResult.warnings);
     }
 
-    const supabase = await createClient();
+    // Verify authentication using custom session
+    const session = await getSession();
+    if (!session) {
+      console.error('[ScoreSubmit] No session found');
+      return NextResponse.json(
+        { error: 'Unauthorized: No active session' },
+        { status: 401 }
+      );
+    }
+
+    // Verify that the authenticated user matches the submitted userId
+    if (session.userId !== userId) {
+      console.error('[ScoreSubmit] User ID mismatch:', {
+        sessionUserId: session.userId,
+        submittedUserId: userId
+      });
+      return NextResponse.json(
+        { error: 'Unauthorized: User ID does not match authenticated user' },
+        { status: 401 }
+      );
+    }
+
+    // Use service role client for database operations (bypasses RLS)
+    const supabase = createServiceClient();
 
     // Get puzzle data for sanitization
     const { data: puzzleData, error: puzzleError } = await supabase
       .from('puzzles')
-      .select('target')
+      .select('target_phrase')
       .eq('id', puzzleId)
       .single();
 
@@ -106,8 +130,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const puzzle = puzzleData as { target: string };
-    const targetWords = puzzle.target.split(/[\s—–]+/).filter((w: string) => w.length > 0);
+    const puzzle = puzzleData as { target_phrase: string };
+    const targetWords = puzzle.target_phrase.split(/[\s—–]+/).filter((w: string) => w.length > 0);
     const quoteWordCount = targetWords.length;
 
     // Sanitize the score submission (recalculate derived values)
@@ -126,17 +150,18 @@ export async function POST(request: NextRequest) {
     }, quoteWordCount);
 
     // Check if this is the user's first play of this puzzle
-    const { data: existingScore } = await supabase
+    const { data: existingScores } = await supabase
       .from('scores')
       .select('id, first_play_of_day')
       .eq('user_id', userId)
       .eq('puzzle_id', puzzleId)
-      .maybeSingle();
+      .limit(1);
 
-    const isFirstPlay = !existingScore;
+    const isFirstPlay = !existingScores || existingScores.length === 0;
 
-    // Preserve the first_play_of_day flag if this is a replay
-    const firstPlayOfDay = isFirstPlay ? true : ((existingScore as any)?.first_play_of_day ?? false);
+    // Determine if this qualifies as "first play of day" (for Pure rankings)
+    // Only the first play with no speed modifications counts as Pure
+    const firstPlayOfDay = isFirstPlay;
 
     // Prepare score data with sanitized values
     const scoreData: ScoreInsert = {
@@ -154,13 +179,10 @@ export async function POST(request: NextRequest) {
       stars: sanitized.stars,
     };
 
-    // Submit score (upsert to handle replays)
+    // Submit score (insert to allow multiple plays per puzzle)
     const { error: scoreError } = await supabase
       .from('scores')
-      // @ts-expect-error - Supabase types not properly inferred in server context
-      .upsert(scoreData, {
-        onConflict: 'user_id,puzzle_id'
-      });
+      .insert(scoreData);
 
     if (scoreError) {
       console.error('[ScoreSubmit] Error submitting score:', scoreError);

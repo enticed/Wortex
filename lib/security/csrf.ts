@@ -60,14 +60,21 @@ export function validateCsrfToken(request: NextRequest): boolean {
   const cookieToken = getCsrfTokenFromCookie(request);
   const headerToken = getCsrfTokenFromHeader(request);
 
+  console.log('[CSRF Server] Validating CSRF token:');
+  console.log('  Cookie token:', cookieToken ? `${cookieToken.substring(0, 10)}...` : 'null');
+  console.log('  Header token:', headerToken ? `${headerToken.substring(0, 10)}...` : 'null');
+
   // Both tokens must exist
   if (!cookieToken || !headerToken) {
+    console.log('[CSRF Server] Validation failed: missing token');
     return false;
   }
 
   // Tokens must match exactly (timing-safe comparison)
   // Using constant-time comparison to prevent timing attacks
-  return timingSafeEqual(cookieToken, headerToken);
+  const isValid = timingSafeEqual(cookieToken, headerToken);
+  console.log('[CSRF Server] Tokens match:', isValid);
+  return isValid;
 }
 
 /**
@@ -156,8 +163,10 @@ export async function generateCsrfTokenResponse(): Promise<NextResponse> {
 /**
  * Refresh CSRF token in response
  * Call this after successful authentication to rotate tokens
+ * Returns the new token so it can be included in the JSON response
  */
-export function refreshCsrfToken(response: NextResponse): void {
+export function refreshCsrfToken(response: NextResponse): string {
   const newToken = generateCsrfToken();
   setCsrfCookie(response, newToken);
+  return newToken;
 }

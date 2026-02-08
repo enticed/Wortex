@@ -45,6 +45,12 @@ export default function SignInDialog({ isOpen, onClose, onSuccess, onSwitchToSig
 
       console.log('[SignIn] Sign in successful');
 
+      // Update CSRF token if provided
+      if (data.csrfToken) {
+        sessionStorage.setItem('wortex-csrf-token', data.csrfToken);
+        console.log('[SignIn] Updated CSRF token in sessionStorage');
+      }
+
       // Success - call onSuccess to refresh user context
       setLoading(false);
       onSuccess();

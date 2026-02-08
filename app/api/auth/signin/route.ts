@@ -94,9 +94,18 @@ export async function POST(request: NextRequest) {
     });
 
     // Refresh CSRF token after successful authentication
-    refreshCsrfToken(response);
+    const newCsrfToken = refreshCsrfToken(response);
 
-    return response;
+    // Update response to include new CSRF token
+    return NextResponse.json({
+      success: true,
+      userId: userData.id,
+      message: 'Signed in successfully',
+      csrfToken: newCsrfToken,
+    }, {
+      status: 200,
+      headers: response.headers,
+    });
 
   } catch (error: any) {
     console.error('Error in signin route:', error);

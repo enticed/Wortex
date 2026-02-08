@@ -182,12 +182,23 @@ Total: 204 tests passing
 - **Fix:** Use SELECT FOR UPDATE or RPC with transaction
 - **Tests:** Integration test for concurrent updates
 
-### 12. Missing Input Sanitization
-- **Scope:** User-generated content (display names, etc.)
-- **Status:** ⏳ TODO
-- **Issue:** Potential XSS vulnerability
-- **Fix:** Add DOMPurify or similar sanitization
-- **Tests:** Unit tests for sanitization
+### 12. Missing Input Sanitization ✅ FIXED
+- **Scope:** User-generated content (display names, emails)
+- **Status:** ✅ COMPLETE
+- **Issue:** Potential XSS vulnerability from unsanitized user input
+- **Fix Applied:**
+  - Installed `isomorphic-dompurify` package for XSS protection
+  - Created centralized sanitization utility ([lib/security/sanitize.ts](../lib/security/sanitize.ts))
+  - Applied sanitization to all user input endpoints:
+    - `sanitizeDisplayName()` - Strips HTML, trims, limits to 50 chars
+    - `sanitizeEmail()` - Strips HTML, validates format, lowercases
+    - `sanitizeText()` - General text sanitization with optional max length
+    - `sanitizeTimezone()` - Validates IANA timezone strings
+  - Updated API routes:
+    - [app/api/auth/signup/route.ts](../app/api/auth/signup/route.ts) - Sanitizes display names and emails
+    - [app/api/user/profile/route.ts](../app/api/user/profile/route.ts) - Sanitizes profile updates
+- **Tests:** Unit tests in `__tests__/unit/sanitize.test.ts`
+- **User Impact:** Prevents malicious users from injecting scripts through display names or other text fields, protecting all users from XSS attacks
 
 ## Medium Priority (P2) - FIX WITHIN FIRST MONTH
 

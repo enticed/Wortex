@@ -33,7 +33,7 @@ const config: Config = {
     '<rootDir>/e2e/',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!(jose)/)',
+    'node_modules/(?!(jose|isomorphic-dompurify|dompurify|@exodus)/)',
   ],
 };
 

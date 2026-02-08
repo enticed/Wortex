@@ -62,6 +62,12 @@ export default function UpgradeAccountDialog({ isOpen, onClose, onSuccess }: Upg
 
       console.log('[UpgradeAccount] Account upgrade complete');
 
+      // Update CSRF token if provided
+      if (data.csrfToken) {
+        sessionStorage.setItem('wortex-csrf-token', data.csrfToken);
+        console.log('[UpgradeAccount] Updated CSRF token in sessionStorage');
+      }
+
       // Success - call onSuccess to refresh user context
       setLoading(false);
       onSuccess();

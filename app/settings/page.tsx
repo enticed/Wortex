@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/lib/contexts/UserContext';
 import { useRouter } from 'next/navigation';
+import { fetchWithCsrf } from '@/lib/security/csrf-client';
 
 export default function SettingsPage() {
   const { user, userData, userId } = useUser();
@@ -40,8 +41,8 @@ export default function SettingsPage() {
     setLoading(true);
 
     try {
-      // Use API endpoint instead of direct database update
-      const response = await fetch('/api/user/profile', {
+      // Use API endpoint with CSRF protection
+      const response = await fetchWithCsrf('/api/user/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -49,7 +50,6 @@ export default function SettingsPage() {
         body: JSON.stringify({
           displayName: displayName.trim() || null
         }),
-        credentials: 'include', // Include session cookie
       });
 
       const data = await response.json();
@@ -61,9 +61,13 @@ export default function SettingsPage() {
       }
 
       setSaveMessage(data.message || 'Profile updated successfully');
-      setLoading(false);
 
-      // No need to reload - UserContext will pick up the change on next fetch
+      // Update local state with sanitized display name from server
+      if (data.displayName !== undefined) {
+        setDisplayName(data.displayName || '');
+      }
+
+      setLoading(false);
 
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');

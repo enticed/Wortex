@@ -9,6 +9,7 @@ import { hashPassword } from '@/lib/auth/password';
 import { createSession } from '@/lib/auth/session';
 import { checkRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/middleware/rateLimit';
 import { checkCsrfProtection, refreshCsrfToken } from '@/lib/security/csrf';
+import { sanitizeDisplayName, sanitizeEmail } from '@/lib/security/sanitize';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
@@ -26,17 +27,20 @@ export async function POST(request: NextRequest) {
   try {
     const { email, password, displayName } = await request.json();
 
+    // Sanitize inputs
+    const sanitizedEmail = sanitizeEmail(email);
+    const sanitizedDisplayName = sanitizeDisplayName(displayName);
+
     // Validate inputs
-    if (!email || !password) {
+    if (!sanitizedEmail || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }
       );
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Email validation (already done by sanitizeEmail, but check result)
+    if (!sanitizedEmail) {
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
     const { data: existingUser } = await supabase
       .from('users')
       .select('id')
-      .eq('email', email.toLowerCase())
+      .eq('email', sanitizedEmail)
       .single();
 
     if (existingUser) {
@@ -70,15 +74,15 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Create user
+    // Create user with sanitized inputs
     const userId = uuidv4();
     const { error: insertError } = await supabase
       .from('users')
       .insert([{
         id: userId,
-        email: email.toLowerCase(),
+        email: sanitizedEmail,
         password_hash: passwordHash,
-        display_name: displayName || email.split('@')[0],
+        display_name: sanitizedDisplayName || sanitizedEmail.split('@')[0],
         is_anonymous: false,
       }] as any);
 
@@ -91,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create session
-    const sessionToken = await createSession(userId, false, email.toLowerCase());
+    const sessionToken = await createSession(userId, false, sanitizedEmail);
 
     const response = NextResponse.json({
       success: true,
@@ -109,9 +113,18 @@ export async function POST(request: NextRequest) {
     });
 
     // Refresh CSRF token after successful authentication
-    refreshCsrfToken(response);
+    const newCsrfToken = refreshCsrfToken(response);
 
-    return response;
+    // Update response to include new CSRF token
+    return NextResponse.json({
+      success: true,
+      userId,
+      message: 'Account created successfully',
+      csrfToken: newCsrfToken,
+    }, {
+      status: 200,
+      headers: response.headers,
+    });
 
   } catch (error: any) {
     console.error('Error in signup route:', error);

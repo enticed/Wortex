@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/client-server';
 import { checkCsrfProtection } from '@/lib/security/csrf';
+import { sanitizeDisplayName } from '@/lib/security/sanitize';
 
 export async function GET(request: NextRequest) {
   try {
@@ -115,7 +116,8 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { displayName } = body;
 
-    // Validate display name
+    // Sanitize and validate display name
+    let sanitizedDisplayName: string | null = null;
     if (displayName !== undefined) {
       if (typeof displayName !== 'string') {
         return NextResponse.json(
@@ -124,17 +126,11 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      const trimmed = displayName.trim();
-      if (trimmed.length > 0 && trimmed.length < 2) {
+      sanitizedDisplayName = sanitizeDisplayName(displayName);
+
+      if (sanitizedDisplayName.length > 0 && sanitizedDisplayName.length < 2) {
         return NextResponse.json(
           { error: 'Display name must be at least 2 characters' },
-          { status: 400 }
-        );
-      }
-
-      if (trimmed.length > 50) {
-        return NextResponse.json(
-          { error: 'Display name must be 50 characters or less' },
           { status: 400 }
         );
       }
@@ -143,13 +139,13 @@ export async function PUT(request: NextRequest) {
     // Use service role client (server-side only, bypasses RLS)
     const supabase = createClient();
 
-    // Update user profile
+    // Update user profile with sanitized data
     type UpdateData = {
       display_name?: string | null;
     };
     const updateData: UpdateData = {};
-    if (displayName !== undefined) {
-      updateData.display_name = displayName.trim() || null;
+    if (sanitizedDisplayName !== null) {
+      updateData.display_name = sanitizedDisplayName || null;
     }
 
     const { error } = await (supabase.from('users') as any)
