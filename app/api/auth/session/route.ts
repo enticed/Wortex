@@ -28,12 +28,63 @@ const BOT_PATTERNS = [
   /uptimerobot/i,
   /pingdom/i,
   /headless/i,
+  /prerender/i,
+  /preview/i,
+  /lighthouse/i,
+  /pagespeed/i,
+  /gtmetrix/i,
+  /semrush/i,
+  /ahrefs/i,
+  /moz\.com/i,
+  /datadoghq/i,
+  /newrelic/i,
 ];
 
 function isLikelyBot(userAgent: string | null): boolean {
   if (!userAgent) return true; // No user agent = suspicious
   return BOT_PATTERNS.some(pattern => pattern.test(userAgent));
 }
+
+// Rate limiting for user creation - prevent spam from same IP
+const userCreationAttempts = new Map<string, { count: number; firstAttempt: number }>();
+const MAX_USERS_PER_IP_PER_HOUR = 3;
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in ms
+
+function checkUserCreationRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const attempts = userCreationAttempts.get(ip);
+
+  if (!attempts) {
+    userCreationAttempts.set(ip, { count: 1, firstAttempt: now });
+    return true; // Allow first attempt
+  }
+
+  // Reset if window has expired
+  if (now - attempts.firstAttempt > RATE_LIMIT_WINDOW) {
+    userCreationAttempts.set(ip, { count: 1, firstAttempt: now });
+    return true;
+  }
+
+  // Check if limit exceeded
+  if (attempts.count >= MAX_USERS_PER_IP_PER_HOUR) {
+    console.log(`[SessionAPI] Rate limit exceeded for IP: ${ip} (${attempts.count} attempts in last hour)`);
+    return false;
+  }
+
+  // Increment count
+  attempts.count++;
+  return true;
+}
+
+// Clean up old rate limit entries every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, attempts] of userCreationAttempts.entries()) {
+    if (now - attempts.firstAttempt > RATE_LIMIT_WINDOW) {
+      userCreationAttempts.delete(ip);
+    }
+  }
+}, 10 * 60 * 1000);
 
 export async function GET(request: NextRequest) {
   try {
@@ -54,9 +105,23 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      // Get IP address for rate limiting
+      const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                 request.headers.get('x-real-ip') ||
+                 'unknown';
+
+      // Check rate limit
+      if (!checkUserCreationRateLimit(ip)) {
+        console.log('[SessionAPI] Rate limit exceeded, not creating user. IP:', ip);
+        return NextResponse.json(
+          { error: 'Too many requests' },
+          { status: 429 }
+        );
+      }
+
       console.log('[SessionAPI] No session found, creating anonymous user...');
       console.log('[SessionAPI] User-Agent:', userAgent?.substring(0, 100));
-      console.log('[SessionAPI] IP:', request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown');
+      console.log('[SessionAPI] IP:', ip);
 
       const anonymousId = uuidv4();
       const supabase = createClient();
