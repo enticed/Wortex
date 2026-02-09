@@ -13,6 +13,7 @@ import {
   useDroppable,
 } from '@dnd-kit/core';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Vortex from './Vortex';
 import AssemblyArea from './AssemblyArea';
 import Word from './Word';
@@ -35,6 +36,7 @@ interface GameBoardProps {
 }
 
 export default function GameBoard({ puzzle, isArchiveMode = false, showResults = false }: GameBoardProps) {
+  const router = useRouter();
   const [vortexSpeed, setVortexSpeed] = useState(1.0); // Speed multiplier for vortex rotation
   const {
     gameState,
@@ -154,18 +156,21 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
 
             setSavedResults(results);
           } else {
-            console.warn('[GameBoard] No score data found for this puzzle');
+            console.warn('[GameBoard] No score data found for this puzzle - redirecting to homepage');
+            router.push('/');
           }
         } else {
-          console.error('[GameBoard] Error response:', response.status);
+          console.error('[GameBoard] Error response:', response.status, '- redirecting to homepage');
+          router.push('/');
         }
       } catch (error) {
-        console.error('[GameBoard] Error loading score results:', error);
+        console.error('[GameBoard] Error loading score results:', error, '- redirecting to homepage');
+        router.push('/');
       }
     }
 
     loadScoreResults();
-  }, [showResults, userId, puzzle.id, puzzle.date, puzzle.targetPhrase.words.length, puzzle.facsimilePhrase.words.length]);
+  }, [showResults, userId, puzzle.id, puzzle.date, puzzle.targetPhrase.words.length, puzzle.facsimilePhrase.words.length, router]);
 
   // Tutorial: Phase 1 steps (show on game start if tutorial not completed)
   // ONLY run tutorial on the actual tutorial puzzle, not on daily puzzles
@@ -346,14 +351,16 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
       const oldIndex = gameState.targetPhraseWords.findIndex((w) => w.id === activeId);
 
       let newIndex: number;
-      if (overId === 'target') {
-        // Dropping on target area itself - place at end
-        newIndex = gameState.targetPhraseWords.length;
-      } else if (dropIndicatorIndex !== null) {
-        // Use the indicator index
+      // IMPORTANT: Prioritize the indicator position over collision detection
+      // The indicator was set during dragOver and shows where the user intends to place the word
+      if (dropIndicatorIndex !== null) {
+        // Use the indicator index - this is where the user positioned it
         newIndex = dropIndicatorIndex;
+      } else if (overId === 'target') {
+        // Dropping on target area itself - place at end (only if no indicator was set)
+        newIndex = gameState.targetPhraseWords.length;
       } else {
-        // Fallback - shouldn't happen
+        // Fallback - find index of drop target word
         newIndex = gameState.targetPhraseWords.findIndex((w) => w.id === overId);
       }
 
@@ -714,6 +721,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
               phase2Score={savedResults?.phase2Score ?? gameState.phase2Score ?? 0}
               finalScore={savedResults?.finalScore ?? gameState.finalScore ?? 0}
               bonusCorrect={savedResults?.bonusCorrect ?? gameState.bonusCorrect}
+              isPure={!isArchiveMode && gameState.minSpeed === 1.0 && gameState.maxSpeed === 1.0}
               onPlayAgain={() => {
                 sessionStorage.removeItem('wortex-final-results');
                 window.location.reload();
