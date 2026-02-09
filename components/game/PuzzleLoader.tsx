@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import GameBoard from './GameBoard';
 import AppLayout from '@/components/layout/AppLayout';
+import { GameErrorBoundary } from '@/components/error/GameErrorBoundary';
 import { getUserTimezone } from '@/lib/utils/game';
 import type { Puzzle } from '@/types/game';
 
@@ -85,7 +86,9 @@ export default function PuzzleLoader({ fallbackPuzzle }: PuzzleLoaderProps) {
 
   return (
     <AppLayout showHeader={true} isArchiveMode={isArchiveMode} isGamePage={true}>
-      <GameBoard puzzle={puzzle} isArchiveMode={isArchiveMode} showResults={showResults} />
+      <GameErrorBoundary>
+        <GameBoard puzzle={puzzle} isArchiveMode={isArchiveMode} showResults={showResults} />
+      </GameErrorBoundary>
     </AppLayout>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import TierBadge from '@/components/admin/TierBadge';
 import ShareModal from '@/components/share/ShareModal';
 import { generateLeaderboardShareText } from '@/lib/utils/shareText';
@@ -67,22 +67,38 @@ export default function LeaderboardTable({
     return null; // Let parent handle empty state messaging
   }
 
+  // Group entries by stars (5 to 1)
+  const groupedByStars = entries.reduce((groups, entry) => {
+    const stars = ('stars' in entry && entry.stars) ? entry.stars : 0;
+    if (!groups[stars]) {
+      groups[stars] = [];
+    }
+    groups[stars].push(entry);
+    return groups;
+  }, {} as Record<number, LeaderboardEntryWithTier[]>);
+
+  // Get star levels that have entries (sorted 5 to 1)
+  const starLevels = Object.keys(groupedByStars)
+    .map(Number)
+    .sort((a, b) => b - a)
+    .filter(stars => stars > 0); // Only show groups with stars
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+            <th className="text-left py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Rank
             </th>
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+            <th className="text-left py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Player
             </th>
-            <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+            <th className="text-right py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Score
             </th>
             {showSpeed && (
-              <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+              <th className="text-center py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                 Speed
               </th>
             )}
@@ -92,7 +108,24 @@ export default function LeaderboardTable({
           </tr>
         </thead>
         <tbody>
-          {entries.map((entry, index) => {
+          {starLevels.map((starLevel) => (
+            <React.Fragment key={`star-group-${starLevel}`}>
+              {/* Star group header */}
+              <tr key={`star-header-${starLevel}`}>
+                <td colSpan={showSpeed ? 4 : (puzzleDate ? 4 : 3)} className="py-3 px-4 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-500 text-lg">
+                      {'⭐'.repeat(starLevel)}
+                    </span>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      {starLevel} {starLevel === 1 ? 'Star' : 'Stars'}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+
+              {/* Entries for this star level */}
+              {groupedByStars[starLevel].map((entry, index) => {
             const isCurrentUser = entry.user_id === currentUserId;
             const isTopThree = entry.rank <= 3;
 
@@ -105,7 +138,7 @@ export default function LeaderboardTable({
                   ${isCurrentUser ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
                 `}
               >
-                <td className="py-4 px-4">
+                <td className="py-2 px-4">
                   <div className="flex items-center gap-2">
                     {isTopThree ? (
                       <span className="text-2xl">
@@ -120,7 +153,7 @@ export default function LeaderboardTable({
                     )}
                   </div>
                 </td>
-                <td className="py-4 px-4">
+                <td className="py-2 px-4">
                   <div className="flex items-center gap-2">
                     <span className={`
                       font-medium
@@ -141,7 +174,7 @@ export default function LeaderboardTable({
                     )}
                   </div>
                 </td>
-                <td className="py-4 px-4">
+                <td className="py-2 px-4">
                   <div className="text-right">
                     <span className="font-bold text-gray-900 dark:text-gray-100">
                       {entry.score.toFixed(2)}
@@ -149,7 +182,7 @@ export default function LeaderboardTable({
                   </div>
                 </td>
                 {showSpeed && 'min_speed' in entry && 'max_speed' in entry && (
-                  <td className="py-4 px-4">
+                  <td className="py-2 px-4">
                     <div className="text-center">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {entry.min_speed === entry.max_speed
@@ -161,7 +194,7 @@ export default function LeaderboardTable({
                   </td>
                 )}
                 {puzzleDate && isCurrentUser && (
-                  <td className="py-4 px-2">
+                  <td className="py-2 px-2">
                     <button
                       onClick={() => handleShare(entry)}
                       className="p-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
@@ -175,11 +208,13 @@ export default function LeaderboardTable({
                   </td>
                 )}
                 {puzzleDate && !isCurrentUser && (
-                  <td className="py-4 px-2"></td>
+                  <td className="py-2 px-2"></td>
                 )}
               </tr>
             );
           })}
+            </React.Fragment>
+          ))}
         </tbody>
       </table>
 

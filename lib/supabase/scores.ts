@@ -167,13 +167,14 @@ export async function getUserPuzzleScore(
 export async function getPuzzleLeaderboardPure(
   supabase: any,
   puzzleId: string,
-  limit: number = 100
+  limit: number = 100,
+  offset: number = 0
 ): Promise<Array<LeaderboardPureRow & { user_tier?: 'free' | 'premium' | 'admin' }>> {
   const { data, error } = await supabase
     .from('leaderboards_pure')
     .select('*')
     .eq('puzzle_id', puzzleId)
-    .limit(limit);
+    .range(offset, offset + limit - 1);
 
   if (error) {
     console.error('Error fetching Pure leaderboard:', error);
@@ -206,13 +207,14 @@ export async function getPuzzleLeaderboardPure(
 export async function getPuzzleLeaderboardBoosted(
   supabase: any,
   puzzleId: string,
-  limit: number = 100
+  limit: number = 100,
+  offset: number = 0
 ): Promise<Array<LeaderboardBoostedRow & { user_tier?: 'free' | 'premium' | 'admin' }>> {
   const { data, error } = await supabase
     .from('leaderboards_boosted')
     .select('*')
     .eq('puzzle_id', puzzleId)
-    .limit(limit);
+    .range(offset, offset + limit - 1);
 
   if (error) {
     console.error('Error fetching Boosted leaderboard:', error);
@@ -244,13 +246,25 @@ export async function getPuzzleLeaderboardBoosted(
  */
 export async function getGlobalLeaderboardPure(
   supabase: any,
-  limit: number = 100
+  limit: number = 100,
+  offset: number = 0,
+  sortBy: 'average_score' | 'total_stars' = 'average_score'
 ): Promise<Array<GlobalLeaderboardPureRow & { user_tier?: 'free' | 'premium' | 'admin' }>> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('global_leaderboards_pure')
     .select('*')
-    .gte('total_games', 10)
-    .limit(limit);
+    .gte('total_games', 10);
+
+  // Sort by the specified metric
+  if (sortBy === 'total_stars') {
+    query = query.order('total_stars', { ascending: false });
+  } else {
+    query = query.order('average_score', { ascending: true });
+  }
+
+  query = query.range(offset, offset + limit - 1);
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching Pure global leaderboard:', error);
@@ -282,13 +296,25 @@ export async function getGlobalLeaderboardPure(
  */
 export async function getGlobalLeaderboardBoosted(
   supabase: any,
-  limit: number = 100
+  limit: number = 100,
+  offset: number = 0,
+  sortBy: 'average_score' | 'total_stars' = 'average_score'
 ): Promise<Array<GlobalLeaderboardBoostedRow & { user_tier?: 'free' | 'premium' | 'admin' }>> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('global_leaderboards_boosted')
     .select('*')
-    .gte('total_games', 10)
-    .limit(limit);
+    .gte('total_games', 10);
+
+  // Sort by the specified metric
+  if (sortBy === 'total_stars') {
+    query = query.order('total_stars', { ascending: false });
+  } else {
+    query = query.order('average_score', { ascending: true });
+  }
+
+  query = query.range(offset, offset + limit - 1);
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching Boosted global leaderboard:', error);

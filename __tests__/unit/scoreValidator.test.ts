@@ -21,8 +21,10 @@ describe('Score Validation', () => {
 
       const sanitized = sanitizeScoreSubmission(submission, 10);
 
-      // finalScore should be phase1 + phase2 + bonus
-      expect(sanitized.finalScore).toBe(5.25); // 2.5 + 1.75 + 1
+      // finalScore should be (phase1 + phase2) * bonus_multiplier
+      // Bonus correct = 0.9 multiplier (10% reduction)
+      // Result is rounded to 2 decimal places: 3.825 → 3.83
+      expect(sanitized.finalScore).toBe(3.83); // (2.5 + 1.75) * 0.9 = 3.825, rounded to 3.83
     });
 
     test('should recalculate final score without bonus', () => {
@@ -205,8 +207,8 @@ describe('Score Validation', () => {
       const submission: ScoreSubmission = {
         userId: 'user-123',
         puzzleId: 'puzzle-456',
-        finalScore: 2.0, // 1.0 + 0 + 1 (bonus)
-        phase1Score: 1.0, // Perfect
+        finalScore: 2.0, // Wrong value
+        phase1Score: 1.0, // Perfect - saw 100% of combined words (hint + mystery)
         phase2Score: 0, // No reordering needed
         bonusCorrect: true,
         timeTakenSeconds: 60,
@@ -215,7 +217,8 @@ describe('Score Validation', () => {
 
       const sanitized = sanitizeScoreSubmission(submission, 10);
 
-      expect(sanitized.finalScore).toBe(2.0);
+      // Perfect score: (1.0 + 0) * 0.9 = 0.9
+      expect(sanitized.finalScore).toBe(0.9);
       expect(sanitized.stars).toBe(5); // Perfect play = 5 stars
     });
 

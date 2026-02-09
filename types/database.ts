@@ -161,6 +161,8 @@ export interface Database {
           best_streak: number;
           last_played_date: string;
           updated_at: string;
+          total_stars_pure: number;
+          total_stars_boosted: number;
         };
         Insert: {
           user_id: string;
@@ -170,6 +172,8 @@ export interface Database {
           best_streak?: number;
           last_played_date?: string;
           updated_at?: string;
+          total_stars_pure?: number;
+          total_stars_boosted?: number;
         };
         Update: {
           user_id?: string;
@@ -178,6 +182,8 @@ export interface Database {
           current_streak?: number;
           best_streak?: number;
           last_played_date?: string;
+          total_stars_pure?: number;
+          total_stars_boosted?: number;
           updated_at?: string;
         };
       };
@@ -234,6 +240,7 @@ export interface Database {
           display_name: string | null;
           score: number;
           bonus_correct: boolean;
+          stars: number | null;
           rank: number;
           puzzle_date: string;
         };
@@ -248,6 +255,7 @@ export interface Database {
           speed: number;
           min_speed: number;
           max_speed: number;
+          stars: number | null;
           rank: number;
           puzzle_date: string;
         };
@@ -258,6 +266,7 @@ export interface Database {
           display_name: string | null;
           average_score: number;
           total_games: number;
+          total_stars: number;
           rank: number;
         };
       };
@@ -267,6 +276,7 @@ export interface Database {
           display_name: string | null;
           average_score: number;
           total_games: number;
+          total_stars: number;
           rank: number;
         };
       };

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
 import GlobalLeaderboardTable from '@/components/leaderboard/GlobalLeaderboardTable';
+import RankingSubTabs from '@/components/leaderboard/RankingSubTabs';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/contexts/UserContext';
 import {
@@ -33,13 +34,31 @@ interface GlobalLeaderboardEntry {
   total_games: number;
 }
 
+type RankingSubTabType = 'pure' | 'boosted';
+type GlobalMetricType = 'average_score' | 'total_stars';
+
 function LeaderboardContent() {
   const { userId, loading: userLoading } = useUser();
   const [activeTab, setActiveTab] = useState<TabType>('daily');
+  const [activeSubTab, setActiveSubTab] = useState<RankingSubTabType>('pure');
+  const [globalMetric, setGlobalMetric] = useState<GlobalMetricType>('average_score');
+
   const [dailyEntriesPure, setDailyEntriesPure] = useState<LeaderboardPureRow[]>([]);
   const [dailyEntriesBoosted, setDailyEntriesBoosted] = useState<LeaderboardBoostedRow[]>([]);
   const [globalEntriesPure, setGlobalEntriesPure] = useState<GlobalLeaderboardPureRow[]>([]);
   const [globalEntriesBoosted, setGlobalEntriesBoosted] = useState<GlobalLeaderboardBoostedRow[]>([]);
+
+  // Pagination state
+  const [dailyPureOffset, setDailyPureOffset] = useState(0);
+  const [dailyBoostedOffset, setDailyBoostedOffset] = useState(0);
+  const [globalPureOffset, setGlobalPureOffset] = useState(0);
+  const [globalBoostedOffset, setGlobalBoostedOffset] = useState(0);
+  const [hasMoreDailyPure, setHasMoreDailyPure] = useState(true);
+  const [hasMoreDailyBoosted, setHasMoreDailyBoosted] = useState(true);
+  const [hasMoreGlobalPure, setHasMoreGlobalPure] = useState(true);
+  const [hasMoreGlobalBoosted, setHasMoreGlobalBoosted] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [puzzleDate, setPuzzleDate] = useState<string | null>(null);
   const [isArchiveMode, setIsArchiveMode] = useState(false);
@@ -102,24 +121,32 @@ function LeaderboardContent() {
       if (puzzle) {
         setPuzzleDate(puzzle.date);
 
-        // Load daily leaderboards (Pure and Boosted)
-        const dailyPure = await getPuzzleLeaderboardPure(supabase, puzzle.id, 100);
-        const dailyBoosted = await getPuzzleLeaderboardBoosted(supabase, puzzle.id, 100);
+        // Load daily leaderboards (Pure and Boosted) - initial 20 entries
+        const dailyPure = await getPuzzleLeaderboardPure(supabase, puzzle.id, 20, 0);
+        const dailyBoosted = await getPuzzleLeaderboardBoosted(supabase, puzzle.id, 20, 0);
         console.log('[Leaderboard] Daily Pure entries:', dailyPure.length);
         console.log('[Leaderboard] Daily Boosted entries:', dailyBoosted.length);
         setDailyEntriesPure(dailyPure);
         setDailyEntriesBoosted(dailyBoosted);
+        setHasMoreDailyPure(dailyPure.length === 20);
+        setHasMoreDailyBoosted(dailyBoosted.length === 20);
+        setDailyPureOffset(20);
+        setDailyBoostedOffset(20);
       } else {
         console.warn('[Leaderboard] No puzzle found for today!');
       }
 
-      // Load global leaderboards (Pure and Boosted)
-      const globalPure = await getGlobalLeaderboardPure(supabase, 100);
-      const globalBoosted = await getGlobalLeaderboardBoosted(supabase, 100);
+      // Load global leaderboards (Pure and Boosted) - initial 20 entries
+      const globalPure = await getGlobalLeaderboardPure(supabase, 20, 0, globalMetric);
+      const globalBoosted = await getGlobalLeaderboardBoosted(supabase, 20, 0, globalMetric);
       console.log('[Leaderboard] Global Pure entries:', globalPure.length);
       console.log('[Leaderboard] Global Boosted entries:', globalBoosted.length);
       setGlobalEntriesPure(globalPure);
       setGlobalEntriesBoosted(globalBoosted);
+      setHasMoreGlobalPure(globalPure.length === 20);
+      setHasMoreGlobalBoosted(globalBoosted.length === 20);
+      setGlobalPureOffset(20);
+      setGlobalBoostedOffset(20);
 
       console.log('[Leaderboard] Loading complete');
     } catch (error) {
@@ -167,6 +194,94 @@ function LeaderboardContent() {
       supabase.removeChannel(channel);
     };
   }, [dailyEntriesPure.length, dailyEntriesBoosted.length]);
+
+  // Load More functions
+  const loadMoreDailyPure = async () => {
+    if (!puzzleDate || loadingMore || !hasMoreDailyPure) return;
+    setLoadingMore(true);
+    try {
+      const puzzle = await getTodaysPuzzle(supabase);
+      if (puzzle) {
+        const moreEntries = await getPuzzleLeaderboardPure(supabase, puzzle.id, 20, dailyPureOffset);
+        setDailyEntriesPure(prev => [...prev, ...moreEntries]);
+        setHasMoreDailyPure(moreEntries.length === 20);
+        setDailyPureOffset(prev => prev + moreEntries.length);
+      }
+    } catch (error) {
+      console.error('[Leaderboard] Error loading more daily pure:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreDailyBoosted = async () => {
+    if (!puzzleDate || loadingMore || !hasMoreDailyBoosted) return;
+    setLoadingMore(true);
+    try {
+      const puzzle = await getTodaysPuzzle(supabase);
+      if (puzzle) {
+        const moreEntries = await getPuzzleLeaderboardBoosted(supabase, puzzle.id, 20, dailyBoostedOffset);
+        setDailyEntriesBoosted(prev => [...prev, ...moreEntries]);
+        setHasMoreDailyBoosted(moreEntries.length === 20);
+        setDailyBoostedOffset(prev => prev + moreEntries.length);
+      }
+    } catch (error) {
+      console.error('[Leaderboard] Error loading more daily boosted:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreGlobalPure = async () => {
+    if (loadingMore || !hasMoreGlobalPure) return;
+    setLoadingMore(true);
+    try {
+      const moreEntries = await getGlobalLeaderboardPure(supabase, 20, globalPureOffset, globalMetric);
+      setGlobalEntriesPure(prev => [...prev, ...moreEntries]);
+      setHasMoreGlobalPure(moreEntries.length === 20);
+      setGlobalPureOffset(prev => prev + moreEntries.length);
+    } catch (error) {
+      console.error('[Leaderboard] Error loading more global pure:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreGlobalBoosted = async () => {
+    if (loadingMore || !hasMoreGlobalBoosted) return;
+    setLoadingMore(true);
+    try {
+      const moreEntries = await getGlobalLeaderboardBoosted(supabase, 20, globalBoostedOffset, globalMetric);
+      setGlobalEntriesBoosted(prev => [...prev, ...moreEntries]);
+      setHasMoreGlobalBoosted(moreEntries.length === 20);
+      setGlobalBoostedOffset(prev => prev + moreEntries.length);
+    } catch (error) {
+      console.error('[Leaderboard] Error loading more global boosted:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Handle metric change for global leaderboards
+  const handleGlobalMetricChange = async (metric: GlobalMetricType) => {
+    setGlobalMetric(metric);
+    setLoading(true);
+    try {
+      // Reload global leaderboards with new metric
+      const globalPure = await getGlobalLeaderboardPure(supabase, 20, 0, metric);
+      const globalBoosted = await getGlobalLeaderboardBoosted(supabase, 20, 0, metric);
+      setGlobalEntriesPure(globalPure);
+      setGlobalEntriesBoosted(globalBoosted);
+      setHasMoreGlobalPure(globalPure.length === 20);
+      setHasMoreGlobalBoosted(globalBoosted.length === 20);
+      setGlobalPureOffset(20);
+      setGlobalBoostedOffset(20);
+    } catch (error) {
+      console.error('[Leaderboard] Error changing metric:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AppLayout>
@@ -242,186 +357,182 @@ function LeaderboardContent() {
             {/* Tab Content */}
             <div className="p-6">
               {activeTab === 'daily' && (
-                <div className="space-y-8">
-                  {/* Pure Leaderboard */}
-                  <div>
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
-                          Pure Rankings
-                        </h2>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {dailyEntriesPure.length} {dailyEntriesPure.length === 1 ? 'player' : 'players'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        First play of the puzzle with no speed adjustments
-                      </p>
-                    </div>
-                    <LeaderboardTable
-                      entries={dailyEntriesPure}
-                      currentUserId={userId || undefined}
-                      loading={loading}
-                      puzzleDate={puzzleDate || undefined}
-                      rankingType="pure"
-                    />
-                    {!loading && dailyEntriesPure.length === 0 && (
-                      <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          No Pure scores yet for {isArchiveMode ? 'this puzzle' : 'today\'s puzzle'}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                <div>
+                  {/* Sub-tabs for Pure/Boosted */}
+                  <RankingSubTabs
+                    activeSubTab={activeSubTab}
+                    onSubTabChange={setActiveSubTab}
+                  />
 
-                  {/* Boosted Leaderboard */}
-                  <div>
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-lg font-semibold text-purple-700 dark:text-purple-400">
-                          Boosted Rankings
-                        </h2>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {dailyEntriesBoosted.length} {dailyEntriesBoosted.length === 1 ? 'player' : 'players'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Repeat plays and/or games with speed adjustments
-                      </p>
-                    </div>
-                    <LeaderboardTable
-                      entries={dailyEntriesBoosted}
-                      currentUserId={userId || undefined}
-                      loading={loading}
-                      puzzleDate={puzzleDate || undefined}
-                      rankingType="boosted"
-                    />
-                    {!loading && dailyEntriesBoosted.length === 0 && (
-                      <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          No Boosted scores yet for {isArchiveMode ? 'this puzzle' : 'today\'s puzzle'}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {!loading && dailyEntriesPure.length === 0 && dailyEntriesBoosted.length === 0 && (
-                    <div className="text-center py-12">
-                      <p className="text-gray-600 dark:text-gray-400 mb-3">
-                        {isArchiveMode ? 'No one has played this puzzle yet!' : 'No one has played today\'s puzzle yet!'}
-                      </p>
-                      {!isArchiveMode && (
-                        <a
-                          href="/"
-                          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-                        >
-                          Play Today's Puzzle
-                        </a>
+                  {/* Pure Rankings Content */}
+                  {activeSubTab === 'pure' && (
+                    <div>
+                      <LeaderboardTable
+                        entries={dailyEntriesPure}
+                        currentUserId={userId || undefined}
+                        loading={loading}
+                        puzzleDate={puzzleDate || undefined}
+                        rankingType="pure"
+                      />
+                      {!loading && dailyEntriesPure.length === 0 && (
+                        <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                          <p className="text-gray-600 dark:text-gray-400">
+                            No Pure scores yet for {isArchiveMode ? 'this puzzle' : 'today\'s puzzle'}
+                          </p>
+                        </div>
                       )}
+                      {!loading && hasMoreDailyPure && dailyEntriesPure.length > 0 && (
+                        <div className="mt-4 text-center">
+                          <button
+                            onClick={loadMoreDailyPure}
+                            disabled={loadingMore}
+                            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                          >
+                            {loadingMore ? 'Loading...' : 'Load More'}
+                          </button>
+                        </div>
+                      )}
+                      {/* Pure explanation card */}
+                      <div className="mt-6 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
+                        <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-300 mb-2">
+                          Pure Rankings
+                        </h3>
+                        <p className="text-xs text-emerald-800 dark:text-emerald-400">
+                          Your first play of each puzzle at standard speed (1.0x). Compete on equal footing!
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Boosted Rankings Content */}
+                  {activeSubTab === 'boosted' && (
+                    <div>
+                      <LeaderboardTable
+                        entries={dailyEntriesBoosted}
+                        currentUserId={userId || undefined}
+                        loading={loading}
+                        puzzleDate={puzzleDate || undefined}
+                        rankingType="boosted"
+                      />
+                      {!loading && dailyEntriesBoosted.length === 0 && (
+                        <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                          <p className="text-gray-600 dark:text-gray-400">
+                            No Boosted scores yet for {isArchiveMode ? 'this puzzle' : 'today\'s puzzle'}
+                          </p>
+                        </div>
+                      )}
+                      {!loading && hasMoreDailyBoosted && dailyEntriesBoosted.length > 0 && (
+                        <div className="mt-4 text-center">
+                          <button
+                            onClick={loadMoreDailyBoosted}
+                            disabled={loadingMore}
+                            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                          >
+                            {loadingMore ? 'Loading...' : 'Load More'}
+                          </button>
+                        </div>
+                      )}
+                      {/* Boosted explanation card */}
+                      <div className="mt-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                        <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-300 mb-2">
+                          Boosted Rankings
+                        </h3>
+                        <p className="text-xs text-purple-800 dark:text-purple-400">
+                          Repeat plays and/or games using the speed slider. Perfect your score and experiment!
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
               )}
 
               {activeTab === 'global' && (
-                <div className="space-y-8">
-                  {/* Pure Global Leaderboard */}
-                  <div>
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
-                          Pure Rankings - Best Averages
-                        </h2>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          Top 100 players
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                        Average scores from Pure games only (first plays with no speed adjustments)
-                      </p>
-                    </div>
-                    <GlobalLeaderboardTable
-                      entries={globalEntriesPure}
-                      currentUserId={userId || undefined}
-                      loading={loading}
-                    />
-                    {!loading && globalEntriesPure.length === 0 && (
-                      <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          No Pure scores recorded yet
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                <div>
+                  {/* Sub-tabs for Pure/Boosted */}
+                  <RankingSubTabs
+                    activeSubTab={activeSubTab}
+                    onSubTabChange={setActiveSubTab}
+                  />
 
-                  {/* Boosted Global Leaderboard */}
-                  <div>
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-lg font-semibold text-purple-700 dark:text-purple-400">
-                          Boosted Rankings - Best Averages
-                        </h2>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          Top 100 players
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                        Average scores from Boosted games (repeat plays and/or speed adjustments)
-                      </p>
-                    </div>
-                    <GlobalLeaderboardTable
-                      entries={globalEntriesBoosted}
-                      currentUserId={userId || undefined}
-                      loading={loading}
-                    />
-                    {!loading && globalEntriesBoosted.length === 0 && (
-                      <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                        <p className="text-gray-600 dark:text-gray-400">
-                          No Boosted scores recorded yet
+                  {/* Pure Rankings Content */}
+                  {activeSubTab === 'pure' && (
+                    <div>
+                      <GlobalLeaderboardTable
+                        entries={globalEntriesPure}
+                        currentUserId={userId || undefined}
+                        loading={loading}
+                        onMetricChange={handleGlobalMetricChange}
+                      />
+                      {!loading && globalEntriesPure.length === 0 && (
+                        <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                          <p className="text-gray-600 dark:text-gray-400">
+                            No Pure scores recorded yet
+                          </p>
+                        </div>
+                      )}
+                      {!loading && hasMoreGlobalPure && globalEntriesPure.length > 0 && (
+                        <div className="mt-4 text-center">
+                          <button
+                            onClick={loadMoreGlobalPure}
+                            disabled={loadingMore}
+                            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                          >
+                            {loadingMore ? 'Loading...' : 'Load More'}
+                          </button>
+                        </div>
+                      )}
+                      {/* Pure explanation card */}
+                      <div className="mt-6 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
+                        <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-300 mb-2">
+                          Pure Rankings
+                        </h3>
+                        <p className="text-xs text-emerald-800 dark:text-emerald-400">
+                          Rankings from Pure games only (first plays with no speed adjustments). Switch between average score and total stars earned.
                         </p>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Boosted Rankings Content */}
+                  {activeSubTab === 'boosted' && (
+                    <div>
+                      <GlobalLeaderboardTable
+                        entries={globalEntriesBoosted}
+                        currentUserId={userId || undefined}
+                        loading={loading}
+                        onMetricChange={handleGlobalMetricChange}
+                      />
+                      {!loading && globalEntriesBoosted.length === 0 && (
+                        <div className="mt-4 text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                          <p className="text-gray-600 dark:text-gray-400">
+                            No Boosted scores recorded yet
+                          </p>
+                        </div>
+                      )}
+                      {!loading && hasMoreGlobalBoosted && globalEntriesBoosted.length > 0 && (
+                        <div className="mt-4 text-center">
+                          <button
+                            onClick={loadMoreGlobalBoosted}
+                            disabled={loadingMore}
+                            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                          >
+                            {loadingMore ? 'Loading...' : 'Load More'}
+                          </button>
+                        </div>
+                      )}
+                      {/* Boosted explanation card */}
+                      <div className="mt-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                        <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-300 mb-2">
+                          Boosted Rankings
+                        </h3>
+                        <p className="text-xs text-purple-800 dark:text-purple-400">
+                          Rankings from Boosted games (repeat plays and/or speed adjustments). Switch between average score and total stars earned.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Info Section */}
-          <div className="mt-6 space-y-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
-                How Scoring Works
-              </h3>
-              <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
-                <li>• Lower scores are better</li>
-                <li>• Score = (Words Seen / Unique Words) + Reorder Moves + Hints Used</li>
-                <li>• Correct bonus answers reduce your final score by 10%</li>
-              </ul>
-            </div>
-
-            <div className="bg-gradient-to-r from-emerald-50 to-purple-50 dark:from-emerald-900/20 dark:to-purple-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Ranking Categories
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">Pure Rankings</span>
-                  </div>
-                  <p className="text-xs text-gray-700 dark:text-gray-300">
-                    Your first play of each puzzle at standard speed (1.0x). Compete on equal footing!
-                  </p>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-purple-600 dark:text-purple-400 font-semibold text-sm">Boosted Rankings</span>
-                  </div>
-                  <p className="text-xs text-gray-700 dark:text-gray-300">
-                    Repeat plays and/or games using the speed slider. Perfect your score and experiment!
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </div>

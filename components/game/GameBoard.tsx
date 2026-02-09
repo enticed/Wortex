@@ -53,7 +53,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
     showPhase2Dialog,
     confirmPhase2Complete,
   } = useGameState(puzzle, vortexSpeed, isArchiveMode);
-  const { userId, refreshStats } = useUser();
+  const { userId, refreshStats, loading: userLoading } = useUser();
   const { hasCompletedTutorial } = useTutorial();
   const [draggedWordId, setDraggedWordId] = useState<string | null>(null);
   const [draggedWordText, setDraggedWordText] = useState<string | null>(null);
@@ -413,6 +413,17 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
 
         try {
           console.log('[GameBoard] Submitting score via API for user:', userId.substring(0, 12), isArchiveMode ? '(archive mode)' : '');
+          console.log('[GameBoard] Puzzle ID:', puzzle.id);
+          console.log('[GameBoard] Score data:', {
+            finalScore: gameState.finalScore,
+            phase1Score: gameState.score || 0,
+            phase2Score: gameState.phase2Score || 0,
+            bonusCorrect: gameState.bonusCorrect || false,
+            timeTakenSeconds,
+            speed: gameState.speed,
+            minSpeed: gameState.minSpeed,
+            maxSpeed: gameState.maxSpeed,
+          });
 
           // Submit score via secure API endpoint with CSRF protection
           const response = await fetchWithCsrf('/api/score/submit', {
@@ -441,7 +452,7 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
             console.error('[GameBoard] Score submission failed:', response.status, errorData);
 
             // Show user-friendly error message
-            alert(`Failed to save your score: ${errorData.error || 'Please try again'}. Your game data has been saved locally.`);
+            alert(`Failed to save your score: ${errorData.error || 'Please try again'}.`);
           } else {
             const result = await response.json();
             console.log('[GameBoard] Score submitted successfully:', result);
@@ -542,6 +553,19 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
     gameState.targetPhraseWords,
     puzzle.targetPhrase.words
   );
+
+  // Wait for UserContext to load before allowing gameplay
+  // This prevents the race condition where users could complete the game before userId is available
+  if (userLoading) {
+    return (
+      <div className="h-[calc(100dvh-2.5rem)] w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading your account...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <DndContext

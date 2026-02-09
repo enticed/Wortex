@@ -4,7 +4,7 @@ import "./globals.css";
 import "driver.js/dist/driver.css";
 import { UserProvider } from "@/lib/contexts/UserContext";
 import { TutorialProvider } from "@/lib/contexts/TutorialContext";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { CsrfInitializer } from "@/components/CsrfInitializer";
 
 const geistSans = Geist({

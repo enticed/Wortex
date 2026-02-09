@@ -135,20 +135,19 @@ export async function validateScoreSubmission(
   // 6. Validate Phase 2 score (reordering efficiency)
   // Phase 2 score = 0.25 * number of moves
   // Perfect score = 0 (no reordering needed)
-  // Max reasonable moves = quoteWordCount * 3 (very inefficient)
-
-  const MAX_MOVES = quoteWordCount * 3;
-  const MAX_PHASE2_SCORE = MAX_MOVES * 0.25;
+  // Note: We don't enforce a hard maximum because new players may legitimately make many moves
+  // The star system already handles this - very high scores get 1 star
 
   if (submission.phase2Score < 0) {
     return { valid: false, error: 'Phase 2 score cannot be negative' };
   }
 
-  if (submission.phase2Score > MAX_PHASE2_SCORE) {
-    return {
-      valid: false,
-      error: `Phase 2 score too high (${submission.phase2Score}). Maximum for ${quoteWordCount} words is ${MAX_PHASE2_SCORE}`,
-    };
+  // Warn about very high scores (10+ moves per word) but don't reject them
+  const movesPerWord = submission.phase2Score / 0.25 / quoteWordCount;
+  if (movesPerWord > 10) {
+    warnings.push(
+      `Phase 2 score is very high (${submission.phase2Score} = ${Math.round(movesPerWord)} moves per word). User may be exploring/learning.`
+    );
   }
 
   // Phase 2 score should be a multiple of 0.25 (each move = 0.25 points)

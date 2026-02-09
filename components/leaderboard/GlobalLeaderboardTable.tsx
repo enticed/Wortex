@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import TierBadge from '@/components/admin/TierBadge';
 
 export interface GlobalLeaderboardEntry {
@@ -7,6 +8,7 @@ export interface GlobalLeaderboardEntry {
   display_name: string | null;
   average_score: number;
   total_games: number;
+  total_stars: number;
   user_tier?: 'free' | 'premium' | 'admin';
 }
 
@@ -14,13 +16,24 @@ interface GlobalLeaderboardTableProps {
   entries: GlobalLeaderboardEntry[];
   currentUserId?: string;
   loading?: boolean;
+  onMetricChange?: (metric: 'average_score' | 'total_stars') => void;
 }
 
 export default function GlobalLeaderboardTable({
   entries,
   currentUserId,
-  loading = false
+  loading = false,
+  onMetricChange
 }: GlobalLeaderboardTableProps) {
+  const [sortMetric, setSortMetric] = useState<'average_score' | 'total_stars'>('average_score');
+
+  const handleMetricChange = (metric: 'average_score' | 'total_stars') => {
+    setSortMetric(metric);
+    if (onMetricChange) {
+      onMetricChange(metric);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-2">
@@ -45,20 +58,51 @@ export default function GlobalLeaderboardTable({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div>
+      {/* Metric Toggle */}
+      <div className="flex justify-center mb-4">
+        <div className="inline-flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1">
+          <button
+            onClick={() => handleMetricChange('average_score')}
+            className={`
+              px-4 py-2 rounded-md text-sm font-medium transition-colors
+              ${sortMetric === 'average_score'
+                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300'
+              }
+            `}
+          >
+            Avg Score
+          </button>
+          <button
+            onClick={() => handleMetricChange('total_stars')}
+            className={`
+              px-4 py-2 rounded-md text-sm font-medium transition-colors
+              ${sortMetric === 'total_stars'
+                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300'
+              }
+            `}
+          >
+            Total Stars
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+            <th className="text-left py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Rank
             </th>
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+            <th className="text-left py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Player
             </th>
-            <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-              Avg Score
+            <th className="text-right py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+              {sortMetric === 'average_score' ? 'Avg Score' : 'Total Stars'}
             </th>
-            <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+            <th className="text-right py-2 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
               Games
             </th>
           </tr>
@@ -78,7 +122,7 @@ export default function GlobalLeaderboardTable({
                   ${isCurrentUser ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
                 `}
               >
-                <td className="py-4 px-4">
+                <td className="py-2 px-4">
                   <div className="flex items-center gap-2">
                     {isTopThree ? (
                       <span className="text-2xl">
@@ -93,7 +137,7 @@ export default function GlobalLeaderboardTable({
                     )}
                   </div>
                 </td>
-                <td className="py-4 px-4">
+                <td className="py-2 px-4">
                   <div className="flex items-center gap-2">
                     <span className={`
                       font-medium
@@ -114,14 +158,17 @@ export default function GlobalLeaderboardTable({
                     )}
                   </div>
                 </td>
-                <td className="py-4 px-4">
+                <td className="py-2 px-4">
                   <div className="text-right">
                     <span className="font-bold text-gray-900 dark:text-gray-100">
-                      {entry.average_score.toFixed(2)}
+                      {sortMetric === 'average_score'
+                        ? entry.average_score.toFixed(2)
+                        : entry.total_stars
+                      }
                     </span>
                   </div>
                 </td>
-                <td className="py-4 px-4">
+                <td className="py-2 px-4">
                   <div className="text-right">
                     <span className="text-gray-600 dark:text-gray-400">
                       {entry.total_games}
@@ -133,6 +180,7 @@ export default function GlobalLeaderboardTable({
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

@@ -450,7 +450,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
       // Calculate total score: Phase 1 + Phase 2
       const totalScore = (prev.score || 0) + (prev.phase2Score || 0);
 
-      // If correct, apply 10% reduction to total score
+      // If correct, apply 10% reduction (lower score is better in this game)
       const finalScore = isCorrect
         ? Math.round((totalScore * 0.9) * 100) / 100
         : totalScore;
@@ -474,7 +474,7 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
         ...prev,
         bonusAnswered: true,
         bonusCorrect: false,
-        finalScore: totalScore, // No reduction for skip
+        finalScore: totalScore, // No bonus for skip
       };
     });
   }, []);
