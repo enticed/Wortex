@@ -29,8 +29,12 @@ function ResultsPageContent() {
     );
   }
 
+  // Check if the date is today (not archive mode)
+  const today = new Date().toISOString().split('T')[0];
+  const isArchiveMode = date !== today;
+
   return (
-    <AppLayout showHeader={true} isArchiveMode={true}>
+    <AppLayout showHeader={true} isArchiveMode={isArchiveMode}>
       <ResultsViewer puzzleDate={date} />
     </AppLayout>
   );

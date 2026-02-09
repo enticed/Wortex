@@ -12,7 +12,7 @@ interface ResultsViewerProps {
 }
 
 export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
-  const { userId } = useUser();
+  const { userId, user } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +23,7 @@ export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
     finalScore: number;
     bonusCorrect: boolean;
     stars: number | null;
+    isPure: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -72,6 +73,15 @@ export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
         if (!scoreResponse.ok) {
           const errorData = await scoreResponse.json();
           console.error('[ResultsViewer] Failed to fetch score:', errorData.error);
+
+          // If score not found (404), redirect to homepage as safe fallback
+          if (scoreResponse.status === 404) {
+            console.log('[ResultsViewer] Score not found, redirecting to homepage');
+            router.push('/');
+            return;
+          }
+
+          // For other errors, show error message
           setError('Unable to load your score for this puzzle. Please try again.');
           setLoading(false);
           return;
@@ -80,9 +90,9 @@ export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
         const { score } = await scoreResponse.json();
 
         if (!score) {
-          console.error('[ResultsViewer] No score found - this should not happen from Recent Games');
-          setError('Unable to load your score for this puzzle. Please try again.');
-          setLoading(false);
+          console.error('[ResultsViewer] No score found for this puzzle (null response)');
+          // Redirect to homepage instead of showing error
+          router.push('/');
           return;
         }
 
@@ -92,12 +102,18 @@ export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
         const phase1Score = score.phase1_score ?? (score.score / 2);
         const phase2Score = score.phase2_score ?? (score.score / 2);
 
+        // Determine if this is a Pure game (first play with no speed adjustments)
+        const isPure = score.first_play_of_day === true &&
+                       (score.min_speed ?? 1.0) === 1.0 &&
+                       (score.max_speed ?? 1.0) === 1.0;
+
         setScoreData({
           phase1Score,
           phase2Score,
           finalScore: score.score,
           bonusCorrect: score.bonus_correct,
           stars: score.stars,
+          isPure,
         });
 
       } catch (err) {
@@ -153,6 +169,10 @@ export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
     sourceIndex: index,
   }));
 
+  // Check if this puzzle is from today (not archive mode)
+  const today = new Date().toISOString().split('T')[0];
+  const isArchiveMode = puzzleDate !== today;
+
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Mystery Quote Section - 40% height, matching GameBoard layout */}
@@ -185,12 +205,19 @@ export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
           phase2Score={scoreData.phase2Score}
           finalScore={scoreData.finalScore}
           bonusCorrect={scoreData.bonusCorrect}
+          isPure={scoreData.isPure}
           onPlayAgain={() => {
-            router.push(`/play?date=${puzzleDate}&archive=true`);
+            if (isArchiveMode) {
+              router.push(`/play?date=${puzzleDate}&archive=true`);
+            } else {
+              // Premium/Admin users bypass pre-game and go straight to play
+              const isPremium = user?.user_tier === 'premium' || user?.user_tier === 'admin';
+              router.push(isPremium ? '/play' : '/pre-game');
+            }
           }}
           totalWordsSeen={0}
           totalUniqueWords={puzzle.targetPhrase.words.length + puzzle.facsimilePhrase.words.length}
-          isArchiveMode={true}
+          isArchiveMode={isArchiveMode}
           reorderMoves={0}
           hintsUsed={0}
           quoteWordCount={puzzle.targetPhrase.words.length}

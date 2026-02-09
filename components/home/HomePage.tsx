@@ -32,11 +32,13 @@ function getStreakMessage(streak: number): string {
 }
 
 export default function HomePage() {
-  const { userData, stats, loading, userId } = useUser();
+  const { userData, stats, loading, userId, user } = useUser();
   const [currentDate, setCurrentDate] = useState('');
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [averageStars, setAverageStars] = useState<number>(0);
   const [hasPlayedToday, setHasPlayedToday] = useState<boolean>(false);
+  const [checkingPlayStatus, setCheckingPlayStatus] = useState<boolean>(true);
+  const [todayDate, setTodayDate] = useState<string>('');
 
   // Fetch average stars from API
   useEffect(() => {
@@ -81,9 +83,15 @@ export default function HomePage() {
   // Fetch today's puzzle for the hint phrase and check if user has played
   useEffect(() => {
     async function fetchPuzzle() {
+      setCheckingPlayStatus(true);
       const supabase = createClient();
       const todaysPuzzle = await getTodaysPuzzle(supabase);
       setPuzzle(todaysPuzzle);
+
+      // Store today's date for navigation
+      if (todaysPuzzle) {
+        setTodayDate(todaysPuzzle.date);
+      }
 
       // Check if user has played today's puzzle
       if (userId && todaysPuzzle) {
@@ -95,6 +103,7 @@ export default function HomePage() {
           setHasPlayedToday(!!score);
         }
       }
+      setCheckingPlayStatus(false);
     }
     fetchPuzzle();
   }, [userId]);
@@ -239,10 +248,14 @@ export default function HomePage() {
 
         {/* Play Button - Compact */}
         <div className="text-center">
-          {hasPlayedToday ? (
+          {checkingPlayStatus ? (
+            <div className="inline-block px-8 py-3 bg-gray-300 dark:bg-gray-700 text-transparent text-lg font-bold rounded-xl shadow-lg animate-pulse">
+              Play Today&apos;s Puzzle
+            </div>
+          ) : hasPlayedToday && todayDate ? (
             <Link
               id="my-results-button"
-              href="/play"
+              href={`/results?date=${todayDate}`}
               className="inline-block px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-lg font-bold rounded-xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
             >
               My Results
@@ -250,7 +263,7 @@ export default function HomePage() {
           ) : (
             <Link
               id="play-button"
-              href="/pre-game"
+              href={user?.user_tier === 'premium' || user?.user_tier === 'admin' ? '/play' : '/pre-game'}
               className="inline-block px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-lg font-bold rounded-xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
             >
               Play Today&apos;s Puzzle

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client-server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,17 +15,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createClient();
 
-    // Fetch the score using server-side client (bypasses RLS session issues)
+    // Fetch the most recent score using server-side client (bypasses RLS session issues)
+    // Note: Users can play multiple times, so we get the most recent score
     const { data: score, error } = await (supabase
       .from('scores') as any)
       .select('*')
       .eq('user_id', userId)
       .eq('puzzle_id', puzzleId)
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('[API /score/get] Error fetching score:', error);
       return NextResponse.json(
         { error: 'Failed to fetch score' },
