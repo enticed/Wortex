@@ -7,8 +7,14 @@ import type { Database } from '@/types/database';
 
 type UserRow = Database['public']['Tables']['users']['Row'];
 
+interface UserWithStats extends UserRow {
+  stats?: {
+    total_games: number;
+  } | null;
+}
+
 interface UsersResponse {
-  users: UserRow[];
+  users: UserWithStats[];
   pagination: {
     page: number;
     limit: number;
@@ -19,7 +25,7 @@ interface UsersResponse {
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserRow[]>([]);
+  const [users, setUsers] = useState<UserWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -234,7 +240,7 @@ export default function AdminUsersPage() {
                       </div>
                     </th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Email
+                      Games Played
                     </th>
                     <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                       Actions
@@ -259,7 +265,7 @@ export default function AdminUsersPage() {
                         {formatRelativeTime(user.last_active)}
                       </td>
                       <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-                        {user.email || '—'}
+                        {user.stats?.total_games ?? 0}
                       </td>
                       <td className="px-3 py-2 text-right">
                         <Link

@@ -30,10 +30,15 @@ export async function GET(request: NextRequest) {
     // Create Supabase client with service role for admin access
     const supabase = createClient();
 
-    // Build query
+    // Build query with stats join to get games played
     let query = supabase
       .from('users')
-      .select('*', { count: 'exact' });
+      .select(`
+        *,
+        stats!user_id (
+          total_games
+        )
+      `, { count: 'exact' });
 
     // Apply tier filter
     if (tier && tier !== 'all') {
