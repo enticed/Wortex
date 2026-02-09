@@ -10,6 +10,7 @@ interface FinalResultsProps {
   phase2Score: number;
   finalScore: number;
   bonusCorrect: boolean | null;
+  isPure?: boolean;
   onPlayAgain: () => void;
   totalWordsSeen?: number;
   totalUniqueWords?: number;
@@ -84,6 +85,7 @@ export default function FinalResults({
   phase2Score,
   finalScore,
   bonusCorrect,
+  isPure,
   onPlayAgain,
   totalWordsSeen,
   totalUniqueWords,
@@ -175,8 +177,19 @@ export default function FinalResults({
           {/* Final Score - Compact */}
           <div className="rounded-lg p-2 bg-green-100 dark:bg-green-900">
             <div className="grid items-center gap-2" style={{ gridTemplateColumns: 'auto 1fr auto' }}>
-              <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 justify-self-start">
-                Final Score
+              <div className="justify-self-start">
+                <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Final Score
+                </div>
+                {isPure !== undefined && (
+                  <div className={`text-xs leading-tight font-semibold ${
+                    isPure
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-purple-600 dark:text-purple-400'
+                  }`} style={{ maxWidth: '60px' }}>
+                    {isPure ? 'Pure' : 'Boosted'}
+                  </div>
+                )}
               </div>
               <div className="justify-self-center">
                 <Stars count={finalStars} size="lg" color="green" />
