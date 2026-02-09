@@ -42,6 +42,27 @@ export default function StatsPage() {
 
   const router = useRouter();
 
+  // Check if we're showing expired (not today's) stats
+  const isExpired = () => {
+    if (!stats?.last_played_date) return false;
+    const today = new Date().toISOString().split('T')[0];
+    return stats.last_played_date !== today;
+  };
+
+  // Handle close button - redirect to homepage if on expired data
+  const handleClose = () => {
+    // Check if last played date is from a previous day
+    if (stats?.last_played_date) {
+      const today = new Date().toISOString().split('T')[0];
+      if (stats.last_played_date < today) {
+        console.log('[Stats] Expired data detected, redirecting to homepage');
+        router.push('/');
+        return;
+      }
+    }
+    router.back();
+  };
+
   const loadStats = useCallback(async () => {
     if (!userId) {
       console.warn('[Stats] Cannot load stats - no userId');
@@ -202,7 +223,7 @@ export default function StatsPage() {
               )}
             </div>
             <button
-              onClick={() => router.back()}
+              onClick={handleClose}
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               aria-label="Close"
             >

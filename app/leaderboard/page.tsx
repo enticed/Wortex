@@ -67,6 +67,28 @@ function LeaderboardContent() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
+  // Handle close button - redirect to homepage if on expired data
+  const handleClose = () => {
+    // If we're in archive mode, always go to homepage
+    if (isArchiveMode) {
+      console.log('[Leaderboard] Archive mode detected, redirecting to homepage');
+      router.push('/');
+      return;
+    }
+
+    // Check if the puzzle date is from today
+    if (puzzleDate) {
+      const today = new Date().toISOString().split('T')[0];
+      if (puzzleDate < today) {
+        console.log('[Leaderboard] Expired data detected, redirecting to homepage');
+        router.push('/');
+        return;
+      }
+    }
+
+    router.back();
+  };
+
   const loadLeaderboards = useCallback(async () => {
     try {
       console.log('[Leaderboard] Starting to load data...');
@@ -305,7 +327,7 @@ function LeaderboardContent() {
               )}
             </div>
             <button
-              onClick={() => router.back()}
+              onClick={handleClose}
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               aria-label="Close"
             >
