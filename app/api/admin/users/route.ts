@@ -54,26 +54,46 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Apply sorting
+    // Apply sorting before pagination
     const ascending = sortDirection === 'asc';
 
+    let users: any[] | null = null;
+    let error: any = null;
+    let count: number | null = null;
+
     if (sortBy === 'games_played') {
-      // For games_played, we need to order by the stats.total_games field
-      // Note: This requires the stats join to work properly
-      query = query
-        .order('stats.total_games', { ascending, nullsFirst: false })
-        .order('created_at', { ascending: false }); // Secondary sort
+      // For games_played, we need to fetch ALL users to sort correctly across pages
+      // since PostgREST can't easily order by joined table fields
+      const { data: allUsers, error: fetchError, count: totalCount } = await query;
+
+      error = fetchError;
+      count = totalCount;
+
+      if (!fetchError && allUsers) {
+        // Sort all users by games_played
+        const sortedAll = [...allUsers].sort((a, b) => {
+          const aGames = (a.stats as any)?.total_games ?? 0;
+          const bGames = (b.stats as any)?.total_games ?? 0;
+          return ascending ? aGames - bGames : bGames - aGames;
+        });
+
+        // Apply pagination manually
+        users = sortedAll.slice(offset, offset + limit);
+      }
     } else {
-      // For other fields (created_at, last_active), order directly
+      // For other fields (created_at, last_active), use database sorting
       query = query
         .order(sortBy, { ascending })
         .order('created_at', { ascending: false }); // Secondary sort
+
+      // Apply pagination
+      query = query.range(offset, offset + limit - 1);
+
+      const result = await query;
+      users = result.data;
+      error = result.error;
+      count = result.count;
     }
-
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1);
-
-    const { data: users, error, count } = await query;
 
     if (error) {
       console.error('[API] Error fetching users:', error);
@@ -87,7 +107,7 @@ export async function GET(request: NextRequest) {
     const totalPages = count ? Math.ceil(count / limit) : 0;
 
     return NextResponse.json({
-      users,
+      users: users || [],
       pagination: {
         page,
         limit,
