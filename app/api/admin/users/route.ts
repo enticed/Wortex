@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const search = searchParams.get('search') || '';
     const tier = searchParams.get('tier') || 'all'; // all, free, premium, admin
+    const sortBy = searchParams.get('sortBy') || 'created_at'; // created_at, last_active, games_played
+    const sortDirection = searchParams.get('sortDirection') || 'desc'; // asc, desc
 
     const offset = (page - 1) * limit;
 
@@ -52,10 +54,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Apply pagination and ordering
-    query = query
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+    // Apply sorting
+    const ascending = sortDirection === 'asc';
+
+    if (sortBy === 'games_played') {
+      // For games_played, we need to order by the stats.total_games field
+      // Note: This requires the stats join to work properly
+      query = query
+        .order('stats.total_games', { ascending, nullsFirst: false })
+        .order('created_at', { ascending: false }); // Secondary sort
+    } else {
+      // For other fields (created_at, last_active), order directly
+      query = query
+        .order(sortBy, { ascending })
+        .order('created_at', { ascending: false }); // Secondary sort
+    }
+
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1);
 
     const { data: users, error, count } = await query;
 

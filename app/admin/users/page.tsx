@@ -37,7 +37,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [tierFilter, setTierFilter] = useState<'all' | 'free' | 'premium' | 'admin'>('all');
   const [searchInput, setSearchInput] = useState('');
-  const [sortField, setSortField] = useState<'created_at' | 'last_active' | null>(null);
+  const [sortField, setSortField] = useState<'created_at' | 'last_active' | 'games_played' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Fetch users
@@ -51,6 +51,10 @@ export default function AdminUsersPage() {
 
       if (search) params.append('search', search);
       if (tierFilter !== 'all') params.append('tier', tierFilter);
+      if (sortField) {
+        params.append('sortBy', sortField);
+        params.append('sortDirection', sortDirection);
+      }
 
       const response = await fetch(`/api/admin/users?${params}`);
       const data: UsersResponse = await response.json();
@@ -68,10 +72,10 @@ export default function AdminUsersPage() {
     }
   }
 
-  // Initial load
+  // Initial load and re-fetch when filters or sort changes
   useEffect(() => {
     fetchUsers(1);
-  }, [search, tierFilter]);
+  }, [search, tierFilter, sortField, sortDirection]);
 
   // Handle search
   function handleSearch() {
@@ -110,23 +114,10 @@ export default function AdminUsersPage() {
     admin: users.filter(u => u.user_tier === 'admin').length,
   };
 
-  // Sort users client-side
-  const sortedUsers = [...users].sort((a, b) => {
-    if (!sortField) return 0;
-
-    const aVal = a[sortField];
-    const bVal = b[sortField];
-
-    if (!aVal && !bVal) return 0;
-    if (!aVal) return 1;
-    if (!bVal) return -1;
-
-    const comparison = new Date(aVal).getTime() - new Date(bVal).getTime();
-    return sortDirection === 'asc' ? comparison : -comparison;
-  });
+  // Users are now sorted server-side, no need for client-side sorting
 
   // Toggle sort
-  function toggleSort(field: 'created_at' | 'last_active') {
+  function toggleSort(field: 'created_at' | 'last_active' | 'games_played') {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -239,8 +230,18 @@ export default function AdminUsersPage() {
                         )}
                       </div>
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                      Games Played
+                    <th
+                      className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-gray-200"
+                      onClick={() => toggleSort('games_played')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Games Played
+                        {sortField === 'games_played' && (
+                          <span className="text-blue-600 dark:text-blue-400">
+                            {sortDirection === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
                     </th>
                     <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                       Actions
@@ -248,7 +249,7 @@ export default function AdminUsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {sortedUsers.map((user) => (
+                  {users.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                       <td className="px-3 py-2">
                         <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
