@@ -30,7 +30,11 @@ function ResultsPageContent() {
   }
 
   // Check if the date is today (not archive mode)
-  const today = new Date().toISOString().split('T')[0];
+  // Use local timezone to match how puzzle dates are calculated elsewhere
+  const now = new Date();
+  const today = new Date(now.getTime() - (now.getTimezoneOffset() * 60000))
+    .toISOString()
+    .split('T')[0];
   const isArchiveMode = date !== today;
 
   return (
