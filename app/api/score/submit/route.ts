@@ -211,6 +211,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       warnings: validationResult.warnings,
+      first_play_of_day: firstPlayOfDay,
+      min_speed: sanitized.minSpeed,
+      max_speed: sanitized.maxSpeed,
     });
   } catch (error) {
     console.error('[ScoreSubmit] Error in score submission:', error);

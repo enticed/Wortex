@@ -79,6 +79,9 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
     hintsUsed: number;
     puzzleId: string;
     puzzleDate?: string;
+    firstPlayOfDay?: boolean;
+    minSpeed?: number;
+    maxSpeed?: number;
   } | null>(null);
 
   // Configure sensors for both mouse and touch input
@@ -152,6 +155,9 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
             hintsUsed: 0, // Not stored in database
             puzzleId: puzzle.id,
             puzzleDate: puzzle.date,
+            firstPlayOfDay: scoreData.first_play_of_day,
+            minSpeed: scoreData.min_speed,
+            maxSpeed: scoreData.max_speed,
           };
 
             setSavedResults(results);
@@ -394,6 +400,13 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
     }
   };
 
+  // Store values from score submission for Pure/Boosted calculation
+  const [submittedScoreData, setSubmittedScoreData] = useState<{
+    firstPlayOfDay?: boolean;
+    minSpeed?: number;
+    maxSpeed?: number;
+  } | null>(null);
+
   // Submit score when bonus is answered
   useEffect(() => {
     async function submitScore() {
@@ -464,6 +477,13 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
             const result = await response.json();
             console.log('[GameBoard] Score submitted successfully:', result);
 
+            // Store score metadata for Pure/Boosted calculation
+            setSubmittedScoreData({
+              firstPlayOfDay: result.first_play_of_day,
+              minSpeed: result.min_speed,
+              maxSpeed: result.max_speed,
+            });
+
             // Refresh user stats to reflect the new score
             await refreshStats();
           }
@@ -492,11 +512,14 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
         hintsUsed: gameState.hintsUsed,
         puzzleId: puzzle.id,
         puzzleDate: puzzle.date,
+        firstPlayOfDay: submittedScoreData?.firstPlayOfDay,
+        minSpeed: submittedScoreData?.minSpeed ?? gameState.minSpeed,
+        maxSpeed: submittedScoreData?.maxSpeed ?? gameState.maxSpeed,
       };
       sessionStorage.setItem('wortex-final-results', JSON.stringify(resultsToSave));
       console.log('[GameBoard] Final results saved to sessionStorage for puzzle:', puzzle.date);
     }
-  }, [gameState.bonusAnswered, gameState.finalScore, gameState.bonusCorrect, gameState.score, gameState.phase2Score, gameState.totalWordsSeen, gameState.reorderMoves, gameState.hintsUsed, puzzle.id, puzzle.date, puzzle.targetPhrase.words.length, puzzle.facsimilePhrase.words.length]);
+  }, [gameState.bonusAnswered, gameState.finalScore, gameState.bonusCorrect, gameState.score, gameState.phase2Score, gameState.totalWordsSeen, gameState.reorderMoves, gameState.hintsUsed, gameState.minSpeed, gameState.maxSpeed, puzzle.id, puzzle.date, puzzle.targetPhrase.words.length, puzzle.facsimilePhrase.words.length, submittedScoreData]);
 
   // Auto-remove unnecessary word after brief highlight
   useEffect(() => {
@@ -721,7 +744,12 @@ export default function GameBoard({ puzzle, isArchiveMode = false, showResults =
               phase2Score={savedResults?.phase2Score ?? gameState.phase2Score ?? 0}
               finalScore={savedResults?.finalScore ?? gameState.finalScore ?? 0}
               bonusCorrect={savedResults?.bonusCorrect ?? gameState.bonusCorrect}
-              isPure={!isArchiveMode && gameState.minSpeed === 1.0 && gameState.maxSpeed === 1.0}
+              isPure={
+                // Pure requires: first_play_of_day=true AND min_speed=1.0 AND max_speed=1.0
+                (savedResults?.firstPlayOfDay ?? submittedScoreData?.firstPlayOfDay ?? !isArchiveMode) &&
+                (savedResults?.minSpeed ?? submittedScoreData?.minSpeed ?? gameState.minSpeed) === 1.0 &&
+                (savedResults?.maxSpeed ?? submittedScoreData?.maxSpeed ?? gameState.maxSpeed) === 1.0
+              }
               onPlayAgain={() => {
                 sessionStorage.removeItem('wortex-final-results');
                 window.location.reload();
