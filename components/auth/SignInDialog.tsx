@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { fetchWithCsrf } from '@/lib/security/csrf-client';
 
 interface SignInDialogProps {
   isOpen: boolean;
@@ -26,7 +27,7 @@ export default function SignInDialog({ isOpen, onClose, onSuccess, onSwitchToSig
     try {
       console.log('[SignIn] Signing in:', email);
 
-      const response = await fetch('/api/auth/signin', {
+      const response = await fetchWithCsrf('/api/auth/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

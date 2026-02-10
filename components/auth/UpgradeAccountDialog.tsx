@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { fetchWithCsrf } from '@/lib/security/csrf-client';
 
 interface UpgradeAccountDialogProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ export default function UpgradeAccountDialog({ isOpen, onClose, onSuccess }: Upg
     try {
       console.log('[UpgradeAccount] Upgrading account for:', email);
 
-      const response = await fetch('/api/auth/signup', {
+      const response = await fetchWithCsrf('/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -144,8 +144,8 @@ export function useGameState(puzzle: Puzzle | null, speed: number = 1.0, isArchi
         // Add word to vortex or replace oldest
         const timestamp = Date.now();
         // Add random offset to prevent stacking when words release simultaneously
-        // Increased from ±5° to ±45° to better distribute words around the entrance
-        const angleOffset = (Math.random() - 0.5) * 90; // ±45 degrees
+        // Using ±20° to balance stacking prevention with spiral aesthetics
+        const angleOffset = (Math.random() - 0.5) * 40; // ±20 degrees
         const radiusOffset = (Math.random() - 0.5) * 0.2; // ±0.1 radius variation
         const newWord = {
           ...nextWord,

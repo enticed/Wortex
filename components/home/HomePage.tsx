@@ -263,7 +263,7 @@ export default function HomePage() {
           ) : (
             <Link
               id="play-button"
-              href={user?.user_tier === 'premium' || user?.user_tier === 'admin' ? '/play' : '/pre-game'}
+              href={userData?.user_tier === 'premium' || userData?.user_tier === 'admin' ? '/play' : '/pre-game'}
               className="inline-block px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-lg font-bold rounded-xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95"
             >
               Play Today&apos;s Puzzle

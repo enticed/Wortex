@@ -12,7 +12,7 @@ interface ResultsViewerProps {
 }
 
 export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
-  const { userId, user } = useUser();
+  const { userId, user, userData } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -215,7 +215,7 @@ export default function ResultsViewer({ puzzleDate }: ResultsViewerProps) {
               router.push(`/play?date=${puzzleDate}&archive=true`);
             } else {
               // Premium/Admin users bypass pre-game and go straight to play
-              const isPremium = user?.user_tier === 'premium' || user?.user_tier === 'admin';
+              const isPremium = userData?.user_tier === 'premium' || userData?.user_tier === 'admin';
               router.push(isPremium ? '/play' : '/pre-game');
             }
           }}
