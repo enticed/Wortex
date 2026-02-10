@@ -18,6 +18,7 @@ interface UserData {
   isAdmin: boolean;
   createdAt: string;
   isAnonymous: boolean;
+  user_tier?: 'free' | 'premium' | 'admin';
 }
 
 interface UserContextType {

@@ -185,7 +185,7 @@ export async function GET(request: NextRequest) {
     const supabase = createClient();
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, email, display_name, is_admin, created_at')
+      .select('id, email, display_name, is_admin, created_at, user_tier')
       .eq('id', session.userId)
       .single();
 
@@ -203,6 +203,7 @@ export async function GET(request: NextRequest) {
       display_name: string | null;
       is_admin: boolean;
       created_at: string;
+      user_tier: 'free' | 'premium' | 'admin';
     };
 
     return NextResponse.json({
@@ -212,7 +213,8 @@ export async function GET(request: NextRequest) {
         username: userData.display_name || 'Player',
         isAdmin: userData.is_admin,
         createdAt: userData.created_at,
-        isAnonymous: !userData.email // Anonymous if no email
+        isAnonymous: !userData.email, // Anonymous if no email
+        user_tier: userData.user_tier
       }
     });
   } catch (error) {
