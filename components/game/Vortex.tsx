@@ -570,8 +570,9 @@ export default function Vortex({ words, onWordGrab, isActive, speed = 1.0, total
       animatedWordIds.current.add(word.id);
 
       // Each word starts at progress 0 (entrance) and animates to progress 1 (center)
-      // Add angular offset to prevent stacking at entrance
-      const angularOffset = (word.angle % 30) - 15; // Random offset between -15° and +15°
+      // Use the word's entrance angle as offset to prevent stacking
+      // word.angle is now randomized ±45° from 180° in game state
+      const angularOffset = word.angle - 180; // Offset from the default 180° entrance
       const wordData = { progress: 0 };
 
       // Animate the word along the spiral path from entrance to center
